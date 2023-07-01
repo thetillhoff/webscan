@@ -8,3 +8,5 @@ on:
 jobs:
   release-on-tag:
     uses: thetillhoff/.github/.github/workflows/release-golang-executable-on-tag.yaml@main
+    permissions:
+      issues: write
