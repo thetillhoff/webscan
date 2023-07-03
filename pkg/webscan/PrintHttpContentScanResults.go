@@ -70,12 +70,14 @@ func (engine Engine) PrintHttpContentScanResults() {
 		sizeMessages = append(sizeMessages, "Total size of "+strconv.Itoa(scriptFileCount)+" external scripts: "+strconv.FormatFloat(float64(totalScriptSize), 'f', 1, 64)+"kb")
 	}
 
-	totalsize := float32(engine.httpContentHtmlSize/1000) + totalStylesheetSize + totalScriptSize
-	sizeMessages = append(sizeMessages, "Total download size: "+strconv.FormatFloat(float64(totalsize), 'f', 1, 64)+"kb")
+	if engine.httpContentHtmlSize > 0 {
+		totalsize := float32(engine.httpContentHtmlSize/1000) + totalStylesheetSize + totalScriptSize
+		sizeMessages = append(sizeMessages, "Total download size: "+strconv.FormatFloat(float64(totalsize), 'f', 1, 64)+"kb")
 
-	fmt.Println()
-	for _, sizeMessage := range sizeMessages {
-		fmt.Println(sizeMessage)
+		fmt.Println()
+		for _, sizeMessage := range sizeMessages {
+			fmt.Println(sizeMessage)
+		}
 	}
 
 }
