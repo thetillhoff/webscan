@@ -15,9 +15,17 @@ In addition to the library, it also contains a cli-wrapper around it.
 ## Usage
 
 ```sh
-webscan google.com
+webscan google.com -a
 ```
 
+## Installation
+
+```sh
+wget https://github.com/thetillhoff/webscan/releases/download/v0.1.0/webscan_linux_amd64
+# sha256sum -c // TODO
+install webscan_linux_amd64 /usr/local/bin/webscan # automatically sets rwxr-xr-x permissions
+rm webscan_linux_amd64
+```
 
 ## Features
 
@@ -25,7 +33,7 @@ webscan google.com
 Display dns information about the provided URL, and give improvement recommendations.
 
 - [x] Check who is the owner of the Domain via RDAP (not supported for country-TLDs)
-- [ ] Check who is the owner of the DNS zone (== nameserver owner)
+- [ ] Check who is the owner of the DNS zone (== nameserver owner) - recursively
 - [ ] Follow CNAMEs
 - [x] DNS records overview
 - [x] Long DNS name (requires `--opinionated` flag)
@@ -59,11 +67,22 @@ Display dns information about the provided URL, and give improvement recommendat
 ### Subdomain finder
 - [x] Search for subdomains of the provided domains and provide a list of them.
   - [x] Search for subdomains listed in certificates logs (https://certificate.transparency.dev/).
+- [ ] Search for subdomains in the subject and alternate name list of the original domain tls certificate.
+- [ ] Check other DNS entries (like PTR), certificate pointers, SPF record, certificate logs, reverse-ip-lookups
+  - [ ] reverse ip lookup with https://hackertarget.com/reverse-ip-lookup/
+  - [ ] Bing reverse ip lookup
+  - [ ] https://www.nmmapper.com/sys/tools/subdomainfinder/
+  - [ ] https://dnsdumpster.readthedocs.io/en/latest/#
+  - [ ] crawl the website itself and the links it has for subdomains
+  - [ ] second source for cert-transparency-logs, f.e. https://github.com/SSLMate/certspotter
+  - [ ] other 3rd party databases like virustotal, securitytrails, and dnsdumpster
+  - [ ] 3rd party apis like Amass and PassiveTotal
 
 ### IPv6 readiness
 - [x] Check if both ipv4 and ipv6 entries were found.
   - IPv4 is necessary to stay backwards compatible.
   - IPv6 is recommended to be IPv6 ready.
+  - [ ] If either is missing, recommend to have a proxy in between, for example cloudflare.
 
 ### IP analysis
 - [x] Check who is the hoster of the IP address via RDAP (successor of whois) - like AWS, Azure, GCP, ...
