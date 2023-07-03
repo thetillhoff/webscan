@@ -110,7 +110,7 @@ By default `webscan` assumes you're using https. Yet, it will check whether it's
 - [x] If both http and https are available
   - [x] and https redirects, check that either http redirects to https or to the same location that https redirects to
   - [x] and both are redirecting, the destination should be a https location
-  - [x] and https does not redirect, http should redirect to it with 301 status code.
+  - [x] and https does not redirect, http should redirect to it with 301 or 308 status code. (https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#http-redirect-code)
 - [x] Check which http versions are supported by the webserver (like HTTP/1.1, HTTP/2, HTTP/3 aka QUIC)
 - [ ] Additional flag to follow redirects and check them as well - recursive with exact same flags enabled
 
@@ -168,6 +168,8 @@ Print recommendations on the html code.
 - [ ] headless rendering with https://github.com/chromedp/chromedp
   - [ ] performance index (download speed ( first time, second time), render speed)
   - [ ] check for console errors
+
+- [ ] Check if there's a /.well-known/security.txt file.
 
 ### SEO recommendations
 - [ ] check if robots.txt exists

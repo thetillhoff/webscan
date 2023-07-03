@@ -34,7 +34,7 @@ func (engine Engine) PrintProtocolScanResults() {
 				fmt.Println()
 				linebreakPrinted = true
 			}
-			fmt.Println("HTTP should only be used to redirect to an HTTPS location with a 301 status code. Got " + strconv.Itoa(engine.httpStatusCode))
+			fmt.Println("HTTP should only be used to redirect to an HTTPS location with a 301 or 308 status code. Got " + strconv.Itoa(engine.httpStatusCode))
 		}
 
 		if engine.httpsStatusCode != 200 {
@@ -65,12 +65,12 @@ func (engine Engine) PrintProtocolScanResults() {
 			}
 		} else { // Else https serves a page
 
-			if engine.httpStatusCode != 301 { // Http should redirect to https with 301
+			if engine.httpStatusCode != 301 && engine.httpStatusCode != 308 { // Http should redirect to https with 301 or 308
 				if !linebreakPrinted {
 					fmt.Println()
 					linebreakPrinted = true
 				}
-				fmt.Println("HTTP redirect to HTTPS should happen with 301 status code. Instead got: " + strconv.Itoa(engine.httpStatusCode))
+				fmt.Println("HTTP redirect to HTTPS should happen with 301 or 308 status code. Instead got: " + strconv.Itoa(engine.httpStatusCode))
 			}
 
 			if strings.TrimSuffix(engine.httpRedirectLocation, "/") != "https://"+engine.url { // http does not redirect to https (same origin)
