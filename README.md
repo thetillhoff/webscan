@@ -22,9 +22,10 @@ webscan google.com -a
 
 ```sh
 wget https://github.com/thetillhoff/webscan/releases/download/v0.1.0/webscan_linux_amd64
-# sha256sum -c // TODO
+wget https://github.com/thetillhoff/webscan/releases/download/v0.1.0/webscan_linux_amd64.sha256
+sha256sum -c webscan_linux_amd64.sha256
 install webscan_linux_amd64 /usr/local/bin/webscan # automatically sets rwxr-xr-x permissions
-rm webscan_linux_amd64
+rm webscan_linux_amd64 webscan_linux_amd64.sha256
 ```
 
 ## Features
