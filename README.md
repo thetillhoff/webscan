@@ -24,7 +24,7 @@ webscan google.com -a
 wget https://github.com/thetillhoff/webscan/releases/download/v0.1.0/webscan_linux_amd64
 wget https://github.com/thetillhoff/webscan/releases/download/v0.1.0/webscan_linux_amd64.sha256
 sha256sum -c webscan_linux_amd64.sha256
-install webscan_linux_amd64 /usr/local/bin/webscan # automatically sets rwxr-xr-x permissions
+sudo install webscan_linux_amd64 /usr/local/bin/webscan # automatically sets rwxr-xr-x permissions
 rm webscan_linux_amd64 webscan_linux_amd64.sha256
 ```
 
@@ -200,3 +200,7 @@ cobra-cli init --viper
 - For packages that have "global" variables / arguments, use Context (called "engine" in this project) as well.
 - While making this tool available from commandline with the frameworks cobra and viper, I also
 - WASM doesn't work in this case, because the http package isn't available there.
+
+
+
+Check readme of thetillhoff.de (accessibility, other features, plus caddyfile, ...
