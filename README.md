@@ -202,5 +202,8 @@ cobra-cli init --viper
 - WASM doesn't work in this case, because the http package isn't available there.
 
 
+## Other todos
 
-Check readme of thetillhoff.de (accessibility, other features, plus caddyfile, ...
+- Check readme of thetillhoff.de (accessibility, other features, plus caddyfile, ...
+- make use of https://github.com/gosuri/uilive & https://github.com/gosuri/uiprogress for output
+- if advanced steps like "-w" are stated, warnings of all previous steps should be displayed anyway.
