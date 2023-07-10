@@ -207,3 +207,6 @@ cobra-cli init --viper
 - Check readme of thetillhoff.de (accessibility, other features, plus caddyfile, ...
 - make use of https://github.com/gosuri/uilive & https://github.com/gosuri/uiprogress for output
 - if advanced steps like "-w" are stated, warnings of all previous steps should be displayed anyway.
+- TTL for dns and html caching
+- urls with or without ending slash / filename & extension
+- Check favicons (https://css-tricks.com/favicons-how-to-make-sure-browsers-only-download-the-svg-version/, https://evilmartians.com/chronicles/how-to-favicon-in-2021-six-files-that-fit-most-needs)
