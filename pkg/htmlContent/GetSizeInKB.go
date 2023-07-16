@@ -1,6 +1,7 @@
 package htmlcontent
 
 import (
+	"crypto/tls"
 	"io"
 	"math"
 	"net/http"
@@ -24,6 +25,9 @@ func GetSizeInKb(url string) (float32, error) {
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		}, // Don't follow redirects // TODO Should we follow redirects or not?
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // Ignore invalid tls certificates here (certificates are checked in another step, and might be interesting what's behind it anyway)
+		},
 	}
 	request, err = http.NewRequest("GET", url, nil) // Only for https pages.
 	if err != nil {

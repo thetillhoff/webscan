@@ -1,6 +1,7 @@
 package protocolScan
 
 import (
+	"crypto/tls"
 	"errors"
 	"net/http"
 	"os"
@@ -27,6 +28,9 @@ func CheckHttpRedirects(url string, isAvailableViaHttp bool, isAvailableViaHttps
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		}, // Don't follow redirects
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // Ignore invalid tls certificates here (certificates are checked in another step, and might be interesting what's behind it anyway)
+		},
 	}
 
 	if isAvailableViaHttp { // If HTTP is available, check the status code
