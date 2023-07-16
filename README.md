@@ -16,6 +16,7 @@ In addition to the library, it also contains a cli-wrapper around it.
 
 ```sh
 webscan google.com -a
+webscan 192.168.0.1 -a
 ```
 
 ## Installation
@@ -33,6 +34,7 @@ rm webscan_linux_amd64 webscan_linux_amd64.sha256
 ### DNS
 Display dns information about the provided URL, and give improvement recommendations.
 
+- [x] This is skipped if the input is an ipv4 or ipv6 address
 - [x] Check who is the owner of the Domain via RDAP (not supported for country-TLDs)
 - [ ] Check who is the owner of the DNS zone (== nameserver owner) - recursively
 - [ ] Follow CNAMEs

@@ -1,6 +1,8 @@
 package webscan
 
-import protocolScan "github.com/thetillhoff/webscan/pkg/protocolScan"
+import (
+	protocolScan "github.com/thetillhoff/webscan/pkg/protocolScan"
+)
 
 func (engine Engine) ScanHttpProtocols() (Engine, error) {
 	var (

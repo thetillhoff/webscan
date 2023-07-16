@@ -1,6 +1,7 @@
 package webscan
 
 import (
+	"net"
 	"net/http"
 
 	"github.com/thetillhoff/webscan/pkg/dnsScan"
@@ -39,6 +40,7 @@ type Engine struct {
 	httpRedirectLocation        string
 	httpsStatusCode             int
 	httpsRedirectLocation       string
+	tlsResult                   error
 	tlsCiphers                  []tlsScan.TlsCipher
 	httpVersions                []string
 	httpsVersions               []string
@@ -66,6 +68,15 @@ func DefaultEngine(inputUrl string, dnsServer string) Engine {
 		dnsScanEngine = dnsScan.EngineWithCustomDns(dnsServer)
 	} else {
 		dnsScanEngine = dnsScan.DefaultEngine()
+	}
+
+	netIP := net.ParseIP(inputUrl) // Try to parse inputUrl as IPaddress
+	if netIP != nil {              // If inputUrl is IPaddress
+		if dnsScan.IsIpv4(inputUrl) { // If it's an ipv4 address
+			dnsScanEngine.ARecords = append(dnsScanEngine.ARecords, inputUrl) // Add as ipv4 address
+		} else { // If it's an ipv6 address
+			dnsScanEngine.AAAARecords = append(dnsScanEngine.AAAARecords, inputUrl) // Add as ipv6 address
+		}
 	}
 
 	return Engine{

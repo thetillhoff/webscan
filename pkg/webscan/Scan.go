@@ -1,6 +1,7 @@
 package webscan
 
 import (
+	"crypto/tls"
 	"net/http"
 	"time"
 )
@@ -14,15 +15,17 @@ func (engine Engine) Scan() (Engine, error) {
 		request *http.Request
 	)
 
-	if engine.DetailedDnsScan {
-		engine, err = engine.ScanDnsDetailed()
-		if err != nil {
-			return engine, err
-		}
-	} else {
-		engine, err = engine.ScanDnsSimple()
-		if err != nil {
-			return engine, err
+	if len(engine.DnsScanEngine.ARecords) == 0 && len(engine.DnsScanEngine.AAAARecords) == 0 { // Only scan dns if input is a domain, not an ip address
+		if engine.DetailedDnsScan {
+			engine, err = engine.ScanDnsDetailed()
+			if err != nil {
+				return engine, err
+			}
+		} else {
+			engine, err = engine.ScanDnsSimple()
+			if err != nil {
+				return engine, err
+			}
 		}
 	}
 

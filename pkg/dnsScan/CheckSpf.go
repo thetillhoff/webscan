@@ -120,7 +120,7 @@ func (engine Engine) CheckSpf() string {
 				// qnum             = 0 - 255
 				// ip4-cidr-length  = "/" ("0" / %x31-39 0*1DIGIT) ; value range 0-32
 				_, _, err := net.ParseCIDR(word)
-				if err != nil || !isIpv4(word) { // Check if ip is really ipv4, not ipv6
+				if err != nil || !IsIpv4(word) { // Check if ip is really ipv4, not ipv6
 					log.Fatalln("Invalid IPv4 address / cidr-range in SPF record:", word)
 				}
 				// It is not permitted to omit parts of the IP address instead of using CIDR notations. That is, use 192.0.2.0/24 instead of 192.0.2.
@@ -130,7 +130,7 @@ func (engine Engine) CheckSpf() string {
 				// qnum             = 0 - 255
 				// If ip4-cidr-length is omitted, it is taken to be "/32".
 				parsedIp := net.ParseIP(word)
-				if parsedIp == nil || !isIpv4(word) { // Check if ip is really ipv4, not ipv6
+				if parsedIp == nil || !IsIpv4(word) { // Check if ip is really ipv4, not ipv6
 					log.Fatalln("Invalid IPv4 address in SPF record:", word)
 				}
 			}
@@ -148,7 +148,7 @@ func (engine Engine) CheckSpf() string {
 				// ip6-network      = <as per Section 2.2 of [RFC4291]>
 				// ip6-cidr-length  = "/" ("0" / %x31-39 0*2DIGIT) ; value range 0-128
 				_, _, err := net.ParseCIDR(word)
-				if err != nil || isIpv4(word) {
+				if err != nil || IsIpv4(word) {
 					log.Fatalln("Invalid IPv6 address / cidr-range in SPF record:", word)
 				}
 				// It is not permitted to omit parts of the IP address instead of using CIDR notations. That is, use 192.0.2.0/24 instead of 192.0.2.
@@ -157,7 +157,7 @@ func (engine Engine) CheckSpf() string {
 				// ip6-network      = <as per Section 2.2 of [RFC4291]>
 				// If ip6-cidr-length is omitted, it is taken to be "/128".
 				parsedIp := net.ParseIP(word)
-				if parsedIp == nil || isIpv4(word) { // Check if ip is really ipv6, not ipv4
+				if parsedIp == nil || IsIpv4(word) { // Check if ip is really ipv6, not ipv4
 					log.Fatalln("Invalid IPv6 address in SPF record:", word)
 				}
 			}
