@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/PuerkitoBio/goquery v1.8.1
 	github.com/openrdap/rdap v0.9.1
-	github.com/quic-go/quic-go v0.36.1
+	github.com/quic-go/quic-go v0.36.2
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.16.0
 	golang.org/x/net v0.12.0
