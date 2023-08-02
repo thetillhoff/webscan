@@ -13,6 +13,7 @@ import (
 	"github.com/thetillhoff/webscan/pkg/webscan"
 )
 
+var version string = "dev" // This is just the default. The actual value is injected at compiletime
 var cfgFile string
 var dnsServer string
 var dkimSelector string
