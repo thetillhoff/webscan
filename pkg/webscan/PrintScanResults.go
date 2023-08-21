@@ -1,8 +1,11 @@
 package webscan
 
+import "net"
+
 func (engine Engine) PrintScanResults() {
 
-	if len(engine.DnsScanEngine.ARecords) == 0 && len(engine.DnsScanEngine.AAAARecords) == 0 { // If input was an IPaddress, don't even try...
+	netIP := net.ParseIP(engine.url)
+	if netIP == nil { // If input was an IPaddress, nothing to see here
 		engine.PrintDnsScanResults()
 
 		engine.PrintIpScanResults()
