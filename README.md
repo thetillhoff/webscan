@@ -43,7 +43,7 @@ Display dns information about the provided URL, and give improvement recommendat
 - [ ] DNS best practices (TTL values, SOA, ...)
 - [ ] DNSSEC
 - [ ] Detect CNAME loops
-- [ ] Warn if there are too many CNAME redirects
+- [ ] Warn if there are too many CNAME redirects (>1)
 - [ ] Domain blacklist detection
 
 - [x] Specify a custom dns server with the `--dns <dns server location>` option.
@@ -69,7 +69,7 @@ Display dns information about the provided URL, and give improvement recommendat
 
 ### Subdomain finder
 - [x] Search for subdomains of the provided domains and provide a list of them.
-  - [x] Search for subdomains listed in certificates logs (https://certificate.transparency.dev/).
+  - [x] Search for subdomains listed in certificates logs (explanation at https://certificate.transparency.dev/, searched at crt.sh).
 - [ ] Search for subdomains in the subject and alternate name list of the original domain tls certificate.
 - [ ] Check other DNS entries (like PTR), certificate pointers, SPF record, certificate logs, reverse-ip-lookups
   - [ ] reverse ip lookup with https://hackertarget.com/reverse-ip-lookup/
