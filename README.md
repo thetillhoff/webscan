@@ -22,8 +22,8 @@ webscan 192.168.0.1 -a
 ## Installation
 
 ```sh
-wget https://github.com/thetillhoff/webscan/releases/download/v0.1.0/webscan_linux_amd64
-wget https://github.com/thetillhoff/webscan/releases/download/v0.1.0/webscan_linux_amd64.sha256
+wget https://github.com/thetillhoff/webscan/releases/download/v0.2.0/webscan_linux_amd64
+wget https://github.com/thetillhoff/webscan/releases/download/v0.2.0/webscan_linux_amd64.sha256
 sha256sum -c webscan_linux_amd64.sha256
 sudo install webscan_linux_amd64 /usr/local/bin/webscan # automatically sets rwxr-xr-x permissions
 rm webscan_linux_amd64 webscan_linux_amd64.sha256
