@@ -1,6 +1,7 @@
 package webscan
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/thetillhoff/webscan/pkg/ipScan"
@@ -12,6 +13,8 @@ func (engine Engine) ScanIps() (Engine, error) {
 
 		response string
 	)
+
+	fmt.Println("Scanning IPs...")
 
 	response = ipScan.CheckIpVersionCompatibility(engine.DnsScanEngine.ARecords, engine.DnsScanEngine.AAAARecords)
 

@@ -3,6 +3,7 @@ package webscan
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/url"
@@ -29,6 +30,8 @@ func (engine Engine) ScanHttpContent() (Engine, error) {
 
 		parsedUrl *url.URL
 	)
+
+	fmt.Println("Scanning HTTP content...")
 
 	message = htmlcontent.CheckCompression(engine.response) // Check whether compression was used
 	if message != "" {

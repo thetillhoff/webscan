@@ -1,6 +1,8 @@
 package webscan
 
 import (
+	"fmt"
+
 	"github.com/thetillhoff/webscan/pkg/portScan"
 )
 
@@ -44,6 +46,8 @@ func (engine Engine) ScanPortDetailed() (Engine, error) {
 
 		openPortsPerIp map[string][]uint16
 	)
+
+	fmt.Println("Scanning ports (detailed)...")
 
 	openPortsPerIp = portScan.ScanPortRangeOfIps(append(engine.DnsScanEngine.ARecords, engine.dnsScanResult.AAAARecords...), scanPorts)
 

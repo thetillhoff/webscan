@@ -1,8 +1,13 @@
 package webscan
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 func (engine Engine) ScanMailConfig() (Engine, error) {
+
+	fmt.Println("Scanning mail config...")
 
 	if engine.SubdomainScan {
 		if engine.DkimSelector != "" {

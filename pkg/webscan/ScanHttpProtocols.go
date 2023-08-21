@@ -1,6 +1,8 @@
 package webscan
 
 import (
+	"fmt"
+
 	protocolScan "github.com/thetillhoff/webscan/pkg/protocolScan"
 )
 
@@ -8,6 +10,8 @@ func (engine Engine) ScanHttpProtocols() (Engine, error) {
 	var (
 		err error
 	)
+
+	fmt.Println("Scanning HTTP protocols...")
 
 	// Scan HTTP / HTTPS for redirects
 	engine.httpStatusCode, engine.httpRedirectLocation, engine.httpsStatusCode, engine.httpsRedirectLocation, err = protocolScan.CheckHttpRedirects(engine.url, engine.isAvailableViaHttp, engine.isAvailableViaHttps)
