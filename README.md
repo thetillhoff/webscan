@@ -212,3 +212,7 @@ cobra-cli init --viper
 - TTL for dns and html caching
 - urls with or without ending slash / filename & extension
 - Check favicons (https://css-tricks.com/favicons-how-to-make-sure-browsers-only-download-the-svg-version/, https://evilmartians.com/chronicles/how-to-favicon-in-2021-six-files-that-fit-most-needs)
+
+- `-a` should run all things, which means, print all available information, including dns, ip, ...
+  `-w` should be used for smaller checks
+- `-w` should tell about timings, too
