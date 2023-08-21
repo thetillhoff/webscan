@@ -3,6 +3,10 @@
 ##
 - `webscan version` now prints the currently used version
 
+## v0.2.1
+- `webscan` now displays status messages during scans
+- Fix bug where scanning ips would trigger dns & ip scan, and vice versa for domain scans
+
 ## v0.2.0
 - Status code 308 added to valid status codes (only 301 before)
 - Now properly checks certificate validity at correct step (not when checking status codes)
