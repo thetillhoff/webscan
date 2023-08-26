@@ -2,9 +2,12 @@ package webscan
 
 import (
 	"crypto/tls"
+	"fmt"
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/thetillhoff/webscan/pkg/dnsScan"
 )
 
 // func (engine Engine) Scan(followRedirects bool) (Engine, error) {
@@ -16,25 +19,47 @@ func (engine Engine) Scan(inputUrl string) (Engine, error) {
 		request *http.Request
 	)
 
-	netIP := net.ParseIP(engine.url)
+	if engine.Verbose {
+		fmt.Println("Engine used:")
+		engine.PrintEngine()
+		fmt.Println()
+	}
+
+	netIP := net.ParseIP(inputUrl)
 	if netIP == nil { // If inputUrl is IPaddress -> Only scan dns and ips if input is a domain, not an ip address
+		if engine.Verbose {
+			fmt.Println("Input identified as Domain.")
+		}
+
 		if engine.DetailedDnsScan {
-			engine, err = engine.ScanDnsDetailed()
+			engine, err = engine.ScanDnsDetailed(inputUrl)
 			if err != nil {
 				return engine, err
 			}
 		} else {
-			engine, err = engine.ScanDnsSimple()
+			engine, err = engine.ScanDnsSimple(inputUrl)
 			if err != nil {
 				return engine, err
 			}
 		}
-
-		if engine.IpScan {
-			engine, err = engine.ScanIps()
-			if err != nil {
-				return engine, err
+	} else {
+		if dnsScan.IsIpv4(inputUrl) { // If inputUrl is ipv4 address
+			engine.DnsScanEngine.ARecords = append(engine.DnsScanEngine.ARecords, inputUrl)
+			if engine.Verbose {
+				fmt.Println("Input identified as IPv4 address.")
 			}
+		} else { // If inputUrl is ipv6 address
+			engine.DnsScanEngine.AAAARecords = append(engine.DnsScanEngine.AAAARecords, inputUrl)
+			if engine.Verbose {
+				fmt.Println("Input identified as IPv6 address.")
+			}
+		}
+	}
+
+	if engine.IpScan {
+		engine, err = engine.ScanIps()
+		if err != nil {
+			return engine, err
 		}
 	}
 

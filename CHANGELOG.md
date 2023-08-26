@@ -4,6 +4,9 @@
 - Upgrade go version from 1.20 to 1.21
 - `webscan version` now prints the currently used version
 - inputUrl is not stored in webScan.Engine any more, but has to be passed as argument to the Scan functions. It's stored in the Result fields instead.
+- Verbose mode now prints initialized Engine.
+- Verbose mode now prints what was the result of identifying the input (domain, ipv4, or ipv6).
+- Following redirects now also applies to following CNAMEs if no A nor AAAA records were detected.
 
 ## v0.2.1
 - `webscan` now displays status messages during scans
