@@ -200,7 +200,7 @@ cobra-cli init --viper
 - Don't use functional options -> they require a lot of code / maintenance. Also, having functions to set a context object every time a function is called is tedious
 - Use Context (called engine in this project). Not necessarily the go-context package, but implement "instance of package" as context and use that.
 - For packages that have "global" variables / arguments, use Context (called "engine" in this project) as well.
-- While making this tool available from commandline with the frameworks cobra and viper, I also
+- While making this tool available from commandline with the frameworks cobra and viper, I also tried WASM for running it in browsers.
 - WASM doesn't work in this case, because the http package isn't available there.
 
 
