@@ -11,7 +11,7 @@ func (engine Engine) ScanMailConfig(inputUrl string) (Engine, error) {
 
 	if engine.SubdomainScan {
 		if engine.DkimSelector != "" {
-			engine.mailConfigRecommendations = engine.DnsScanEngine.CheckMailSecurity(inputUrl, engine.DkimSelector)
+			engine.mailConfigRecommendations = engine.dnsScanEngine.CheckMailSecurity(inputUrl, engine.DkimSelector)
 		} else {
 			return engine, errors.New("DKIM selector required")
 		}

@@ -25,7 +25,9 @@ func (engine Engine) PrintAllDnsRecords() {
 	}
 
 	// CNAME record
-	fmt.Println("CNAME", record)
+	if engine.CNAMERecord != "" {
+		fmt.Println("CNAME", engine.CNAMERecord)
+	}
 
 	// MX record
 	for _, record = range engine.MXRecords {

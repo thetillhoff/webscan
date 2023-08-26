@@ -2,7 +2,7 @@ package dnsScan
 
 import "strings"
 
-func GetDomainAccessibilityHints(url string) []string {
+func (engine Engine) GetDomainAccessibilityHints(url string) Engine {
 	var (
 		hints = []string{}
 	)
@@ -27,5 +27,7 @@ func GetDomainAccessibilityHints(url string) []string {
 		}
 	}
 
-	return hints
+	engine.OpinionatedHints = append(engine.OpinionatedHints, hints...)
+
+	return engine
 }

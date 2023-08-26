@@ -1,7 +1,6 @@
 package webscan
 
 import (
-	"net"
 	"net/http"
 
 	"github.com/thetillhoff/webscan/pkg/dnsScan"
@@ -9,6 +8,9 @@ import (
 )
 
 type Engine struct {
+	// Input
+	DkimSelector string
+
 	// Settings
 	Opinionated     bool
 	Verbose         bool
@@ -25,8 +27,11 @@ type Engine struct {
 	MailConfigScan   bool
 	SubdomainScan    bool
 
+	// Internal variables
+	inputType InputType
+
 	// Results
-	dnsScanResult               dnsScan.Engine
+	dnsScanEngine               dnsScan.Engine
 	ipScanResult                []string
 	ipScanOwners                []string
 	portScanOpenPorts           []uint16
@@ -37,6 +42,7 @@ type Engine struct {
 	httpRedirectLocation        string
 	httpsStatusCode             int
 	httpsRedirectLocation       string
+	protocolRecommendations     []string
 	tlsResult                   error
 	tlsCiphers                  []tlsScan.TlsCipher
 	httpVersions                []string
@@ -51,31 +57,9 @@ type Engine struct {
 	httpContentScriptSizes      map[string]float32
 	httpContentStylesheetSizes  map[string]float32
 	mailConfigRecommendations   []string
-
-	DnsScanEngine dnsScan.Engine
-	DkimSelector  string
 }
 
 func DefaultEngine(inputUrl string, dnsServer string) Engine {
-	var (
-		dnsScanEngine dnsScan.Engine
-	)
-
-	if dnsServer != "" {
-		dnsScanEngine = dnsScan.EngineWithCustomDns(dnsServer)
-	} else {
-		dnsScanEngine = dnsScan.DefaultEngine()
-	}
-
-	netIP := net.ParseIP(inputUrl) // Try to parse inputUrl as IPaddress
-	if netIP != nil {              // If inputUrl is IPaddress
-		if dnsScan.IsIpv4(inputUrl) { // If it's an ipv4 address
-			dnsScanEngine.ARecords = append(dnsScanEngine.ARecords, inputUrl) // Add as ipv4 address
-		} else { // If it's an ipv6 address
-			dnsScanEngine.AAAARecords = append(dnsScanEngine.AAAARecords, inputUrl) // Add as ipv6 address
-		}
-	}
-
 	return Engine{
 		Opinionated:     true,
 		Verbose:         false,
@@ -91,7 +75,6 @@ func DefaultEngine(inputUrl string, dnsServer string) Engine {
 		MailConfigScan:   false,
 		SubdomainScan:    false,
 
-		DnsScanEngine: dnsScanEngine,
-		DkimSelector:  "",
+		DkimSelector: "",
 	}
 }

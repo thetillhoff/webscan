@@ -2,6 +2,8 @@ package webscan
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	protocolScan "github.com/thetillhoff/webscan/pkg/protocolScan"
 )
@@ -11,7 +13,7 @@ func (engine Engine) ScanHttpProtocols(inputUrl string) (Engine, error) {
 		err error
 	)
 
-	fmt.Println("Scanning HTTP protocols...")
+	fmt.Println("Scanning HTTP protocols...") // Needed in more cases than just protocol scan
 
 	// Scan HTTP / HTTPS for redirects
 	engine.httpStatusCode, engine.httpRedirectLocation, engine.httpsStatusCode, engine.httpsRedirectLocation, err = protocolScan.CheckHttpRedirects(inputUrl, engine.isAvailableViaHttp, engine.isAvailableViaHttps)
@@ -25,13 +27,55 @@ func (engine Engine) ScanHttpProtocols(inputUrl string) (Engine, error) {
 	// TODO check redirects to omit the port (it's unneeded if protocol is set and it's the default 80 or 443)
 
 	// TODO follow redirects if desired -> Probably not here, but in Scan().
-
-	// Only check http versions when there is no redirect happening
+	// TODO Only check http versions when there is no redirect happening
 
 	// Scan Http Versions
 	engine.httpVersions, engine.httpsVersions, err = protocolScan.CheckHttpVersions(inputUrl, engine.httpRedirectLocation != "", engine.httpsRedirectLocation != "")
 	if err != nil {
 		return engine, err
+	}
+
+	if engine.HttpProtocolScan { // Only analyze protocol configuration if explicitly enabled
+
+		if engine.isAvailableViaHttp && engine.httpRedirectLocation != "" { // If http does redirect
+			engine.protocolRecommendations = append(engine.protocolRecommendations, "HTTP traffic is redirected to "+engine.httpRedirectLocation) // Display redirection location
+		}
+		if engine.isAvailableViaHttps && engine.httpsRedirectLocation != "" { // If https does redirect
+			engine.protocolRecommendations = append(engine.protocolRecommendations, "HTTPS traffic is redirected to "+engine.httpsRedirectLocation) // Display redirect location
+		}
+
+		// 301 & 308 are permanent redirects, 302, 303, 307 are temporary redirects, 300 and 304 are special cases are not meant for normal redirects
+		if engine.isAvailableViaHttp && engine.httpStatusCode != 301 && engine.httpStatusCode != 302 && engine.httpStatusCode != 303 && engine.httpStatusCode != 307 && engine.httpStatusCode != 308 { // Check against existing redirect status codes
+			engine.protocolRecommendations = append(engine.protocolRecommendations, "HTTP should only be used to redirect to an HTTPS location with a 301 or 308 status code. Got "+strconv.Itoa(engine.httpStatusCode))
+		}
+
+		if engine.isAvailableViaHttps && engine.httpsStatusCode != 200 {
+			engine.protocolRecommendations = append(engine.protocolRecommendations, "HTTPS status code should be 200 when it's not used for redirects. Got "+strconv.Itoa(engine.httpsStatusCode))
+		}
+
+		if engine.httpsRedirectLocation != "" { // If https redirects
+			if engine.httpRedirectLocation != engine.httpsRedirectLocation { // Http and https should redirect to exact same location
+				if strings.TrimSuffix(engine.httpRedirectLocation, "/") != "https://"+inputUrl { // http does not redirect to https (same origin)
+					engine.protocolRecommendations = append(engine.protocolRecommendations, "Both HTTP and HTTPS are redirecting, so they should redirect to the same location. Instead got "+engine.httpRedirectLocation+" for http and "+engine.httpsRedirectLocation+" for https")
+				}
+			}
+
+			if !strings.HasPrefix(engine.httpRedirectLocation, "https://") { // Not redirecting to a https location
+				engine.protocolRecommendations = append(engine.protocolRecommendations, "Both HTTP and HTTPS are redirecting, and should redirect to https locations only. Instead got: "+engine.httpsRedirectLocation)
+			}
+		} else { // Else https serves a page
+
+			if engine.isAvailableViaHttp && engine.httpStatusCode != 301 && engine.httpStatusCode != 308 { // Http should redirect to https with 301 or 308
+				engine.protocolRecommendations = append(engine.protocolRecommendations, "HTTP redirect to HTTPS should happen with 301 or 308 status code. Instead got: "+strconv.Itoa(engine.httpStatusCode))
+			}
+
+			if engine.isAvailableViaHttp && strings.TrimSuffix(engine.httpRedirectLocation, "/") != "https://"+inputUrl { // http does not redirect to https (same origin)
+				engine.protocolRecommendations = append(engine.protocolRecommendations, "HTTP should redirect to HTTPS with the same URI. Instead got: "+engine.httpRedirectLocation)
+			}
+		}
+
+		// Both cases for isAvailableViaHttp are covered now, so we know the page is either accessible via https or not at all.
+		// -> All is good.
 	}
 
 	return engine, nil

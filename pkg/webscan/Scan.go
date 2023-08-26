@@ -10,8 +10,9 @@ import (
 	"github.com/thetillhoff/webscan/pkg/dnsScan"
 )
 
-// func (engine Engine) Scan(followRedirects bool) (Engine, error) {
-func (engine Engine) Scan(inputUrl string) (Engine, error) {
+// inputUrl can be domain or IPv4 or IPv6
+// dnsServer can be empty string
+func (engine Engine) Scan(inputUrl string, dnsServer string) (Engine, error) {
 	var (
 		err error
 
@@ -19,16 +20,22 @@ func (engine Engine) Scan(inputUrl string) (Engine, error) {
 		request *http.Request
 	)
 
-	if engine.Verbose {
-		fmt.Println("Engine used:")
-		engine.PrintEngine()
-		fmt.Println()
-	}
-
-	netIP := net.ParseIP(inputUrl)
-	if netIP == nil { // If inputUrl is IPaddress -> Only scan dns and ips if input is a domain, not an ip address
+	if net.ParseIP(inputUrl) == nil { // If inputUrl is domain, scan dns and ips
+		engine.inputType = Domain
 		if engine.Verbose {
 			fmt.Println("Input identified as Domain.")
+		}
+
+		if dnsServer != "" {
+			engine.dnsScanEngine = dnsScan.EngineWithCustomDns(dnsServer)
+			if engine.Verbose {
+				fmt.Println("Using custom dns server:", dnsServer)
+			}
+		} else {
+			engine.dnsScanEngine = dnsScan.DefaultEngine()
+			if engine.Verbose {
+				fmt.Println("Using system dns server")
+			}
 		}
 
 		if engine.DetailedDnsScan {
@@ -42,17 +49,19 @@ func (engine Engine) Scan(inputUrl string) (Engine, error) {
 				return engine, err
 			}
 		}
-	} else {
+	} else { // If inputUrl is IPaddress, don't scan dns and ips
 		if dnsScan.IsIpv4(inputUrl) { // If inputUrl is ipv4 address
-			engine.DnsScanEngine.ARecords = append(engine.DnsScanEngine.ARecords, inputUrl)
+			engine.inputType = IPv4
 			if engine.Verbose {
 				fmt.Println("Input identified as IPv4 address.")
 			}
+			engine.dnsScanEngine.ARecords = append(engine.dnsScanEngine.ARecords, inputUrl)
 		} else { // If inputUrl is ipv6 address
-			engine.DnsScanEngine.AAAARecords = append(engine.DnsScanEngine.AAAARecords, inputUrl)
+			engine.inputType = IPv6
 			if engine.Verbose {
 				fmt.Println("Input identified as IPv6 address.")
 			}
+			engine.dnsScanEngine.AAAARecords = append(engine.dnsScanEngine.AAAARecords, inputUrl)
 		}
 	}
 

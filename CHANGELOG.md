@@ -4,9 +4,18 @@
 - Upgrade go version from 1.20 to 1.21
 - `webscan version` now prints the currently used version
 - inputUrl is not stored in webScan.Engine any more, but has to be passed as argument to the Scan functions. It's stored in the Result fields instead.
-- Verbose mode now prints initialized Engine.
-- Verbose mode now prints what was the result of identifying the input (domain, ipv4, or ipv6).
+- Added Verbose flag
+  - Verbose mode prints what was the result of identifying the input (domain, ipv4, or ipv6) and other sometimes useful information.
 - Following redirects now also applies to following CNAMEs if no A nor AAAA records were detected.
+- `PrintScanResults` and all other `Print*` methods no doesn't require any parameters to be called.
+- Moved IpVersion compatibility hints from ipScan to dnsScan as that's the correct level of abstraction for such a check.
+- Removed `GetCustomDnsServer()` as it's unused after the rework.
+- Removed `customDns` variable as it's unused after the rework.
+- Only print DNS related information if the input was a domain.
+- Moved dnsEngine initialization from scanEngine initialization to webScan initialization.
+- Removed duplicate adding of ip address to dnsEngine if input is said ip address.
+- Moved protocolScan hint generation to scan method instead of print function.
+- Merged `dnsScanEngine` and `dnsScanResults` into one instance of dnsEngine.
 
 ## v0.2.1
 - `webscan` now displays status messages during scans

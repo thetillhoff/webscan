@@ -1,21 +1,22 @@
 package webscan
 
-import "net"
+func (engine Engine) PrintScanResults() {
 
-func (engine Engine) PrintScanResults(inputUrl string) {
+	// check if dns scan results are empty, and if not print them
+	// check if ip scan results are empty, and if not print them
+	// then remove the part below
 
-	netIP := net.ParseIP(inputUrl)
-	if netIP == nil { // If input was an IPaddress, nothing to see here
-		engine.PrintDnsScanResults(inputUrl)
-
-		engine.PrintIpScanResults()
+	if engine.inputType == Domain {
+		engine.PrintDnsScanEngines()
 	}
+
+	engine.PrintIpScanResults()
 
 	engine.PrintPortScanResults()
 
 	engine.PrintTlsScanResults()
 
-	engine.PrintProtocolScanResults(inputUrl)
+	engine.PrintProtocolScanResults()
 
 	engine.PrintHttpHeaderScanResults()
 

@@ -18,7 +18,7 @@ func (engine Engine) ScanPortSimple() (Engine, error) {
 
 	fmt.Println("Scanning ports (simple)...")
 
-	openPortsPerIp = portScan.ScanPortRangeOfIps(append(engine.DnsScanEngine.ARecords, engine.dnsScanResult.AAAARecords...), scanPorts)
+	openPortsPerIp = portScan.ScanPortRangeOfIps(append(engine.dnsScanEngine.ARecords, engine.dnsScanEngine.AAAARecords...), scanPorts)
 
 	engine.portScanOpenPorts, engine.portScanInconsistencies = portScan.CompareOpenPortsOfIps(openPortsPerIp)
 

@@ -14,15 +14,13 @@ func (engine Engine) ScanIps() (Engine, error) {
 		response string
 	)
 
-	fmt.Println("Scanning IPs...")
-
-	response = ipScan.CheckIpVersionCompatibility(engine.DnsScanEngine.ARecords, engine.DnsScanEngine.AAAARecords)
-
-	if response != "" {
-		engine.ipScanResult = append(engine.ipScanResult, response)
+	if (len(engine.dnsScanEngine.ARecords) + len(engine.dnsScanEngine.AAAARecords)) > 1 { // If there is more than one IP
+		fmt.Println("Scanning IPs...") // Plural
+	} else {
+		fmt.Println("Scanning IP...") // Singular
 	}
 
-	for _, aRecord := range engine.DnsScanEngine.ARecords {
+	for _, aRecord := range engine.dnsScanEngine.ARecords {
 		response, err = ipScan.GetIPOwnerViaRDAP(aRecord)
 		if err != nil {
 			log.Fatalln(err)
@@ -30,7 +28,7 @@ func (engine Engine) ScanIps() (Engine, error) {
 		engine.ipScanOwners = append(engine.ipScanOwners, "According to RDAP information, IP "+aRecord+" is registered at "+response)
 	}
 
-	for _, aaaaRecord := range engine.DnsScanEngine.AAAARecords {
+	for _, aaaaRecord := range engine.dnsScanEngine.AAAARecords {
 		response, err = ipScan.GetIPOwnerViaRDAP(aaaaRecord)
 		if err != nil {
 			log.Fatalln(err)
