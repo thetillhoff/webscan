@@ -11,12 +11,6 @@ func (engine Engine) ScanDnsDetailed(inputUrl string) (Engine, error) {
 
 	fmt.Println("Scanning DNS (detailed) of", inputUrl, "...")
 
-	if engine.Opinionated {
-		// Domain Accessibility
-		engine.dnsScanEngine = engine.dnsScanEngine.CheckIpVersionCompatibility(engine.dnsScanEngine.ARecords, engine.dnsScanEngine.AAAARecords)
-		engine.dnsScanEngine = engine.dnsScanEngine.GetDomainAccessibilityHints(inputUrl)
-	}
-
 	engine.dnsScanEngine, _ = engine.dnsScanEngine.GetDomainOwnerViaRDAP(inputUrl)
 	// // `err` is ignored here, as it's okay that it can't be retrieved. It's not a critical error, but an error nonetheless
 	// if err != nil {
@@ -26,6 +20,12 @@ func (engine Engine) ScanDnsDetailed(inputUrl string) (Engine, error) {
 	engine.dnsScanEngine, err = engine.dnsScanEngine.GetAllRecords(inputUrl)
 	if err != nil {
 		return engine, err
+	}
+
+	if engine.Opinionated {
+		// Domain Accessibility
+		engine.dnsScanEngine = engine.dnsScanEngine.CheckIpVersionCompatibility() // TODO What if CNAME exists? See if function below
+		engine.dnsScanEngine = engine.dnsScanEngine.GetDomainAccessibilityHints(inputUrl)
 	}
 
 	if len(engine.dnsScanEngine.ARecords) == 0 && len(engine.dnsScanEngine.AAAARecords) == 0 && engine.FollowRedirects { // If neither A nor AAAA records exist & redirects should be followed
