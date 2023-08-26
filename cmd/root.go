@@ -72,12 +72,12 @@ var rootCmd = &cobra.Command{
 			engine.SubdomainScan = subdomainScan
 		}
 
-		engine, err = engine.Scan()
+		engine, err = engine.Scan(url)
 		if err != nil {
 			log.Fatalln(err)
 		}
 
-		engine.PrintScanResults()
+		engine.PrintScanResults(url)
 
 	},
 }
