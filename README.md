@@ -216,3 +216,6 @@ cobra-cli init --viper
 - `-a` should run all things, which means, print all available information, including dns, ip, ...
   `-w` should be used for smaller checks
 - `-w` should tell about timings, too
+
+- inputUrl should be saved in each Result, so it can be used in print.
+  DNS might have multiple ones, due to following CNAMEs, as can happen with HTTP redirects.

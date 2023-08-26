@@ -9,9 +9,6 @@ import (
 )
 
 type Engine struct {
-	// Input
-	url string
-
 	// Settings
 	Opinionated     bool
 	Verbose         bool
@@ -80,8 +77,6 @@ func DefaultEngine(inputUrl string, dnsServer string) Engine {
 	}
 
 	return Engine{
-		url: inputUrl,
-
 		Opinionated:     true,
 		Verbose:         false,
 		FollowRedirects: false,

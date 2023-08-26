@@ -6,14 +6,14 @@ import (
 	subdomainfinder "github.com/thetillhoff/webscan/pkg/subDomainFinder"
 )
 
-func (engine Engine) ScanSubdomains() (Engine, error) {
+func (engine Engine) ScanSubdomains(inputUrl string) (Engine, error) {
 	var (
 		err error
 	)
 
 	fmt.Println("Scanning subdomains...")
 
-	engine.subdomains, err = subdomainfinder.CheckCertLogs(engine.url)
+	engine.subdomains, err = subdomainfinder.CheckCertLogs(inputUrl)
 
 	if err != nil {
 		return engine, err

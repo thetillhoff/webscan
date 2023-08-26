@@ -6,7 +6,7 @@ import (
 	protocolScan "github.com/thetillhoff/webscan/pkg/protocolScan"
 )
 
-func (engine Engine) ScanHttpProtocols() (Engine, error) {
+func (engine Engine) ScanHttpProtocols(inputUrl string) (Engine, error) {
 	var (
 		err error
 	)
@@ -14,7 +14,7 @@ func (engine Engine) ScanHttpProtocols() (Engine, error) {
 	fmt.Println("Scanning HTTP protocols...")
 
 	// Scan HTTP / HTTPS for redirects
-	engine.httpStatusCode, engine.httpRedirectLocation, engine.httpsStatusCode, engine.httpsRedirectLocation, err = protocolScan.CheckHttpRedirects(engine.url, engine.isAvailableViaHttp, engine.isAvailableViaHttps)
+	engine.httpStatusCode, engine.httpRedirectLocation, engine.httpsStatusCode, engine.httpsRedirectLocation, err = protocolScan.CheckHttpRedirects(inputUrl, engine.isAvailableViaHttp, engine.isAvailableViaHttps)
 	if err != nil {
 		return engine, err
 	}
@@ -29,7 +29,7 @@ func (engine Engine) ScanHttpProtocols() (Engine, error) {
 	// Only check http versions when there is no redirect happening
 
 	// Scan Http Versions
-	engine.httpVersions, engine.httpsVersions, err = protocolScan.CheckHttpVersions(engine.url, engine.httpRedirectLocation != "", engine.httpsRedirectLocation != "")
+	engine.httpVersions, engine.httpsVersions, err = protocolScan.CheckHttpVersions(inputUrl, engine.httpRedirectLocation != "", engine.httpsRedirectLocation != "")
 	if err != nil {
 		return engine, err
 	}

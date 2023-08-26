@@ -8,7 +8,7 @@ import (
 )
 
 // func (engine Engine) Scan(followRedirects bool) (Engine, error) {
-func (engine Engine) Scan() (Engine, error) {
+func (engine Engine) Scan(inputUrl string) (Engine, error) {
 	var (
 		err error
 
@@ -51,14 +51,14 @@ func (engine Engine) Scan() (Engine, error) {
 	}
 
 	if engine.TlsScan {
-		engine, err = engine.ScanTls()
+		engine, err = engine.ScanTls(inputUrl)
 		if err != nil {
 			return engine, err
 		}
 	}
 
 	if engine.HttpProtocolScan {
-		engine, err = engine.ScanHttpProtocols()
+		engine, err = engine.ScanHttpProtocols(inputUrl)
 		if err != nil {
 			return engine, err
 		}
@@ -74,7 +74,7 @@ func (engine Engine) Scan() (Engine, error) {
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // Ignore invalid tls certificates here (certificates are checked in another step, and might be interesting what's behind it anyway)
 			},
 		}
-		request, err = http.NewRequest("GET", "https://"+engine.url, nil) // Only for https pages.
+		request, err = http.NewRequest("GET", "https://"+inputUrl, nil) // Only for https pages.
 		if err != nil {
 			return engine, err
 		}
@@ -94,33 +94,28 @@ func (engine Engine) Scan() (Engine, error) {
 	}
 
 	if engine.HttpContentScan {
-		engine, err = engine.ScanHttpContent()
+		engine, err = engine.ScanHttpContent(inputUrl)
 		if err != nil {
 			return engine, err
 		}
 	}
 
 	if engine.MailConfigScan {
-		engine, err = engine.ScanMailConfig()
+		engine, err = engine.ScanMailConfig(inputUrl)
 		if err != nil {
 			return engine, err
 		}
 	}
 
 	if engine.SubdomainScan {
-		engine, err = engine.ScanSubdomains()
+		engine, err = engine.ScanSubdomains(inputUrl)
 		if err != nil {
 			return engine, err
 		}
 	}
 
-	// TODO move cmd.root.go code here
-	// TODO create type will all necessary fields to fill in
-	// TODO return this type instead of printing directly
-	// TODO type should implement a String function, so it prints its contents according to config
-
-	// if followRedirects is true, CNAMEs should be followed (scan them, too)
-	// if followRedirects is true, http and https redirects should be followed (scan them, too)
+	// TODO if followRedirects is true, CNAMEs should be followed (scan them, too)
+	// TODO if followRedirects is true, http and https redirects should be followed (scan them, too)
 
 	return engine, nil
 }

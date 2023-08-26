@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func (engine Engine) PrintProtocolScanResults() {
+func (engine Engine) PrintProtocolScanResults(inputUrl string) {
 	var (
 		messages = []string{}
 	)
@@ -31,7 +31,7 @@ func (engine Engine) PrintProtocolScanResults() {
 
 		if engine.httpsRedirectLocation != "" { // If https redirects
 			if engine.httpRedirectLocation != engine.httpsRedirectLocation { // Http and https should redirect to exact same location
-				if strings.TrimSuffix(engine.httpRedirectLocation, "/") != "https://"+engine.url { // http does not redirect to https (same origin)
+				if strings.TrimSuffix(engine.httpRedirectLocation, "/") != "https://"+inputUrl { // http does not redirect to https (same origin)
 					messages = append(messages, "Both HTTP and HTTPS are redirecting, so they should redirect to the same location. Instead got "+engine.httpRedirectLocation+" for http and "+engine.httpsRedirectLocation+" for https")
 				}
 			}
@@ -45,7 +45,7 @@ func (engine Engine) PrintProtocolScanResults() {
 				messages = append(messages, "HTTP redirect to HTTPS should happen with 301 or 308 status code. Instead got: "+strconv.Itoa(engine.httpStatusCode))
 			}
 
-			if engine.isAvailableViaHttp && strings.TrimSuffix(engine.httpRedirectLocation, "/") != "https://"+engine.url { // http does not redirect to https (same origin)
+			if engine.isAvailableViaHttp && strings.TrimSuffix(engine.httpRedirectLocation, "/") != "https://"+inputUrl { // http does not redirect to https (same origin)
 				messages = append(messages, "HTTP should redirect to HTTPS with the same URI. Instead got: "+engine.httpRedirectLocation)
 			}
 		}

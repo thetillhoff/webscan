@@ -7,7 +7,7 @@ import (
 	"github.com/thetillhoff/webscan/pkg/dnsScan"
 )
 
-func (engine Engine) PrintDnsScanResults() {
+func (engine Engine) PrintDnsScanResults(inputUrl string) {
 	if engine.DetailedDnsScan {
 		dnsServer := engine.DnsScanEngine.GetCustomDns()
 		if dnsServer != "" {
@@ -30,7 +30,7 @@ func (engine Engine) PrintDnsScanResults() {
 		if engine.Opinionated {
 			// Domain Accessibility
 			fmt.Println()
-			for _, hint := range dnsScan.GetDomainAccessibilityHints(engine.url) {
+			for _, hint := range dnsScan.GetDomainAccessibilityHints(inputUrl) {
 				fmt.Println(hint)
 			}
 		}

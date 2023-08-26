@@ -2,11 +2,11 @@ package webscan
 
 import "net"
 
-func (engine Engine) PrintScanResults() {
+func (engine Engine) PrintScanResults(inputUrl string) {
 
-	netIP := net.ParseIP(engine.url)
+	netIP := net.ParseIP(inputUrl)
 	if netIP == nil { // If input was an IPaddress, nothing to see here
-		engine.PrintDnsScanResults()
+		engine.PrintDnsScanResults(inputUrl)
 
 		engine.PrintIpScanResults()
 	}
@@ -15,7 +15,7 @@ func (engine Engine) PrintScanResults() {
 
 	engine.PrintTlsScanResults()
 
-	engine.PrintProtocolScanResults()
+	engine.PrintProtocolScanResults(inputUrl)
 
 	engine.PrintHttpHeaderScanResults()
 
