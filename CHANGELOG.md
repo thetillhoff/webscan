@@ -16,6 +16,8 @@
 - Removed duplicate adding of ip address to dnsEngine if input is said ip address.
 - Moved protocolScan hint generation to scan method instead of print function.
 - Merged `dnsScanEngine` and `dnsScanResults` into one instance of dnsEngine.
+- Open ports are now sorted ascending instead of random.
+- Inconsistencies of open ports between ip addresses are now detected and printed.
 
 ## v0.2.1
 - `webscan` now displays status messages during scans
