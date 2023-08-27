@@ -1,6 +1,6 @@
 # CHANGELOG
 
-##
+## v0.3.0
 - Upgrade go version from 1.20 to 1.21
 - `webscan version` now prints the currently used version
 - inputUrl is not stored in webScan.Engine any more, but has to be passed as argument to the Scan functions. It's stored in the Result fields instead.
