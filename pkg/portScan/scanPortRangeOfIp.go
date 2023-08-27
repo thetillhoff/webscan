@@ -1,24 +1,29 @@
 package portScan
 
 import (
+	"fmt"
 	"net"
 	"sync"
 )
 
-var wg sync.WaitGroup
+var wgPortScan sync.WaitGroup
 
-func ScanPortRangeOfIp(ip string, ports []uint16) []uint16 {
+func scanPortRangeOfIp(ip string, ports []uint16, verbose bool, portChannel chan<- IpPortsTuple) {
 	var (
 		openPorts       = []uint16{}
 		openPortChannel = make(chan uint16, len(ports))
 	)
+	defer wgIpScan.Done()
 
 	for _, port := range ports { // For each important port
-		wg.Add(1)                                                // Wait for one more goroutine to finish
+		wgPortScan.Add(1)                                        // Wait for one more goroutine to finish
 		go isOpenTcpPort(net.ParseIP(ip), port, openPortChannel) // Start goroutine that checks if port is open
+		if verbose {
+			fmt.Println("Started scanning port", port, "of ip", ip)
+		}
 	}
 
-	wg.Wait() // Wait until all goroutines are finished
+	wgPortScan.Wait() // Wait until all goroutines are finished
 
 	close(openPortChannel) // Make sure channel is closed when goroutines are finished
 
@@ -26,5 +31,8 @@ func ScanPortRangeOfIp(ip string, ports []uint16) []uint16 {
 		openPorts = append(openPorts, openPort)
 	}
 
-	return openPorts
+	portChannel <- IpPortsTuple{ // Return equivalent
+		Ip:    ip,
+		Ports: openPorts,
+	}
 }

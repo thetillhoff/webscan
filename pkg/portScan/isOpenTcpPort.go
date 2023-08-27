@@ -12,7 +12,7 @@ func isOpenTcpPort(ip net.IP, port uint16, portChannel chan<- uint16) {
 	var (
 		err error
 	)
-	defer wg.Done()
+	defer wgPortScan.Done()
 
 	_, err = net.DialTimeout("tcp", ip.String()+":"+strconv.FormatUint(uint64(port), 10), 5*time.Second)
 	if err == nil {

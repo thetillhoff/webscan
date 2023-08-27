@@ -18,6 +18,7 @@
 - Merged `dnsScanEngine` and `dnsScanResults` into one instance of dnsEngine.
 - Open ports are now sorted ascending instead of random.
 - Inconsistencies of open ports between ip addresses are now detected and printed.
+- Scanning open ports of ips is now not only parallelized on ports per ip level, but on ip level, too (all ports of all ips in parallel now).
 
 ## v0.2.1
 - `webscan` now displays status messages during scans

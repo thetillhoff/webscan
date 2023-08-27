@@ -49,7 +49,7 @@ func (engine Engine) ScanPortDetailed() (Engine, error) {
 
 	fmt.Println("Scanning ports (detailed)...")
 
-	openPortsPerIp = portScan.ScanPortRangeOfIps(append(engine.dnsScanEngine.ARecords, engine.dnsScanEngine.AAAARecords...), scanPorts)
+	openPortsPerIp = portScan.ScanPortRangeOfIps(append(engine.dnsScanEngine.ARecords, engine.dnsScanEngine.AAAARecords...), scanPorts, engine.Verbose)
 
 	engine.portScanOpenPorts, engine.portScanInconsistencies = portScan.CompareOpenPortsOfIps(openPortsPerIp)
 
