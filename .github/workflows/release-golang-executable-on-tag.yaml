@@ -22,8 +22,9 @@ jobs:
       matrix:
         os:
           - linux
-          - windows
-          - darwin
+          # TODO enable them later on
+          # - windows
+          # - darwin
         arch:
           - amd64
     steps:
