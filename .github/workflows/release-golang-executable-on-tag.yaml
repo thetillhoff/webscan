@@ -17,6 +17,8 @@ jobs:
           ARCH: amd64
 
       - uses: thetillhoff/action-release-artifacts@main
+        with:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
     #uses: thetillhoff/.github/.github/workflows/release-golang-executable-on-tag.yaml@main
     #permissions:
