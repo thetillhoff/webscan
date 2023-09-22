@@ -6,15 +6,18 @@ on:
     - "v[0-9]+.[0-9]+.[0-9]+"
 
 jobs:
-  release-on-tag:
+  release-prerequisites:
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: thetillhoff/action-release-prerequisites@main
-        with:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
+  golang-build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
       - uses: thetillhoff/action-golang-build@main
         with:
           OS: linux
