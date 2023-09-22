@@ -8,13 +8,18 @@ on:
 jobs:
   release-on-tag:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: thetillhoff/action-release-prerequisites@main
+        with:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
       - uses: thetillhoff/action-golang-build@main
         with:
           OS: linux
           ARCH: amd64
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
       - uses: thetillhoff/action-release-artifacts@main
         with:
@@ -23,3 +28,6 @@ jobs:
     #uses: thetillhoff/.github/.github/workflows/release-golang-executable-on-tag.yaml@main
     #permissions:
     #  contents: write
+
+    # if fail, delete tag -> extra job with own permissions
+    # if: github.repository == 'octo-org/octo-repo-prod' -> if X failed
