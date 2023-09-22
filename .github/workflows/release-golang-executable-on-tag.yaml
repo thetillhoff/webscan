@@ -46,3 +46,4 @@ jobs:
       - uses: thetillhoff/action-release-artifacts@v0.1.0
         with:
           RELEASE_BODY: "${{needs.release-prerequisites.outputs.RELEASE_BODY}}"
+          BUILDARGS: -ldflags="-X 'cmd.version=${{ github.ref_name }}'"
