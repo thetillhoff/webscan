@@ -206,7 +206,7 @@ cobra-cli init --viper
 
 ## Other todos
 
-- Check readme of thetillhoff.de (accessibility, other features, plus caddyfile, ...
+- Check readme of thetillhoff.de (accessibility, other features, plus caddyfile, ...)
 - make use of https://github.com/gosuri/uilive & https://github.com/gosuri/uiprogress for output
 - if advanced steps like "-w" are stated, warnings of all previous steps should be displayed anyway.
 - TTL for dns and html caching
