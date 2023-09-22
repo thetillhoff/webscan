@@ -25,9 +25,8 @@ jobs:
       matrix:
         os:
           - linux
-          # TODO enable them later on
-          # - windows
-          # - darwin
+          - windows
+          - darwin
         arch:
           - amd64
     steps:
@@ -47,10 +46,3 @@ jobs:
       - uses: thetillhoff/action-release-artifacts@main
         with:
           RELEASE_BODY: "${{needs.release-prerequisites.outputs.RELEASE_BODY}}"
-
-    #uses: thetillhoff/.github/.github/workflows/release-golang-executable-on-tag.yaml@main
-    #permissions:
-    #  contents: write
-
-    # if fail, delete tag -> extra job with own permissions
-    # if: github.repository == 'octo-org/octo-repo-prod' -> if X failed
