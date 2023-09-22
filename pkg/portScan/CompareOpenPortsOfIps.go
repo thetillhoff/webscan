@@ -1,6 +1,7 @@
 package portScan
 
 import (
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -10,9 +11,10 @@ import (
 // a list of inconsistencies
 func CompareOpenPortsOfIps(openPortsPerIp map[string][]uint16) ([]uint16, []string) {
 	var (
-		uniqueRelevantPorts  = map[uint16]struct{}{}
-		ipsWithPortOpened    []string
-		ipsWithoutPortOpened []string
+		uniqueRelevantPorts       = map[uint16]struct{}{}
+		sortedUniqueRelevantPorts []uint16
+		ipsWithPortOpened         []string
+		ipsWithoutPortOpened      []string
 
 		openPorts       = []uint16{}
 		inconsistencies = []string{}
@@ -25,31 +27,40 @@ func CompareOpenPortsOfIps(openPortsPerIp map[string][]uint16) ([]uint16, []stri
 		}
 	}
 
-	for uniqueRelevantPort := range uniqueRelevantPorts { // Iterate over unique relevant ports and compare to actual open ports of each ip
+	// Sorting unique open ports
+	sortedUniqueRelevantPorts = make([]uint16, len(uniqueRelevantPorts)) // Allocate slice with correct length
+	portIndex := 0
+	for key := range uniqueRelevantPorts { // For each port in uniqueRelevantPorts
+		sortedUniqueRelevantPorts[portIndex] = key // Add openPort to slice
+		portIndex++                                // Increase index in slice
+	}
+	sort.Slice(sortedUniqueRelevantPorts, func(i, j int) bool { return sortedUniqueRelevantPorts[i] < sortedUniqueRelevantPorts[j] }) // Sort slice
 
-		ipsWithPortOpened = []string{}    // Reset for each port
-		ipsWithoutPortOpened = []string{} // Reset for each port
+	// compare open ports per ip against global list of open ports
+	for _, uniqueRelevantPort := range sortedUniqueRelevantPorts { // Iterate over unique relevant ports and compare to actual open ports of each ip
+		ipsWithPortOpened = []string{}    // Reset for each iteration (==port)
+		ipsWithoutPortOpened = []string{} // Reset for each iteration (==port)
 
-		for ip, openPorts := range openPortsPerIp { // Iterate over ips and check whether this particular port is open
-			exists := false
+		for ip, openPorts := range openPortsPerIp { // Iterate over ips to get their open ports
+			portOpenAtThisIp := false
 			for _, openPort := range openPorts { // Search data for whether ip has this particular port open
-				if openPort == uniqueRelevantPort {
-					exists = true
-					break
+				if openPort == uniqueRelevantPort { // If ip has this particular port open
+					portOpenAtThisIp = true
+					break // No need to check other ports
 				}
 			}
-			if exists { // This ip has this port open
+			if portOpenAtThisIp { // If this ip has this particular port open
 				ipsWithPortOpened = append(ipsWithPortOpened, ip)
-			} else { // This ip doesn't have this port open
-				ipsWithoutPortOpened = append(ipsWithPortOpened, ip)
+			} else { // If this ip doesn't have this particular port open
+				ipsWithoutPortOpened = append(ipsWithoutPortOpened, ip)
 			}
 		}
 
-		if len(ipsWithoutPortOpened) == 0 { // Consistently open port
-			openPorts = append(openPorts, uniqueRelevantPort)
-		} else { // Inconsistent port
+		openPorts = append(openPorts, uniqueRelevantPort) // Add open port of any ip address to list of open ports, even if inconsistently open
+
+		if len(ipsWithoutPortOpened) > 0 { // Inconsistent port
 			inconsistencies = append(inconsistencies,
-				"Inconsistent open port deteced: Port "+strconv.FormatUint(uint64(uniqueRelevantPort), 10)+
+				"Inconsistent open port detected: Port "+strconv.FormatUint(uint64(uniqueRelevantPort), 10)+
 					" is open at "+strings.Join(ipsWithPortOpened, ", ")+
 					" but closed at "+strings.Join(ipsWithoutPortOpened, ", "))
 		}

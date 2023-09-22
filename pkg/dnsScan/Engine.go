@@ -8,8 +8,7 @@ import (
 
 type Engine struct {
 	// Internal variables
-	customDns string
-	resolver  *net.Resolver
+	resolver *net.Resolver
 
 	// Scan Results
 	NSRecords   []string
@@ -28,8 +27,7 @@ func DefaultEngine() Engine {
 	return Engine{
 		OpinionatedHints: []string{},
 
-		customDns: "",
-		resolver:  nil, // Nil resolver is the same as a zero resolver
+		resolver: nil, // Nil resolver is the same as a zero resolver
 
 		NSRecords:   []string{},
 		ARecords:    []string{},
@@ -43,7 +41,6 @@ func DefaultEngine() Engine {
 
 func EngineWithCustomDns(dnsServer string) Engine {
 	engine := DefaultEngine()
-	engine.customDns = dnsServer
 	engine.resolver = &net.Resolver{
 		PreferGo:     false,
 		StrictErrors: true,
@@ -53,8 +50,4 @@ func EngineWithCustomDns(dnsServer string) Engine {
 		},
 	}
 	return engine
-}
-
-func (engine Engine) GetCustomDns() string {
-	return engine.customDns
 }

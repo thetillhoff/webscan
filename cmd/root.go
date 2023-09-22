@@ -13,11 +13,13 @@ import (
 	"github.com/thetillhoff/webscan/pkg/webscan"
 )
 
+var version string = "dev" // This is just the default. The actual value is injected at compiletime
 var cfgFile string
 var dnsServer string
 var dkimSelector string
 var all bool
 var follow bool
+var verbose bool
 
 var detailedDnsScan bool
 var ipScan bool
@@ -47,7 +49,8 @@ var rootCmd = &cobra.Command{
 
 		engine = webscan.DefaultEngine(url, dnsServer)
 		engine.DkimSelector = dkimSelector
-		engine.FollowRedirects = follow
+		engine.FollowRedirects = follow // follow is always optional
+		engine.Verbose = verbose        // verbose is always optional
 
 		if all {
 			engine.DetailedDnsScan = true
@@ -71,7 +74,7 @@ var rootCmd = &cobra.Command{
 			engine.SubdomainScan = subdomainScan
 		}
 
-		engine, err = engine.Scan()
+		engine, err = engine.Scan(url, dnsServer)
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -103,6 +106,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&dkimSelector, "dkim-selector", "", "set dkim-selector as in <dkim-selector>._domainkey.<your-domain>.<tld>")
 	rootCmd.PersistentFlags().BoolVarP(&all, "all", "a", false, "enables all checks")
 	rootCmd.PersistentFlags().BoolVarP(&follow, "follow", "f", false, "enables following redirects and CNAME checks")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "increase verbosity")
 
 	rootCmd.PersistentFlags().BoolVarP(&detailedDnsScan, "dns", "d", false, "enable detailed DNS scan")
 	rootCmd.PersistentFlags().BoolVarP(&ipScan, "ip", "i", false, "enable IP analysis")

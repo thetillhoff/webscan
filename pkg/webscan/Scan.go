@@ -2,12 +2,17 @@ package webscan
 
 import (
 	"crypto/tls"
+	"fmt"
+	"net"
 	"net/http"
 	"time"
+
+	"github.com/thetillhoff/webscan/pkg/dnsScan"
 )
 
-// func (engine Engine) Scan(followRedirects bool) (Engine, error) {
-func (engine Engine) Scan() (Engine, error) {
+// inputUrl can be domain or IPv4 or IPv6
+// dnsServer can be empty string
+func (engine Engine) Scan(inputUrl string, dnsServer string) (Engine, error) {
 	var (
 		err error
 
@@ -15,17 +20,48 @@ func (engine Engine) Scan() (Engine, error) {
 		request *http.Request
 	)
 
-	if len(engine.DnsScanEngine.ARecords) == 0 && len(engine.DnsScanEngine.AAAARecords) == 0 { // Only scan dns if input is a domain, not an ip address
+	if net.ParseIP(inputUrl) == nil { // If inputUrl is domain, scan dns and ips
+		engine.inputType = Domain
+		if engine.Verbose {
+			fmt.Println("Input identified as Domain.")
+		}
+
+		if dnsServer != "" {
+			engine.dnsScanEngine = dnsScan.EngineWithCustomDns(dnsServer)
+			if engine.Verbose {
+				fmt.Println("Using custom dns server:", dnsServer)
+			}
+		} else {
+			engine.dnsScanEngine = dnsScan.DefaultEngine()
+			if engine.Verbose {
+				fmt.Println("Using system dns server")
+			}
+		}
+
 		if engine.DetailedDnsScan {
-			engine, err = engine.ScanDnsDetailed()
+			engine, err = engine.ScanDnsDetailed(inputUrl)
 			if err != nil {
 				return engine, err
 			}
 		} else {
-			engine, err = engine.ScanDnsSimple()
+			engine, err = engine.ScanDnsSimple(inputUrl)
 			if err != nil {
 				return engine, err
 			}
+		}
+	} else { // If inputUrl is IPaddress, don't scan dns and ips
+		if dnsScan.IsIpv4(inputUrl) { // If inputUrl is ipv4 address
+			engine.inputType = IPv4
+			if engine.Verbose {
+				fmt.Println("Input identified as IPv4 address.")
+			}
+			engine.dnsScanEngine.ARecords = append(engine.dnsScanEngine.ARecords, inputUrl)
+		} else { // If inputUrl is ipv6 address
+			engine.inputType = IPv6
+			if engine.Verbose {
+				fmt.Println("Input identified as IPv6 address.")
+			}
+			engine.dnsScanEngine.AAAARecords = append(engine.dnsScanEngine.AAAARecords, inputUrl)
 		}
 	}
 
@@ -49,14 +85,14 @@ func (engine Engine) Scan() (Engine, error) {
 	}
 
 	if engine.TlsScan {
-		engine, err = engine.ScanTls()
+		engine, err = engine.ScanTls(inputUrl)
 		if err != nil {
 			return engine, err
 		}
 	}
 
 	if engine.HttpProtocolScan {
-		engine, err = engine.ScanHttpProtocols()
+		engine, err = engine.ScanHttpProtocols(inputUrl)
 		if err != nil {
 			return engine, err
 		}
@@ -72,7 +108,7 @@ func (engine Engine) Scan() (Engine, error) {
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // Ignore invalid tls certificates here (certificates are checked in another step, and might be interesting what's behind it anyway)
 			},
 		}
-		request, err = http.NewRequest("GET", "https://"+engine.url, nil) // Only for https pages.
+		request, err = http.NewRequest("GET", "https://"+inputUrl, nil) // Only for https pages.
 		if err != nil {
 			return engine, err
 		}
@@ -92,33 +128,28 @@ func (engine Engine) Scan() (Engine, error) {
 	}
 
 	if engine.HttpContentScan {
-		engine, err = engine.ScanHttpContent()
+		engine, err = engine.ScanHttpContent(inputUrl)
 		if err != nil {
 			return engine, err
 		}
 	}
 
 	if engine.MailConfigScan {
-		engine, err = engine.ScanMailConfig()
+		engine, err = engine.ScanMailConfig(inputUrl)
 		if err != nil {
 			return engine, err
 		}
 	}
 
 	if engine.SubdomainScan {
-		engine, err = engine.ScanSubdomains()
+		engine, err = engine.ScanSubdomains(inputUrl)
 		if err != nil {
 			return engine, err
 		}
 	}
 
-	// TODO move cmd.root.go code here
-	// TODO create type will all necessary fields to fill in
-	// TODO return this type instead of printing directly
-	// TODO type should implement a String function, so it prints its contents according to config
-
-	// if followRedirects is true, CNAMEs should be followed (scan them, too)
-	// if followRedirects is true, http and https redirects should be followed (scan them, too)
+	// TODO if followRedirects is true, CNAMEs should be followed (scan them, too)
+	// TODO if followRedirects is true, http and https redirects should be followed (scan them, too)
 
 	return engine, nil
 }

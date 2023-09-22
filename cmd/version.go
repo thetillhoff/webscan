@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var version = "dev" // Injected at compiletime
+var version = "dev" // This is just the default. The actual value is injected at compiletime
 
 // versionCmd represents the version command
 var versionCmd = &cobra.Command{

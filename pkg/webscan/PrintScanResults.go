@@ -2,11 +2,15 @@ package webscan
 
 func (engine Engine) PrintScanResults() {
 
-	if len(engine.DnsScanEngine.ARecords) == 0 && len(engine.DnsScanEngine.AAAARecords) == 0 { // If input was an IPaddress, don't even try...
-		engine.PrintDnsScanResults()
+	// check if dns scan results are empty, and if not print them
+	// check if ip scan results are empty, and if not print them
+	// then remove the part below
 
-		engine.PrintIpScanResults()
+	if engine.inputType == Domain {
+		engine.PrintDnsScanEngines()
 	}
+
+	engine.PrintIpScanResults()
 
 	engine.PrintPortScanResults()
 

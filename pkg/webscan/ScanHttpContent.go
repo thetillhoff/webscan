@@ -3,6 +3,7 @@ package webscan
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/url"
@@ -15,7 +16,7 @@ import (
 
 // TODO return image / media / video / audio / svgs / ... as well
 
-func (engine Engine) ScanHttpContent() (Engine, error) {
+func (engine Engine) ScanHttpContent(inputUrl string) (Engine, error) {
 	var (
 		err error
 
@@ -29,6 +30,8 @@ func (engine Engine) ScanHttpContent() (Engine, error) {
 
 		parsedUrl *url.URL
 	)
+
+	fmt.Println("Scanning HTTP content...")
 
 	message = htmlcontent.CheckCompression(engine.response) // Check whether compression was used
 	if message != "" {
@@ -97,7 +100,7 @@ func (engine Engine) ScanHttpContent() (Engine, error) {
 		}
 
 		if parsedUrl.Host == "" { // Doesn't include hostname
-			parsedUrl.Host = engine.url // Add hostname
+			parsedUrl.Host = inputUrl // Add hostname
 		}
 
 		if !filepath.IsAbs(parsedUrl.Path) { // If not leading '/' in path
@@ -134,7 +137,7 @@ func (engine Engine) ScanHttpContent() (Engine, error) {
 		}
 
 		if parsedUrl.Host == "" { // Doesn't include hostname
-			parsedUrl.Host = engine.url // Add hostname
+			parsedUrl.Host = inputUrl // Add hostname
 		}
 
 		if !filepath.IsAbs(parsedUrl.Path) { // If not leading '/' in path

@@ -1,13 +1,19 @@
 package webscan
 
-import subdomainfinder "github.com/thetillhoff/webscan/pkg/subDomainFinder"
+import (
+	"fmt"
 
-func (engine Engine) ScanSubdomains() (Engine, error) {
+	subdomainfinder "github.com/thetillhoff/webscan/pkg/subDomainFinder"
+)
+
+func (engine Engine) ScanSubdomains(inputUrl string) (Engine, error) {
 	var (
 		err error
 	)
 
-	engine.subdomains, err = subdomainfinder.CheckCertLogs(engine.url)
+	fmt.Println("Scanning subdomains...")
+
+	engine.subdomains, err = subdomainfinder.CheckCertLogs(inputUrl)
 
 	if err != nil {
 		return engine, err

@@ -1,22 +1,48 @@
 package webscan
 
-func (engine Engine) ScanDnsDetailed() (Engine, error) {
+import (
+	"fmt"
+)
+
+func (engine Engine) ScanDnsDetailed(inputUrl string) (Engine, error) {
 	var (
 		err error
 	)
 
-	engine.DnsScanEngine, _ = engine.DnsScanEngine.GetDomainOwnerViaRDAP(engine.url)
+	fmt.Println("Scanning DNS (detailed) of", inputUrl, "...")
+
+	engine.dnsScanEngine, _ = engine.dnsScanEngine.GetDomainOwnerViaRDAP(inputUrl)
 	// // `err` is ignored here, as it's okay that it can't be retrieved. It's not a critical error, but an error nonetheless
 	// if err != nil {
 	// return engine, err
 	// }
 
-	engine.DnsScanEngine, err = engine.DnsScanEngine.GetAllRecords(engine.url)
+	engine.dnsScanEngine, err = engine.dnsScanEngine.GetAllRecords(inputUrl)
 	if err != nil {
 		return engine, err
 	}
 
-	// TODO follow CNAME if exists
+	if engine.Opinionated {
+		// Domain Accessibility
+		engine.dnsScanEngine = engine.dnsScanEngine.CheckIpVersionCompatibility() // TODO What if CNAME exists? See if function below
+		engine.dnsScanEngine = engine.dnsScanEngine.GetDomainAccessibilityHints(inputUrl)
+	}
+
+	if len(engine.dnsScanEngine.ARecords) == 0 && len(engine.dnsScanEngine.AAAARecords) == 0 && engine.FollowRedirects { // If neither A nor AAAA records exist & redirects should be followed
+		engine.dnsScanEngine, err = engine.dnsScanEngine.GetCNAMERecord(inputUrl) // Retrieve CNAME record if exists
+		if err != nil {
+			return engine, err
+		}
+		if engine.dnsScanEngine.CNAMERecord != "" { // If CNAME record exists
+			if engine.Verbose {
+				fmt.Println("No A or AAAA records for", inputUrl, ". Following CNAME...")
+			}
+			engine, err = engine.ScanDnsSimple(engine.dnsScanEngine.CNAMERecord) // Follow CNAME recursively, but only checking A, AAAA, and CNAMEs
+			if err != nil {
+				return engine, err
+			}
+		}
+	}
 
 	return engine, nil
 }

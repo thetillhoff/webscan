@@ -43,7 +43,7 @@ Display dns information about the provided URL, and give improvement recommendat
 - [ ] DNS best practices (TTL values, SOA, ...)
 - [ ] DNSSEC
 - [ ] Detect CNAME loops
-- [ ] Warn if there are too many CNAME redirects
+- [ ] Warn if there are too many CNAME redirects (>1)
 - [ ] Domain blacklist detection
 
 - [x] Specify a custom dns server with the `--dns <dns server location>` option.
@@ -69,7 +69,7 @@ Display dns information about the provided URL, and give improvement recommendat
 
 ### Subdomain finder
 - [x] Search for subdomains of the provided domains and provide a list of them.
-  - [x] Search for subdomains listed in certificates logs (https://certificate.transparency.dev/).
+  - [x] Search for subdomains listed in certificates logs (explanation at https://certificate.transparency.dev/, searched at crt.sh).
 - [ ] Search for subdomains in the subject and alternate name list of the original domain tls certificate.
 - [ ] Check other DNS entries (like PTR), certificate pointers, SPF record, certificate logs, reverse-ip-lookups
   - [ ] reverse ip lookup with https://hackertarget.com/reverse-ip-lookup/
@@ -200,7 +200,7 @@ cobra-cli init --viper
 - Don't use functional options -> they require a lot of code / maintenance. Also, having functions to set a context object every time a function is called is tedious
 - Use Context (called engine in this project). Not necessarily the go-context package, but implement "instance of package" as context and use that.
 - For packages that have "global" variables / arguments, use Context (called "engine" in this project) as well.
-- While making this tool available from commandline with the frameworks cobra and viper, I also
+- While making this tool available from commandline with the frameworks cobra and viper, I also tried WASM for running it in browsers.
 - WASM doesn't work in this case, because the http package isn't available there.
 
 
@@ -214,3 +214,9 @@ cobra-cli init --viper
 - Check favicons (https://css-tricks.com/favicons-how-to-make-sure-browsers-only-download-the-svg-version/, https://evilmartians.com/chronicles/how-to-favicon-in-2021-six-files-that-fit-most-needs)
 
 - version variable has to be injected at build/release time
+- `-a` should run all things, which means, print all available information, including dns, ip, ...
+  `-w` should be used for smaller checks
+- `-w` should tell about timings, too
+
+- inputUrl should be saved in each Result, so it can be used in print.
+  DNS might have multiple ones, due to following CNAMEs, as can happen with HTTP redirects.
