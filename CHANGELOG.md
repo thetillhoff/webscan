@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v0.3.1
+- Upgrade dependencies
+- Adjust pipelines
+
 ## v0.3.0
 - Upgrade go version from 1.20 to 1.21
 - `webscan version` now prints the currently used version
