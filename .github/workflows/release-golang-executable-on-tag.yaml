@@ -38,9 +38,17 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Generate release body
+        shell: bash
+        run: |
+          {
+            echo 'RELEASE_BODY<<EOF'
+            sed -n '/^## ${{ github.ref_name }}/,/^## v.*/{//! s/^//p}' CHANGELOG.md | head -n -1
+            echo EOF
+          } >> "$GITHUB_ENV"
       - uses: thetillhoff/action-release-artifacts@main
         with:
-          RELEASE_BODY: "This is a test"
+          RELEASE_BODY: "${{ env.RELEASE_BODY }}"
 
     #uses: thetillhoff/.github/.github/workflows/release-golang-executable-on-tag.yaml@main
     #permissions:
