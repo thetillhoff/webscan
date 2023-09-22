@@ -32,6 +32,8 @@ jobs:
       contents: write
     steps:
       - uses: thetillhoff/action-release-artifacts@main
+        with:
+          RELEASE_BODY: "This is a test"
 
     #uses: thetillhoff/.github/.github/workflows/release-golang-executable-on-tag.yaml@main
     #permissions:
