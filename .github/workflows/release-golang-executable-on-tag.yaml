@@ -12,6 +12,9 @@ jobs:
       - uses: thetillhoff/action-release-prerequisites@main
 
       - uses: thetillhoff/action-golang-build@main
+        with:
+          OS: linux
+          ARCH: amd64
 
       - uses: thetillhoff/action-release-artifacts@main
 
