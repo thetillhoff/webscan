@@ -34,6 +34,7 @@ jobs:
         with:
           OS: "${{ matrix.os }}"
           ARCH: "${{ matrix.arch }}"
+          BUILDARGS: -ldflags="-X 'cmd.version=${{ github.ref_name }}'"
 
   release-artifacts:
     needs:
@@ -46,4 +47,3 @@ jobs:
       - uses: thetillhoff/action-release-artifacts@v0.1.0
         with:
           RELEASE_BODY: "${{needs.release-prerequisites.outputs.RELEASE_BODY}}"
-          BUILDARGS: -ldflags="-X 'cmd.version=${{ github.ref_name }}'"
