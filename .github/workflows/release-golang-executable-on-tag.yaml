@@ -10,8 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      RELEASE_BODY: ${{ steps.release-prerequisites.outputs.RELEASE_BODY }}
     steps:
-      - uses: thetillhoff/action-release-prerequisites@main
+      - id: release-prerequisites
+        uses: thetillhoff/action-release-prerequisites@main
 
   golang-build:
     needs: release-prerequisites
