@@ -14,6 +14,7 @@ jobs:
       - uses: thetillhoff/action-release-prerequisites@main
 
   golang-build:
+    needs: release-prerequisites
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -22,11 +23,15 @@ jobs:
         with:
           OS: linux
           ARCH: amd64
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
+
+  release-artifacts:
+    needs: golang-build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
       - uses: thetillhoff/action-release-artifacts@main
-        with:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
     #uses: thetillhoff/.github/.github/workflows/release-golang-executable-on-tag.yaml@main
     #permissions:
