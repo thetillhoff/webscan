@@ -37,7 +37,9 @@ jobs:
           ARCH: "${{ matrix.arch }}"
 
   release-artifacts:
-    needs: golang-build
+    needs:
+      - golang-build
+      - release-prerequisites
     runs-on: ubuntu-latest
     permissions:
       contents: write
