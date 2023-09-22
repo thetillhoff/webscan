@@ -18,12 +18,19 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    strategy:
+      matrix:
+        os:
+          - linux
+          - windows
+          - darwin
+        arch:
+          - amd64
     steps:
       - uses: thetillhoff/action-golang-build@main
         with:
-          OS: linux
-          ARCH: amd64
-
+          OS: "${{ matrix.os }}"
+          ARCH: "${{ matrix.arch }}"
 
   release-artifacts:
     needs: golang-build
