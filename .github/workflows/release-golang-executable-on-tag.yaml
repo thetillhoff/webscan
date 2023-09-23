@@ -30,11 +30,11 @@ jobs:
         arch:
           - amd64
     steps:
-      - uses: thetillhoff/action-golang-build@main
+      - uses: thetillhoff/action-golang-build@v0.1.0
         with:
           OS: "${{ matrix.os }}"
           ARCH: "${{ matrix.arch }}"
-          BUILDARGS: -ldflags="-X 'cmd.version=${{ github.ref_name }}'"
+          BUILDARGS: -ldflags="-X 'github.com/thetillhoff/webscan/cmd.version=${{ github.ref_name }}'"
 
   release-artifacts:
     needs:
