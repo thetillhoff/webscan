@@ -21,9 +21,14 @@ webscan 192.168.0.1 -a
 
 ## Installation
 
+If you're feeling fancy:
 ```sh
-curl -s https://github.com/thetillhoff/webscan/install.sh | sudo bash
-# OR
+curl -s https://raw.githubusercontent.com/thetillhoff/webscan/main/install.sh | sudo bash
+```
+
+or manually (requires `jq`):
+
+```sh
 export WEBSCAN_VERSION=$(curl -s https://api.github.com/repos/thetillhoff/webscan/releases/latest | jq -r '.tag_name')
 wget "https://github.com/thetillhoff/webscan/releases/download/${WEBSCAN_VERSION}/webscan_linux_amd64"
 wget "https://github.com/thetillhoff/webscan/releases/download/${WEBSCAN_VERSION}/webscan_linux_amd64.sha256"
@@ -223,3 +228,11 @@ cobra-cli init --viper
 
 - inputUrl should be saved in each Result, so it can be used in print.
   DNS might have multiple ones, due to following CNAMEs, as can happen with HTTP redirects.
+
+
+
+
+
+TODO add buildargs to example usage sections in all three repos for the actions
+
+git describe --tags # for latest tag
