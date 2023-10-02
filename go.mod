@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/PuerkitoBio/goquery v1.8.1
 	github.com/openrdap/rdap v0.9.1
-	github.com/quic-go/quic-go v0.38.1
+	github.com/quic-go/quic-go v0.39.0
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.16.0
 	golang.org/x/net v0.15.0
@@ -17,7 +17,6 @@ require (
 	github.com/andybalholm/cascadia v1.3.2 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
-	github.com/golang/mock v1.6.0 // indirect
 	github.com/google/pprof v0.0.0-20230912144702-c363fe2c2ed8 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
@@ -34,6 +33,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
+	go.uber.org/mock v0.3.0 // indirect
 	golang.org/x/crypto v0.13.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
 	golang.org/x/mod v0.12.0 // indirect
