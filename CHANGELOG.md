@@ -1,6 +1,6 @@
 # CHANGELOG
 
-##
+## v1.0.0
 - Restructured output
 - Improved TLS cipher recommendations
 - Added domain and ip blacklist search
