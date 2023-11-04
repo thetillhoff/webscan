@@ -5,8 +5,9 @@ import "fmt"
 func (engine Engine) PrintMailConfigScanResults() {
 
 	if len(engine.mailConfigRecommendations) > 0 {
-		fmt.Println()
-		fmt.Println("\nDNS mail security findings:")
+
+		fmt.Printf("\n\n--- Mail security scan results ---\n")
+
 		for _, message := range engine.mailConfigRecommendations {
 			fmt.Println(message)
 		}

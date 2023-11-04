@@ -5,17 +5,16 @@ import (
 	"net"
 )
 
-func (engine Engine) GetAAAARecords(url string) (Engine, error) {
+func (engine Engine) GetAAAARecords(url string, resolver *net.Resolver) (Engine, error) {
 	var (
 		err error
 
 		records []string
 	)
 
-	aaaaRecords, err := engine.resolver.LookupIP(context.Background(), "ip6", url)
+	aaaaRecords, err := resolver.LookupIP(context.Background(), "ip6", url)
 	if _, ok := err.(*net.DNSError); ok {
 		// No AAAA record available
-		// TODO add opinionated recommendation to add it
 	} else if err != nil {
 		return engine, err
 	}

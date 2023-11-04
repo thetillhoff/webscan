@@ -46,7 +46,11 @@ var rootCmd = &cobra.Command{
 			engine webscan.Engine
 		)
 
-		engine = webscan.DefaultEngine(url, dnsServer)
+		if dnsServer != "" {
+			engine = webscan.EngineWithCustomDns(url, dnsServer)
+		} else {
+			engine = webscan.DefaultEngine(url)
+		}
 		engine.DkimSelector = dkimSelector
 		engine.FollowRedirects = follow // follow is always optional
 		engine.Verbose = verbose        // verbose is always optional
@@ -73,7 +77,7 @@ var rootCmd = &cobra.Command{
 			engine.SubdomainScan = subdomainScan
 		}
 
-		engine, err = engine.Scan(url, dnsServer)
+		engine, err = engine.Scan(url)
 		if err != nil {
 			log.Fatalln(err)
 		}

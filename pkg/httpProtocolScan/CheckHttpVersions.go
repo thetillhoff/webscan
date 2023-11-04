@@ -1,4 +1,4 @@
-package protocolScan
+package httpProtocolScan
 
 // Takes url
 // and whether http and/or https should be checked

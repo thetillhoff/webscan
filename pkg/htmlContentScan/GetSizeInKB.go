@@ -1,4 +1,4 @@
-package htmlcontent
+package htmlContentScan
 
 import (
 	"crypto/tls"
@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func GetSizeInKb(url string) (float32, error) {
+func GetSizeInKb(url string) (float64, error) {
 	var (
 		err error
 
@@ -50,5 +50,5 @@ func GetSizeInKb(url string) (float32, error) {
 	size = size / 1000              // Byte to Kilobyte conversion
 	size = math.Round(size*10) / 10 // Rounding like this will leave exactly one decimal
 
-	return float32(size), nil
+	return size, nil
 }

@@ -1,13 +1,16 @@
 package dnsScan
 
-import "strings"
+import (
+	"net"
+	"strings"
+)
 
-func (engine Engine) CheckDkim(selectorUrl string) string {
+func (engine Engine) CheckDkim(selectorUrl string, resolver *net.Resolver) string {
 	subDomainEngine := engine
 
-	subDomainEngine, txtErr := subDomainEngine.GetTXTRecords(selectorUrl)
+	subDomainEngine, txtErr := subDomainEngine.GetTXTRecords(selectorUrl, resolver)
 	if txtErr != nil {
-		subDomainEngine, cnameErr := subDomainEngine.GetCNAMERecord(selectorUrl)
+		subDomainEngine, cnameErr := subDomainEngine.GetCNAMERecord(selectorUrl, resolver)
 		if cnameErr != nil {
 			return "Hint: Neither TXT nor CNAME found at specified DKIM selector."
 		}

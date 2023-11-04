@@ -5,10 +5,12 @@ import "fmt"
 func (engine Engine) PrintPortScanResults() {
 
 	if engine.DetailedPortScan {
-		fmt.Println()
-		if len(engine.portScanOpenPorts) > 0 {
+
+		fmt.Printf("\n\n--- TCP port scan results ---\n")
+
+		if len(engine.openPorts) > 0 {
 			fmt.Println("Relevant open ports:")
-			for _, relevantOpenPort := range engine.portScanOpenPorts {
+			for _, relevantOpenPort := range engine.openPorts {
 				fmt.Println("-", relevantOpenPort)
 			}
 		} else {
@@ -16,9 +18,8 @@ func (engine Engine) PrintPortScanResults() {
 		}
 	}
 
-	if len(engine.portScanInconsistencies) > 0 {
-		fmt.Println()
-		for _, portInconsistency := range engine.portScanInconsistencies {
+	if len(engine.openPortInconsistencies) > 0 {
+		for _, portInconsistency := range engine.openPortInconsistencies {
 			fmt.Println(portInconsistency)
 		}
 	}

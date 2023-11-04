@@ -10,16 +10,17 @@ func (engine Engine) PrintHttpContentScanResults() {
 		sizeMessages = []string{}
 
 		stylesheetFileCount int     = 0
-		totalStylesheetSize float32 = 0
+		totalStylesheetSize float64 = 0
 
 		scriptFileCount int     = 0
-		totalScriptSize float32 = 0
+		totalScriptSize float64 = 0
 	)
+
+	fmt.Printf("\n\n--- HTTP content scan results ---\n")
 
 	// TODO include images, custom fonts
 
 	if len(engine.httpContentRecommendations) > 0 {
-		fmt.Println()
 		for _, message := range engine.httpContentRecommendations {
 			fmt.Println(message)
 		}
@@ -27,8 +28,8 @@ func (engine Engine) PrintHttpContentScanResults() {
 
 	// HTML
 
-	sizeMessages = append(sizeMessages, "HTML size: "+strconv.Itoa(engine.httpContentHtmlSize/1000)+"kb")
-	if engine.httpContentHtmlSize > 200*1000 { // Size is larger than 200kb
+	sizeMessages = append(sizeMessages, "HTML size: "+strconv.FormatFloat(engine.httpContentHtmlSizekB, 'f', -1, 64)+"kb")
+	if engine.httpContentHtmlSizekB > 200 { // Size is larger than 200kb
 		sizeMessages = append(sizeMessages, "  It's recommended to be smaller than 200kb.")
 	}
 
@@ -45,34 +46,24 @@ func (engine Engine) PrintHttpContentScanResults() {
 	// Stylesheets
 
 	for _, size := range engine.httpContentStylesheetSizes {
-		// for stylesheetSource, size := range engine.httpContentStylesheetSizes {
-		// 	fmt.Println("References external Stylesheet with " + strconv.FormatFloat(float64(size), 'f', 1, 64) + "kb at " + stylesheetSource)
 		stylesheetFileCount = stylesheetFileCount + 1
 		totalStylesheetSize = totalStylesheetSize + size
 	}
+	sizeMessages = append(sizeMessages, "External CSS size: "+strconv.FormatFloat(totalStylesheetSize, 'f', -1, 64)+"kb")
 
 	// Scripts
 
 	for _, size := range engine.httpContentScriptSizes {
-		// for scriptSource, size := range engine.httpContentScriptSizes {
-		// 	fmt.Println("References external script with " + strconv.FormatFloat(float64(size), 'f', 1, 64) + "kb at " + scriptSource)
 		scriptFileCount = scriptFileCount + 1
 		totalScriptSize = totalScriptSize + size
 	}
+	sizeMessages = append(sizeMessages, "External JS size: "+strconv.FormatFloat(totalScriptSize, 'f', -1, 64)+"kb")
 
-	// Totals
+	// Total
 
-	if totalStylesheetSize > 0 {
-		sizeMessages = append(sizeMessages, "Total size of "+strconv.Itoa(stylesheetFileCount)+" external stylesheets: "+strconv.FormatFloat(float64(totalStylesheetSize), 'f', 1, 64)+"kb")
-	}
-
-	if totalScriptSize > 0 {
-		sizeMessages = append(sizeMessages, "Total size of "+strconv.Itoa(scriptFileCount)+" external scripts: "+strconv.FormatFloat(float64(totalScriptSize), 'f', 1, 64)+"kb")
-	}
-
-	if engine.httpContentHtmlSize > 0 {
-		totalsize := float32(engine.httpContentHtmlSize/1000) + totalStylesheetSize + totalScriptSize
-		sizeMessages = append(sizeMessages, "Total download size: "+strconv.FormatFloat(float64(totalsize), 'f', 1, 64)+"kb")
+	if engine.httpContentHtmlSizekB > 0 {
+		totalsize := engine.httpContentHtmlSizekB + totalStylesheetSize + totalScriptSize
+		sizeMessages = append(sizeMessages, "Total download size (without media): "+strconv.FormatFloat(totalsize, 'f', -1, 64)+"kb")
 
 		fmt.Println()
 		for _, sizeMessage := range sizeMessages {

@@ -8,13 +8,18 @@ import (
 
 func (engine Engine) PrintTlsScanResults() {
 
-	if engine.tlsResult != nil {
-		fmt.Println()
-		fmt.Println(engine.tlsResult)
-	}
+	if engine.TlsScan {
 
-	if engine.TlsScan && engine.tlsCiphers != nil {
-		tlsScan.PrintRecommendations(engine.tlsCiphers)
-	}
+		fmt.Printf("\n\n--- TLS scan results ---\n")
 
+		if engine.tlsResult != nil {
+			fmt.Println(engine.tlsResult)
+		}
+
+		if engine.tlsCiphers != nil {
+			for _, message := range tlsScan.GetRecommendations(engine.tlsCiphers) {
+				fmt.Println(message)
+			}
+		}
+	}
 }

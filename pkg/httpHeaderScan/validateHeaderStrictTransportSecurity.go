@@ -1,4 +1,4 @@
-package protocolScan
+package httpHeaderScan
 
 import (
 	"errors"

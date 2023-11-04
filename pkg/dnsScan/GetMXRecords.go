@@ -5,7 +5,7 @@ import (
 	"net"
 )
 
-func (engine Engine) GetMXRecords(url string) (Engine, error) {
+func (engine Engine) GetMXRecords(url string, resolver *net.Resolver) (Engine, error) {
 	var (
 		err error
 
@@ -13,7 +13,7 @@ func (engine Engine) GetMXRecords(url string) (Engine, error) {
 		mxRecords []*net.MX
 	)
 
-	mxRecords, err = engine.resolver.LookupMX(context.Background(), url)
+	mxRecords, err = resolver.LookupMX(context.Background(), url)
 	if err, ok := err.(*net.DNSError); ok && err.IsNotFound {
 		// No MX record available
 	} else if err != nil {

@@ -52,7 +52,7 @@ Display dns information about the provided URL, and give improvement recommendat
 - [ ] DNSSEC
 - [ ] Detect CNAME loops
 - [ ] Warn if there are too many CNAME redirects (>1)
-- [ ] Domain blacklist detection
+- [x] Domain blacklist detection
 
 - [x] Specify a custom dns server with the `--dns <dns server location>` option.
 
@@ -97,7 +97,9 @@ Display dns information about the provided URL, and give improvement recommendat
 
 ### IP analysis
 - [x] Check who is the hoster of the IP address via RDAP (successor of whois) - like AWS, Azure, GCP, ...
-- [ ] Check if any IP (v4 and v6) of the domain is blacklisted somewhere.
+- Check if any IP (v4 and v6) of the domain is blacklisted somewhere.
+  - [x] IPv4
+  - [] IPv6
 
 ### Open ports
 - [x] Check all found ipv4 and ipv6 entries for relevant open ports. Examples for relevant ports are SSH, FTP, SMB, SMTP, HTTP, POSTGRES
@@ -111,6 +113,18 @@ Display dns information about the provided URL, and give improvement recommendat
 - [x] Validate certificate only if port 443 is open.
 - [x] Check the validity of the ssl certificate. Subject, date, chain, ciphers, tls-min-version (if valid, but not recommended, don't fail, but print warning/s instead).
 - [ ] Write tests against badssl.com
+
+- [ ] SSL is not recommended
+- [x] TLS 1.0 and TLS 1.1 are not recommended, only TLS 1.2 & 1.3 are okay
+- [ ] TLS 1.3 should be supported
+
+- cipher recommendations like
+  - [x] Recommending against RSA, as it's possible to decrypt traffic at a later time should the certificate be compromised in the future.
+  - [x] Recommending against 3DES, as it's vulnerable to birthday attacks (https://sweet32.info/).
+  - [x] Recommending against RC4, as it's exploitable biases can lead to plaintext recovery without side channels (https://www.rc4nomore.com/).
+  - [x] Recommending against CBC, as it seems fundamentally flawed since the Lucky13 vulnerability was discovered (https://en.wikipedia.org/wiki/Lucky_Thirteen_attack).
+  - [x] Keep in mind ECDH_ ciphers don't support Perfect Forward Secrecy and shouldn't be used after 2026.
+  - [x] Keep in mind DH_ ciphers don't support Perfect Forward Secrecy and shouldn't be used after 2026.
 
 ### HTTP detection
 By default `webscan` assumes you're using https. Yet, it will check whether it's available via http as well.

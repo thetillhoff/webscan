@@ -5,14 +5,14 @@ import (
 	"net"
 )
 
-func (engine Engine) GetCNAMERecord(url string) (Engine, error) {
+func (engine Engine) GetCNAMERecord(url string, resolver *net.Resolver) (Engine, error) {
 	var (
 		err error
 
 		record string
 	)
 
-	record, err = engine.resolver.LookupCNAME(context.Background(), url)
+	record, err = resolver.LookupCNAME(context.Background(), url)
 	if err, ok := err.(*net.DNSError); ok && err.IsNotFound {
 		// No CNAME record available
 	} else if err != nil {

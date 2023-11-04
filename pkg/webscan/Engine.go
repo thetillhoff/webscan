@@ -1,7 +1,10 @@
 package webscan
 
 import (
+	"context"
+	"net"
 	"net/http"
+	"time"
 
 	"github.com/thetillhoff/webscan/pkg/dnsScan"
 	"github.com/thetillhoff/webscan/pkg/tlsScan"
@@ -28,42 +31,60 @@ type Engine struct {
 	SubdomainScan    bool
 
 	// Internal variables
+	input     string
 	inputType InputType
+	dnsServer string
+	resolver  *net.Resolver
+	response  *http.Response // internal use only
 
 	// Results
-	dnsScanEngine               dnsScan.Engine
-	ipScanResult                []string
-	ipScanOwners                []string
-	portScanOpenPorts           []uint16
-	portScanInconsistencies     []string
-	isAvailableViaHttp          bool
-	isAvailableViaHttps         bool
-	httpStatusCode              int
-	httpRedirectLocation        string
-	httpsStatusCode             int
-	httpsRedirectLocation       string
-	protocolRecommendations     []string
-	tlsResult                   error
-	tlsCiphers                  []tlsScan.TlsCipher
-	httpVersions                []string
-	httpsVersions               []string
-	subdomains                  []string
-	response                    *http.Response // internal use only
-	httpHeaderRecommendations   []string
+	dnsScanEngine dnsScan.Engine
+
+	ipOwners          []string
+	ipIsBlacklistedAt map[string][]string
+
+	openPorts               []uint16
+	openPortInconsistencies []string
+
+	isAvailableViaHttp    bool
+	isAvailableViaHttps   bool
+	httpStatusCode        int
+	httpRedirectLocation  string
+	httpsStatusCode       int
+	httpsRedirectLocation string
+	httpVersions          []string
+	httpsVersions         []string
+
+	httpHeaderRecommendations      []string
+	httpCookieRecommendations      map[string][]string
+	httpOtherCookieRecommendations []string
+
+	tlsResult  error
+	tlsCiphers []tlsScan.TlsCipher
+
 	httpContentRecommendations  []string
-	httpContentHtmlSize         int
+	httpContentHtmlSizekB       float64
 	httpContentInlineStyleSize  int
 	httpContentInlineScriptSize int
-	httpContentScriptSizes      map[string]float32
-	httpContentStylesheetSizes  map[string]float32
-	mailConfigRecommendations   []string
+	httpContentScriptSizes      map[string]float64
+	httpContentStylesheetSizes  map[string]float64
+
+	subdomains []string
+
+	mailConfigRecommendations []string
 }
 
-func DefaultEngine(inputUrl string, dnsServer string) Engine {
+func DefaultEngine(inputUrl string) Engine {
 	return Engine{
 		Opinionated:     true,
 		Verbose:         false,
 		FollowRedirects: false,
+
+		dnsScanEngine: dnsScan.DefaultEngine(),
+		dnsServer:     "",
+		resolver:      nil, // Nil resolver is the same as a zero resolver which is the default system resolver
+
+		ipIsBlacklistedAt: map[string][]string{},
 
 		DetailedDnsScan:  false,
 		IpScan:           false,
@@ -77,4 +98,18 @@ func DefaultEngine(inputUrl string, dnsServer string) Engine {
 
 		DkimSelector: "",
 	}
+}
+
+func EngineWithCustomDns(inputUrl string, dnsServer string) Engine {
+	engine := DefaultEngine(inputUrl)
+	engine.dnsServer = dnsServer
+	engine.resolver = &net.Resolver{
+		PreferGo:     false,
+		StrictErrors: true,
+		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+			d := net.Dialer{Timeout: time.Millisecond * time.Duration(10000)}
+			return d.DialContext(ctx, network, net.JoinHostPort(dnsServer, "53"))
+		},
+	}
+	return engine
 }

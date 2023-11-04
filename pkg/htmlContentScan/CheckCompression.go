@@ -1,4 +1,4 @@
-package htmlcontent
+package htmlContentScan
 
 import "net/http"
 

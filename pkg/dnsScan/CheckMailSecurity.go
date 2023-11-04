@@ -1,6 +1,8 @@
 package dnsScan
 
-func (engine Engine) CheckMailSecurity(url string, dkimSelector string) []string {
+import "net"
+
+func (engine Engine) CheckMailSecurity(url string, resolver *net.Resolver, dkimSelector string) []string {
 	var (
 		messages []string
 		message  string
@@ -11,12 +13,12 @@ func (engine Engine) CheckMailSecurity(url string, dkimSelector string) []string
 		messages = append(messages, message)
 	}
 
-	message = engine.CheckDkim(dkimSelector + "._domainkey." + url)
+	message = engine.CheckDkim(dkimSelector+"._domainkey."+url, resolver)
 	if message != "" {
 		messages = append(messages, message)
 	}
 
-	message = engine.CheckDmarc(url)
+	message = engine.CheckDmarc(url, resolver)
 	if message != "" {
 		messages = append(messages, message)
 	}

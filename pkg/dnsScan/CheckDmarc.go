@@ -1,13 +1,16 @@
 package dnsScan
 
-import "strings"
+import (
+	"net"
+	"strings"
+)
 
-func (engine Engine) CheckDmarc(url string) string {
+func (engine Engine) CheckDmarc(url string, resolver *net.Resolver) string {
 	subDomainEngine := engine
 
-	subDomainEngine, txtErr := subDomainEngine.GetTXTRecords("_dmarc." + url)
+	subDomainEngine, txtErr := subDomainEngine.GetTXTRecords("_dmarc."+url, resolver)
 	if txtErr != nil {
-		subDomainEngine, cnameErr := subDomainEngine.GetCNAMERecord("_dmarc." + url)
+		subDomainEngine, cnameErr := subDomainEngine.GetCNAMERecord("_dmarc."+url, resolver)
 		if cnameErr != nil {
 			return "Hint: Neither TXT nor CNAME records are set up for DMARC."
 		}

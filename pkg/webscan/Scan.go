@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"reflect"
 	"time"
 
 	"github.com/thetillhoff/webscan/pkg/dnsScan"
@@ -12,7 +13,7 @@ import (
 
 // inputUrl can be domain or IPv4 or IPv6
 // dnsServer can be empty string
-func (engine Engine) Scan(inputUrl string, dnsServer string) (Engine, error) {
+func (engine Engine) Scan(inputUrl string) (Engine, error) {
 	var (
 		err error
 
@@ -20,20 +21,18 @@ func (engine Engine) Scan(inputUrl string, dnsServer string) (Engine, error) {
 		request *http.Request
 	)
 
+	engine.input = inputUrl
+
 	if net.ParseIP(inputUrl) == nil { // If inputUrl is domain, scan dns and ips
 		engine.inputType = Domain
 		if engine.Verbose {
 			fmt.Println("Input identified as Domain.")
 		}
 
-		if dnsServer != "" {
-			engine.dnsScanEngine = dnsScan.EngineWithCustomDns(dnsServer)
-			if engine.Verbose {
-				fmt.Println("Using custom dns server:", dnsServer)
-			}
-		} else {
-			engine.dnsScanEngine = dnsScan.DefaultEngine()
-			if engine.Verbose {
+		if engine.Verbose {
+			if engine.dnsServer != "" {
+				fmt.Println("Using custom dns server:", engine.dnsServer)
+			} else {
 				fmt.Println("Using system dns server")
 			}
 		}
@@ -98,7 +97,7 @@ func (engine Engine) Scan(inputUrl string, dnsServer string) (Engine, error) {
 		}
 	}
 
-	if engine.HttpHeaderScan || engine.HttpContentScan {
+	if engine.isAvailableViaHttps && (engine.HttpHeaderScan || engine.HttpContentScan) {
 		client = &http.Client{
 			Timeout: 5 * time.Second, // TODO 5s might be a bit long?
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -116,18 +115,19 @@ func (engine Engine) Scan(inputUrl string, dnsServer string) (Engine, error) {
 		// TODO request.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/113.0") // Set "random" valid user agent to prevent bot-detection (as it happens f.e. at amazon.com)
 		engine.response, err = client.Do(request)
 		if err != nil {
+			fmt.Println(err, reflect.TypeOf(err))
 			return engine, err
 		}
 	}
 
-	if engine.HttpHeaderScan {
+	if engine.isAvailableViaHttps && engine.HttpHeaderScan {
 		engine, err = engine.ScanHttpHeaders()
 		if err != nil {
 			return engine, err
 		}
 	}
 
-	if engine.HttpContentScan {
+	if engine.isAvailableViaHttps && engine.HttpContentScan {
 		engine, err = engine.ScanHttpContent(inputUrl)
 		if err != nil {
 			return engine, err

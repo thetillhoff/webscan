@@ -1,5 +1,10 @@
 # CHANGELOG
 
+##
+- Restructured output
+- Improved TLS cipher recommendations
+- Added domain and ip blacklist search
+
 ## v0.3.1
 - Upgrade dependencies
 - Adjust pipelines
@@ -18,7 +23,7 @@
 - Only print DNS related information if the input was a domain.
 - Moved dnsEngine initialization from scanEngine initialization to webScan initialization.
 - Removed duplicate adding of ip address to dnsEngine if input is said ip address.
-- Moved protocolScan hint generation to scan method instead of print function.
+- Moved httpProtocolScan hint generation to scan method instead of print function.
 - Merged `dnsScanEngine` and `dnsScanResults` into one instance of dnsEngine.
 - Open ports are now sorted ascending instead of random.
 - Inconsistencies of open ports between ip addresses are now detected and printed.

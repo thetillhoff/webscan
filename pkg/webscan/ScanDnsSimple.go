@@ -7,20 +7,20 @@ func (engine Engine) ScanDnsSimple(inputUrl string) (Engine, error) {
 		err error
 	)
 
-	fmt.Println("Scanning DNS (simple) of", inputUrl, "...")
+	fmt.Println("Scanning DNS (simple)...")
 
-	engine.dnsScanEngine, err = engine.dnsScanEngine.GetARecords(inputUrl)
+	engine.dnsScanEngine, err = engine.dnsScanEngine.GetARecords(inputUrl, engine.resolver)
 	if err != nil {
 		return engine, err
 	}
 
-	engine.dnsScanEngine, err = engine.dnsScanEngine.GetAAAARecords(inputUrl)
+	engine.dnsScanEngine, err = engine.dnsScanEngine.GetAAAARecords(inputUrl, engine.resolver)
 	if err != nil {
 		return engine, err
 	}
 
 	if len(engine.dnsScanEngine.ARecords) == 0 && len(engine.dnsScanEngine.AAAARecords) == 0 && engine.FollowRedirects { // If neither A nor AAAA records exist & redirects should be followed
-		engine.dnsScanEngine, err = engine.dnsScanEngine.GetCNAMERecord(inputUrl) // Retrieve CNAME record if exists
+		engine.dnsScanEngine, err = engine.dnsScanEngine.GetCNAMERecord(inputUrl, engine.resolver) // Retrieve CNAME record if exists
 		if err != nil {
 			return engine, err
 		}

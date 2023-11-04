@@ -9,15 +9,17 @@ func (engine Engine) ScanDnsDetailed(inputUrl string) (Engine, error) {
 		err error
 	)
 
-	fmt.Println("Scanning DNS (detailed) of", inputUrl, "...")
+	fmt.Println("Scanning DNS (detailed)...")
 
 	engine.dnsScanEngine, _ = engine.dnsScanEngine.GetDomainOwnerViaRDAP(inputUrl)
 	// // `err` is ignored here, as it's okay that it can't be retrieved. It's not a critical error, but an error nonetheless
-	// if err != nil {
-	// return engine, err
-	// }
 
-	engine.dnsScanEngine, err = engine.dnsScanEngine.GetAllRecords(inputUrl)
+	engine.dnsScanEngine.DomainIsBlacklistedAt, err = engine.dnsScanEngine.IsDomainBlacklisted(inputUrl, engine.resolver)
+	if err != nil {
+		return engine, err
+	}
+
+	engine.dnsScanEngine, err = engine.dnsScanEngine.GetAllRecords(inputUrl, engine.resolver)
 	if err != nil {
 		return engine, err
 	}
@@ -29,7 +31,7 @@ func (engine Engine) ScanDnsDetailed(inputUrl string) (Engine, error) {
 	}
 
 	if len(engine.dnsScanEngine.ARecords) == 0 && len(engine.dnsScanEngine.AAAARecords) == 0 && engine.FollowRedirects { // If neither A nor AAAA records exist & redirects should be followed
-		engine.dnsScanEngine, err = engine.dnsScanEngine.GetCNAMERecord(inputUrl) // Retrieve CNAME record if exists
+		engine.dnsScanEngine, err = engine.dnsScanEngine.GetCNAMERecord(inputUrl, engine.resolver) // Retrieve CNAME record if exists
 		if err != nil {
 			return engine, err
 		}

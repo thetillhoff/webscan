@@ -1,4 +1,4 @@
-package protocolScan
+package httpProtocolScan
 
 import (
 	"crypto/tls"

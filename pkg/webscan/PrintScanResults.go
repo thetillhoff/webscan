@@ -16,7 +16,7 @@ func (engine Engine) PrintScanResults() {
 
 	engine.PrintTlsScanResults()
 
-	engine.PrintProtocolScanResults()
+	engine.PrintHttpProtocolScanResults()
 
 	engine.PrintHttpHeaderScanResults()
 

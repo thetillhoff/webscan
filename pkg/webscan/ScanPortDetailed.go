@@ -51,10 +51,10 @@ func (engine Engine) ScanPortDetailed() (Engine, error) {
 
 	openPortsPerIp = portScan.ScanPortRangeOfIps(append(engine.dnsScanEngine.ARecords, engine.dnsScanEngine.AAAARecords...), scanPorts, engine.Verbose)
 
-	engine.portScanOpenPorts, engine.portScanInconsistencies = portScan.CompareOpenPortsOfIps(openPortsPerIp)
+	engine.openPorts, engine.openPortInconsistencies = portScan.CompareOpenPortsOfIps(openPortsPerIp)
 
 	// Check if HTTP / HTTPS are available
-	for _, openPort := range engine.portScanOpenPorts {
+	for _, openPort := range engine.openPorts {
 		if openPort == 80 {
 			engine.isAvailableViaHttp = true
 		} else if openPort == 443 {

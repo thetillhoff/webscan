@@ -5,7 +5,7 @@ import (
 	"net"
 )
 
-func (engine Engine) GetNSRecords(url string) (Engine, error) {
+func (engine Engine) GetNSRecords(url string, resolver *net.Resolver) (Engine, error) {
 	var (
 		err error
 
@@ -13,7 +13,7 @@ func (engine Engine) GetNSRecords(url string) (Engine, error) {
 		nsRecords []*net.NS
 	)
 
-	nsRecords, err = engine.resolver.LookupNS(context.Background(), url)
+	nsRecords, err = resolver.LookupNS(context.Background(), url)
 	if err, ok := err.(*net.DNSError); ok && err.IsNotFound {
 		// No NS record available
 	} else if err != nil {
