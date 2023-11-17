@@ -23,18 +23,20 @@ webscan 192.168.0.1 -a
 
 If you're feeling fancy:
 ```sh
-curl -s https://raw.githubusercontent.com/thetillhoff/webscan/main/install.sh | sudo bash
+curl -s https://raw.githubusercontent.com/thetillhoff/webscan/main/install.sh | sh
 ```
 
 or manually (requires `jq`):
 
 ```sh
-export WEBSCAN_VERSION=$(curl -s https://api.github.com/repos/thetillhoff/webscan/releases/latest | jq -r '.tag_name')
-wget "https://github.com/thetillhoff/webscan/releases/download/${WEBSCAN_VERSION}/webscan_linux_amd64"
-wget "https://github.com/thetillhoff/webscan/releases/download/${WEBSCAN_VERSION}/webscan_linux_amd64.sha256"
-echo "$(cat webscan_linux_amd64.sha256) webscan_linux_amd64" | sha256sum --check --status # If this fails, don't continue
-sudo install webscan_linux_amd64 /usr/local/bin/webscan # automatically sets rwxr-xr-x permissions
-rm webscan_linux_amd64 webscan_linux_amd64.sha256
+OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
+WEBSCAN_VERSION="$(wget -qO- https://api.github.com/repos/thetillhoff/webscan/releases/latest | jq -r '.tag_name')"
+wget webscan "https://github.com/thetillhoff/webscan/releases/download/${WEBSCAN_VERSION}/webscan_${OS}_amd64"
+wget webscan.sha256 "https://github.com/thetillhoff/webscan/releases/download/${WEBSCAN_VERSION}/webscan_${OS}_amd64.sha256"
+echo "$(cat webscan.sha256) webscan" | sha256sum --check --status # If this fails, don't continue
+printf "Checksum validation complete, installing to /usr/local/bin/ ..."
+sudo install webscan /usr/local/bin/webscan # automatically sets rwxr-xr-x permissions
+rm webscan webscan.sha256
 ```
 
 ## Features
