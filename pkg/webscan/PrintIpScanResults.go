@@ -19,6 +19,12 @@ func (engine Engine) PrintIpScanResults() {
 		} else if len(engine.dnsScanEngine.ARecords) > 1 {
 			fmt.Println("IPv4 addresses are not blacklisted.")
 		}
+
+		if len(engine.dnsScanEngine.AAAARecords) == 1 {
+			fmt.Println("IPv6 address is not blacklisted.")
+		} else if len(engine.dnsScanEngine.AAAARecords) > 1 {
+			fmt.Println("IPv6 addresses are not blacklisted.")
+		}
 	}
 
 	if engine.IpScan && len(engine.ipOwners) > 0 {

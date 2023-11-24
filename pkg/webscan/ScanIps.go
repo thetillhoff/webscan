@@ -44,7 +44,14 @@ func (engine Engine) ScanIps() (Engine, error) {
 		}
 		engine.ipOwners = append(engine.ipOwners, "According to RDAP information, IP "+aaaaRecord+" is registered at "+response)
 
-		// TODO add ip blacklisting check for ipv6
+		blacklistMatches, err = ipScan.IsIpBlacklisted(aaaaRecord, engine.Verbose)
+		if err != nil {
+			return engine, err
+		}
+
+		if len(blacklistMatches) > 0 { // If ip was listed on at least one blacklist
+			engine.ipIsBlacklistedAt[aaaaRecord] = blacklistMatches
+		}
 	}
 
 	return engine, nil

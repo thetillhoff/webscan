@@ -95,13 +95,12 @@ Display dns information about the provided URL, and give improvement recommendat
 - [x] Check if both ipv4 and ipv6 entries were found.
   - IPv4 is necessary to stay backwards compatible.
   - IPv6 is recommended to be IPv6 ready.
-  - [ ] If either is missing, recommend to have a proxy in between, for example cloudflare.
 
 ### IP analysis
 - [x] Check who is the hoster of the IP address via RDAP (successor of whois) - like AWS, Azure, GCP, ...
-- Check if any IP (v4 and v6) of the domain is blacklisted somewhere.
+- Check if any IP (v4 and v6) of the domain is blacklisted.
   - [x] IPv4
-  - [] IPv6
+  - [x] IPv6
 
 ### Open ports
 - [x] Check all found ipv4 and ipv6 entries for relevant open ports. Examples for relevant ports are SSH, FTP, SMB, SMTP, HTTP, POSTGRES

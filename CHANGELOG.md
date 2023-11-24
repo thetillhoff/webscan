@@ -1,5 +1,8 @@
 # CHANGELOG
 
+##
+- Add ipv6 blacklist check
+
 ## v1.0.0
 - Restructured output
 - Improved TLS cipher recommendations

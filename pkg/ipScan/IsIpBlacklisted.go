@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net"
+	"net/netip"
 	"strings"
 	"time"
 )
@@ -15,7 +16,8 @@ func IsIpBlacklisted(ip string, verbose bool) ([]string, error) {
 
 		resolver *net.Resolver
 
-		reverseIp string = "" // includes trailing '.'
+		searchPrefix string = "" // includes trailing '.'
+		network      string
 
 		blacklistWithNameservers = map[string][]string{
 			"zen.spamhaus.org": {
@@ -32,8 +34,20 @@ func IsIpBlacklisted(ip string, verbose bool) ([]string, error) {
 		blacklistsWithMatches = []string{}
 	)
 
-	for _, snippet := range strings.Split(ip, ".") {
-		reverseIp = snippet + "." + reverseIp
+	if IsIpv4(ip) { // If ip is ipv4
+		network = "ip4"
+		for _, snippet := range strings.Split(ip, ".") {
+			searchPrefix = snippet + "." + searchPrefix
+		}
+	} else { // If ip is ipv6
+		network = "ip6"
+
+		addr, _ := netip.ParseAddr(ip)
+		ip = addr.StringExpanded()
+		ip = strings.ReplaceAll(ip, ":", "")
+		for _, snippet := range strings.Split(ip, "") {
+			searchPrefix = snippet + "." + searchPrefix
+		}
 	}
 
 	for blacklist, blacklistNameservers := range blacklistWithNameservers {
@@ -49,10 +63,10 @@ func IsIpBlacklisted(ip string, verbose bool) ([]string, error) {
 		}
 
 		if verbose {
-			fmt.Println("Checking ip blacklisting via", reverseIp+blacklist)
+			fmt.Println("Checking ip blacklisting via", searchPrefix+blacklist)
 		}
 
-		response, err = resolver.LookupIP(context.Background(), "ip4", reverseIp+blacklist)
+		response, err = resolver.LookupIP(context.Background(), network, searchPrefix+blacklist)
 		if err, ok := err.(*net.DNSError); ok && err.IsNotFound {
 			// No A record available -> Not blacklisted, so continue
 		} else if err != nil { // Unknown error occurred
