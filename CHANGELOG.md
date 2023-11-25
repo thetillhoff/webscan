@@ -1,7 +1,9 @@
 # CHANGELOG
 
-##
+## v1.1.0
 - Add ipv6 blacklist check
+- Add nameserver owner check
+- Fixed bug where headline of scan result would be printed without content
 
 ## v1.0.0
 - Restructured output
