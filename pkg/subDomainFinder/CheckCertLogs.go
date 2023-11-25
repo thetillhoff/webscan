@@ -53,7 +53,7 @@ func CheckCertLogs(url string) ([]string, error) {
 	if err != nil {
 		log.Fatalln("error reading the response from crt.sh:", err)
 	}
-	defer resp.Body.Close()
+	resp.Body.Close()
 
 	err = json.Unmarshal(body, &certs) // Parse the json
 	if err != nil {

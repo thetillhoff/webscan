@@ -33,7 +33,7 @@ func validateHeaderStrictTransportSecurity(content string) error {
 		} else if directive == "preload" {
 			preload = true
 		} else {
-			return errors.New("unkown directive '" + directive + "' should be removed")
+			return errors.New("Unknown directive '" + directive + "' should be removed")
 		}
 	}
 

@@ -205,7 +205,7 @@ func (engine Engine) CheckSpf() string {
 					} else {
 						existingExp = true
 					}
-				} else { // Unkown modifier
+				} else { // Unknown modifier
 					// Unrecognized modifiers MUST be ignored
 					// unknown-modifier = "<name>=<macro-string>" ; where name is not "redirect" or "exp"
 					// name             = ALPHA *( ALPHA / DIGIT / "-" / "_" / "." )
@@ -219,13 +219,13 @@ func (engine Engine) CheckSpf() string {
 					}
 
 					if !matched {
-						return "Hint: Unkown SPF modifier name `" + name + "` is invalid."
+						return "Hint: Unknown SPF modifier name `" + name + "` is invalid."
 					} else {
-						return "Hint: Unkown SPF modifier `" + name + "=" + macroString + "`." // TODO validate macroString instead
+						return "Hint: Unknown SPF modifier `" + name + "=" + macroString + "`." // TODO validate macroString instead
 					}
 				}
 			} else { // Invalid setting
-				return "Hint: SPF configuration invalid, due to unkown setting `" + word + "`."
+				return "Hint: SPF configuration invalid, due to Unknown setting `" + word + "`."
 			}
 		}
 	}
