@@ -46,7 +46,7 @@ Display dns information about the provided URL, and give improvement recommendat
 
 - [x] This is skipped if the input is an ipv4 or ipv6 address
 - [x] Check who is the owner of the Domain via RDAP (not supported for country-TLDs)
-- [ ] Check who is the owner of the DNS zone (== nameserver owner) - recursively
+- [x] Check who is the owner of the DNS zone (== nameserver owner)
 - [ ] Follow CNAMEs
 - [x] DNS records overview
 - [x] Long DNS name (requires `--opinionated` flag)

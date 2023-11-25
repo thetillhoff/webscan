@@ -24,6 +24,11 @@ func (engine Engine) ScanDnsDetailed(inputUrl string) (Engine, error) {
 		return engine, err
 	}
 
+	engine.dnsScanEngine, err = engine.dnsScanEngine.GetNameserverOwnerViaRDAP(engine.resolver)
+	if err != nil {
+		return engine, err
+	}
+
 	if engine.Opinionated {
 		// Domain Accessibility
 		engine.dnsScanEngine = engine.dnsScanEngine.CheckIpVersionCompatibility() // TODO What if CNAME exists? See if function below

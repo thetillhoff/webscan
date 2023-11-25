@@ -11,6 +11,7 @@ type Engine struct {
 	SRVRecords  []string
 
 	DomainOwners     []string
+	NameserverOwners []string
 	OpinionatedHints []string
 
 	DomainIsBlacklistedAt []string
@@ -26,6 +27,7 @@ func DefaultEngine() Engine {
 		CNAMERecord: "",
 		TXTRecords:  []string{},
 
-		DomainOwners: []string{},
+		DomainOwners:     []string{},
+		NameserverOwners: []string{},
 	}
 }

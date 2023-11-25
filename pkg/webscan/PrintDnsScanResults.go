@@ -16,6 +16,12 @@ func (engine Engine) PrintDnsScanEngines() {
 			fmt.Println("Domain Registrar: ", strings.Join(engine.dnsScanEngine.DomainOwners, ", "))
 		}
 
+		if len(engine.dnsScanEngine.NameserverOwners) == 0 {
+			fmt.Println("Could not retrieve Nameserver Owner")
+		} else {
+			fmt.Println("Nameserver Owner:", strings.Join(engine.dnsScanEngine.NameserverOwners, ", "))
+		}
+
 		if len(engine.dnsScanEngine.DomainIsBlacklistedAt) > 0 {
 			fmt.Println("Domain is blacklisted at:")
 			for _, blacklist := range engine.dnsScanEngine.DomainIsBlacklistedAt {
