@@ -37,6 +37,6 @@ echo https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${LATEST_VE
 $DOWNLOAD_FILE_CMD ${REPO_NAME} "https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${LATEST_VERSION}/webscan_${OS}_amd64"
 $DOWNLOAD_FILE_CMD ${REPO_NAME}.sha256 "https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${LATEST_VERSION}/webscan_${OS}_amd64.sha256"
 printf "$(cat ${REPO_NAME}.sha256) ${REPO_NAME}" | sha256sum --check --status
-printf "Checksum validation complete, installing to /usr/local/bin/ ..."
+printf "Checksum validation complete, installing to /usr/local/bin/ ...\n"
 sudo install ${REPO_NAME} /usr/local/bin/${REPO_NAME} # automatically sets rwxr-xr-x permissions
 rm ${REPO_NAME} ${REPO_NAME}.sha256
