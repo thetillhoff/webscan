@@ -250,9 +250,10 @@ cobra-cli init --viper
 - inputUrl should be saved in each Result, so it can be used in print.
   DNS might have multiple ones, due to following CNAMEs, as can happen with HTTP redirects.
 
+- Add `webscan status` or additional functionality to `webscan version` that checks if a new version is available (`status` could be used to check if internet connectivity is available, plus maybe scanning the local machine with it's public IP)
 
-
-
+- Make renovate automerge bugfixes and minor versions
+- Make renovate autorelease a patch-version if bufixes or minor versions were updated/automerged
 
 TODO add buildargs to example usage sections in all three repos for the actions
 
