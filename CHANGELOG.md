@@ -1,8 +1,12 @@
 # CHANGELOG
 
+## v1.2.0
+- Updated dependencies
+- Added compatibility with new input type 'domain with path' like "github.com/webscan"
+
 ## v1.1.0
-- Add ipv6 blacklist check
-- Add nameserver owner check
+- Added ipv6 blacklist check
+- Added nameserver owner check
 - Fixed bug where headline of scan result would be printed without content
 
 ## v1.0.0
@@ -11,8 +15,8 @@
 - Added domain and ip blacklist search
 
 ## v0.3.1
-- Upgrade dependencies
-- Adjust pipelines
+- Upgraded dependencies
+- Adjusted pipelines
 
 ## v0.3.0
 - Upgrade go version from 1.20 to 1.21
@@ -36,7 +40,7 @@
 
 ## v0.2.1
 - `webscan` now displays status messages during scans
-- Fix bug where scanning ips would trigger dns & ip scan, and vice versa for domain scans
+- Fixed bug where scanning ips would trigger dns & ip scan, and vice versa for domain scans
 
 ## v0.2.0
 - Status code 308 added to valid status codes (only 301 before)

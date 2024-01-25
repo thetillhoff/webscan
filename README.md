@@ -55,6 +55,7 @@ Display dns information about the provided URL, and give improvement recommendat
 - [ ] Detect CNAME loops
 - [ ] Warn if there are too many CNAME redirects (>1)
 - [x] Domain blacklist detection
+- [x] Scan DNS of domain even if input is domain with path (like "github.com/webscan")
 
 - [x] Specify a custom dns server with the `--dns <dns server location>` option.
 
@@ -151,9 +152,10 @@ By default `webscan` assumes you're using https. Yet, it will check whether it's
   - [ ] use nonce or hash for script
   - [ ] use self, or at least https, warn for everything else -> https://storage.googleapis.com/pub-tools-public-publication-data/pdf/45542.pdf
 
-### HTML best-practices
+### HTML content
 Print recommendations on the html code.
 
+- [x] Scan HTML contents of path even if input is domain with path (like "github.com/webscan")
 - [x] Check if compression is enabled
 - [x] HTML validation -> It has to be parsable to look further into the details
 - [x] HTML5 check

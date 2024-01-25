@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	htmlContentScan "github.com/thetillhoff/webscan/pkg/htmlContentScan"
@@ -102,7 +103,12 @@ func (engine Engine) ScanHttpContent(inputUrl string) (Engine, error) {
 			}
 
 			if parsedUrl.Host == "" { // Doesn't include hostname
-				parsedUrl.Host = inputUrl // Add hostname
+				if strings.Contains(inputUrl, "/") {
+					inputUrlParts := strings.SplitN(inputUrl, "/", 2)
+					parsedUrl.Host, parsedUrl.Path = inputUrlParts[0], inputUrlParts[1]+parsedUrl.Path
+				} else {
+					parsedUrl.Host = inputUrl // Add hostname
+				}
 			}
 
 			if !filepath.IsAbs(parsedUrl.Path) { // If not leading '/' in path

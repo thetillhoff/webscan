@@ -6,27 +6,42 @@ import (
 	"net"
 	"net/http"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/thetillhoff/webscan/pkg/dnsScan"
 )
 
-// inputUrl can be domain or IPv4 or IPv6
+// input can be domain or IPv4 or IPv6
 // dnsServer can be empty string
-func (engine Engine) Scan(inputUrl string) (Engine, error) {
+func (engine Engine) Scan(input string) (Engine, error) {
 	var (
 		err error
 
-		client  *http.Client
-		request *http.Request
+		hostname string
+		client   *http.Client
+		request  *http.Request
 	)
 
-	engine.input = inputUrl
+	engine.input = input
 
-	if net.ParseIP(inputUrl) == nil { // If inputUrl is domain, scan dns and ips
-		engine.inputType = Domain
-		if engine.Verbose {
-			fmt.Println("Input identified as Domain.")
+	if net.ParseIP(input) == nil { // If input is domain, scan dns and ips
+		if strings.Contains(input, "/") {
+			hostname = strings.SplitN(input, "/", 2)[0]
+		} else {
+			hostname = input
+		}
+
+		if hostname == input { // If there is no path set in the input
+			engine.inputType = DomainWithPath
+			if engine.Verbose {
+				fmt.Println("Input identified as Domain with path.")
+			}
+		} else { // If there is a path set in the input
+			engine.inputType = Domain
+			if engine.Verbose {
+				fmt.Println("Input identified as Domain.")
+			}
 		}
 
 		if engine.Verbose {
@@ -38,29 +53,29 @@ func (engine Engine) Scan(inputUrl string) (Engine, error) {
 		}
 
 		if engine.DetailedDnsScan {
-			engine, err = engine.ScanDnsDetailed(inputUrl)
+			engine, err = engine.ScanDnsDetailed(hostname)
 			if err != nil {
 				return engine, err
 			}
 		} else {
-			engine, err = engine.ScanDnsSimple(inputUrl)
+			engine, err = engine.ScanDnsSimple(hostname)
 			if err != nil {
 				return engine, err
 			}
 		}
-	} else { // If inputUrl is IPaddress, don't scan dns and ips
-		if dnsScan.IsIpv4(inputUrl) { // If inputUrl is ipv4 address
+	} else { // If input is IPaddress, don't scan dns and ips
+		if dnsScan.IsIpv4(input) { // If input is ipv4 address
 			engine.inputType = IPv4
 			if engine.Verbose {
 				fmt.Println("Input identified as IPv4 address.")
 			}
-			engine.dnsScanEngine.ARecords = append(engine.dnsScanEngine.ARecords, inputUrl)
-		} else { // If inputUrl is ipv6 address
+			engine.dnsScanEngine.ARecords = append(engine.dnsScanEngine.ARecords, input)
+		} else { // If input is ipv6 address
 			engine.inputType = IPv6
 			if engine.Verbose {
 				fmt.Println("Input identified as IPv6 address.")
 			}
-			engine.dnsScanEngine.AAAARecords = append(engine.dnsScanEngine.AAAARecords, inputUrl)
+			engine.dnsScanEngine.AAAARecords = append(engine.dnsScanEngine.AAAARecords, input)
 		}
 	}
 
@@ -84,14 +99,14 @@ func (engine Engine) Scan(inputUrl string) (Engine, error) {
 	}
 
 	if engine.TlsScan {
-		engine, err = engine.ScanTls(inputUrl)
+		engine, err = engine.ScanTls(input)
 		if err != nil {
 			return engine, err
 		}
 	}
 
 	if engine.HttpProtocolScan {
-		engine, err = engine.ScanHttpProtocols(inputUrl)
+		engine, err = engine.ScanHttpProtocols(input)
 		if err != nil {
 			return engine, err
 		}
@@ -107,7 +122,7 @@ func (engine Engine) Scan(inputUrl string) (Engine, error) {
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // Ignore invalid tls certificates here (certificates are checked in another step, and might be interesting what's behind it anyway)
 			},
 		}
-		request, err = http.NewRequest("GET", "https://"+inputUrl, nil) // Only for https pages.
+		request, err = http.NewRequest("GET", "https://"+input, nil) // Only for https pages.
 		if err != nil {
 			return engine, err
 		}
@@ -128,21 +143,21 @@ func (engine Engine) Scan(inputUrl string) (Engine, error) {
 	}
 
 	if engine.isAvailableViaHttps && engine.HttpContentScan {
-		engine, err = engine.ScanHttpContent(inputUrl)
+		engine, err = engine.ScanHttpContent(input)
 		if err != nil {
 			return engine, err
 		}
 	}
 
 	if engine.MailConfigScan {
-		engine, err = engine.ScanMailConfig(inputUrl)
+		engine, err = engine.ScanMailConfig(input)
 		if err != nil {
 			return engine, err
 		}
 	}
 
 	if engine.SubdomainScan {
-		engine, err = engine.ScanSubdomains(inputUrl)
+		engine, err = engine.ScanSubdomains(input)
 		if err != nil {
 			return engine, err
 		}
