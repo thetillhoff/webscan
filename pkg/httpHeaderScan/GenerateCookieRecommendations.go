@@ -6,6 +6,7 @@ import (
 
 func GenerateCookieRecommendations(response *http.Response) (map[string][]string, []string) {
 	var (
+		err                      error
 		allCookieRecommendations = map[string][]string{}
 		otherRecommendations     = []string{}
 
@@ -58,6 +59,11 @@ func GenerateCookieRecommendations(response *http.Response) (map[string][]string
 		if len(cookie.Value) > 450 {
 			// Cookie value length close to 512 chars, which is the upper limit
 			cookieRecommendations = append(cookieRecommendations, "should have a length of <450 characters, because that's quite close to 512 (4k), the upper limit in many browsers.")
+		}
+
+		err = scanCookieChars(cookie.Value)
+		if err != nil {
+			cookieRecommendations = append(cookieRecommendations, "should not contain invalid characters like ( ) < > @ , ; : \\ \" / [ ] ? = { }. "+err.Error())
 		}
 
 		if len(cookieRecommendations) > 0 {

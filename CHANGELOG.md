@@ -3,6 +3,7 @@
 ## v1.2.0
 - Updated dependencies
 - Added compatibility with new input type 'domain with path' like "github.com/webscan"
+- Added valid character scan for cookie headers
 
 ## v1.1.0
 - Added ipv6 blacklist check
