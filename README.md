@@ -139,6 +139,10 @@ By default `webscan` assumes you're using https. Yet, it will check whether it's
   - [x] and https does not redirect, http should redirect to it with 301 or 308 status code. (https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#http-redirect-code)
 - [x] Check which http versions are supported by the webserver (like HTTP/1.1, HTTP/2, HTTP/3 aka QUIC)
 - [ ] Additional flag to follow redirects and check them as well - recursive with exact same flags enabled
+- [x] Scan cookies
+  - [x] amount
+  - [x] length
+  - [ ] used characters
 
 ### Host headers
 [x] Analyze host-headers of the response and recommend best-practices.
