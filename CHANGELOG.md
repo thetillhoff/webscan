@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## v.1.2.2
+- Fixed bug where TLS ciphers weren't tested with new input type 'domain with path
+
 ## v1.2.1
 - Fixed bug where script urls with new input type 'domain with path' didn't work
 - Improved http response/body handling and reduced amount of http clients generated

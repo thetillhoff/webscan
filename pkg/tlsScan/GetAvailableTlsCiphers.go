@@ -2,6 +2,7 @@ package tlsScan
 
 import (
 	"crypto/tls"
+	"strings"
 	"sync"
 )
 
@@ -22,6 +23,8 @@ func GetAvailableTlsCiphers(url string) []TlsCipher {
 		allowedTlsCiphersChan = make(chan TlsCipher, len(tlsVersions)*(len(tls.CipherSuites())+len(tls.InsecureCipherSuites())))
 	)
 
+	urlHost := strings.SplitN(url, "/", 2)[0] // Cleaning url (removing Path)
+
 	for _, cipher := range tls.CipherSuites() { // Add the secure ciphers
 		ciphers = append(ciphers, cipher.ID)
 	}
@@ -31,8 +34,8 @@ func GetAvailableTlsCiphers(url string) []TlsCipher {
 
 	for _, tlsVersion := range tlsVersions { // For each tls version
 		for _, cipher := range ciphers { // For each cipher
-			wg.Add(1)                                                                                           // Wait for one more goroutine to finish
-			go isCipherAvailable(url, TlsCipher{TlsVersion: tlsVersion, Cipher: cipher}, allowedTlsCiphersChan) // Start goroutine that checks if tlsVersion and cipher combination are allowed
+			wg.Add(1)                                                                                               // Wait for one more goroutine to finish
+			go isCipherAvailable(urlHost, TlsCipher{TlsVersion: tlsVersion, Cipher: cipher}, allowedTlsCiphersChan) // Start goroutine that checks if tlsVersion and cipher combination are allowed
 		}
 	}
 
