@@ -2,6 +2,7 @@
 
 ## v.1.2.2
 - Fixed bug where TLS ciphers weren't tested with new input type 'domain with path
+- Fixed bug where newline was printed between http content scan result headline and content
 
 ## v1.2.1
 - Fixed bug where script urls with new input type 'domain with path' didn't work

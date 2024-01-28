@@ -67,7 +67,10 @@ func (engine Engine) PrintHttpContentScanResults() {
 			totalSize := engine.httpContentHtmlSize + totalStylesheetSize + totalScriptSize
 			sizeMessages = append(sizeMessages, "Total download size (without media): "+strconv.Itoa(totalSize/1000)+"kB")
 
-			fmt.Println()
+			if len(engine.httpContentRecommendations) > 0 { // Intermediate newline only needed if other text was already written
+				fmt.Println()
+			}
+
 			for _, sizeMessage := range sizeMessages {
 				fmt.Println(sizeMessage)
 			}
