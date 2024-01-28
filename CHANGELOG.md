@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## v.1.2.2
+## v1.2.2
 - Fixed bug where TLS ciphers weren't tested with new input type 'domain with path
 - Fixed bug where newline was printed between http content scan result headline and content
 
