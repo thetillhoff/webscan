@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/thetillhoff/webscan/pkg/dnsScan"
+	"github.com/thetillhoff/webscan/pkg/httpClient"
 	"github.com/thetillhoff/webscan/pkg/tlsScan"
 )
 
@@ -36,6 +37,7 @@ type Engine struct {
 	dnsServer string
 	resolver  *net.Resolver
 	response  *http.Response // internal use only
+	client    httpClient.Client
 
 	// Results
 	dnsScanEngine dnsScan.Engine
@@ -63,11 +65,11 @@ type Engine struct {
 	tlsCiphers []tlsScan.TlsCipher
 
 	httpContentRecommendations  []string
-	httpContentHtmlSizekB       float64
+	httpContentHtmlSize         int
 	httpContentInlineStyleSize  int
 	httpContentInlineScriptSize int
-	httpContentScriptSizes      map[string]float64
-	httpContentStylesheetSizes  map[string]float64
+	httpContentScriptSizes      map[string]int
+	httpContentStylesheetSizes  map[string]int
 
 	subdomains []string
 

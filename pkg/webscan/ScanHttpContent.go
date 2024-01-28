@@ -45,7 +45,7 @@ func (engine Engine) ScanHttpContent(inputUrl string) (Engine, error) {
 	}
 	defer engine.response.Body.Close()
 
-	engine.httpContentHtmlSizekB = float64(len(body)) / 1000 // Get html size
+	engine.httpContentHtmlSize = len(body)
 
 	// HTML
 
@@ -81,7 +81,7 @@ func (engine Engine) ScanHttpContent(inputUrl string) (Engine, error) {
 		scriptSources = htmlContentScan.GetExternalScriptSources(document)
 
 		if len(stylesheetSources) > 0 {
-			engine.httpContentStylesheetSizes = map[string]float64{}
+			engine.httpContentStylesheetSizes = map[string]int{}
 		}
 
 		for _, stylesheetSource := range stylesheetSources {
@@ -114,16 +114,18 @@ func (engine Engine) ScanHttpContent(inputUrl string) (Engine, error) {
 			if !filepath.IsAbs(parsedUrl.Path) { // If not leading '/' in path
 				parsedUrl.Path = "/" + parsedUrl.Path // Add leading '/'
 			}
-			engine.httpContentStylesheetSizes[stylesheetSource], err = htmlContentScan.GetSizeInKb(parsedUrl.String())
+
+			body, err = engine.client.GetBody(parsedUrl.String())
 			if err != nil {
 				return engine, err
 			}
+			engine.httpContentStylesheetSizes[stylesheetSource] = len(body)
 		}
 
 		// Scripts
 
 		if len(scriptSources) > 0 {
-			engine.httpContentScriptSizes = map[string]float64{}
+			engine.httpContentScriptSizes = map[string]int{}
 		}
 
 		for _, scriptSource := range scriptSources {
@@ -151,10 +153,12 @@ func (engine Engine) ScanHttpContent(inputUrl string) (Engine, error) {
 			if !filepath.IsAbs(parsedUrl.Path) { // If not leading '/' in path
 				parsedUrl.Path = "/" + parsedUrl.Path // Add leading '/'
 			}
-			engine.httpContentScriptSizes[scriptSource], err = htmlContentScan.GetSizeInKb(parsedUrl.String())
+
+			body, err = engine.client.GetBody(parsedUrl.String())
 			if err != nil {
 				return engine, err
 			}
+			engine.httpContentScriptSizes[scriptSource] = len(body)
 		}
 	}
 

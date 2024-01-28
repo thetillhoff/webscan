@@ -1,15 +1,13 @@
 package webscan
 
 import (
-	"crypto/tls"
 	"fmt"
 	"net"
-	"net/http"
-	"reflect"
 	"strings"
 	"time"
 
 	"github.com/thetillhoff/webscan/pkg/dnsScan"
+	"github.com/thetillhoff/webscan/pkg/httpClient"
 )
 
 // input can be domain or IPv4 or IPv6
@@ -19,8 +17,6 @@ func (engine Engine) Scan(input string) (Engine, error) {
 		err error
 
 		hostname string
-		client   *http.Client
-		request  *http.Request
 	)
 
 	engine.input = input
@@ -112,37 +108,30 @@ func (engine Engine) Scan(input string) (Engine, error) {
 		}
 	}
 
-	if engine.isAvailableViaHttps && (engine.HttpHeaderScan || engine.HttpContentScan) {
-		client = &http.Client{
-			Timeout: 5 * time.Second, // TODO 5s might be a bit long?
-			CheckRedirect: func(req *http.Request, via []*http.Request) error {
-				return http.ErrUseLastResponse
-			}, // Don't follow redirects // TODO Should we follow redirects or not?
-			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // Ignore invalid tls certificates here (certificates are checked in another step, and might be interesting what's behind it anyway)
-			},
-		}
-		request, err = http.NewRequest("GET", "https://"+input, nil) // Only for https pages.
+	if engine.isAvailableViaHttp || engine.isAvailableViaHttps {
+		engine.client = httpClient.NewClient(
+			5*time.Second,
+			10,
+			false,
+			"Go-http-client/1.1",
+		)
+	}
+
+	if engine.isAvailableViaHttps && (engine.HttpHeaderScan || engine.HttpContentScan) { // TODO why only for https?
+		engine.response, err = engine.client.MakeRequest("GET", "https://"+input, nil) // TODO why only for https?
 		if err != nil {
-			return engine, err
-		}
-		request.Header.Set("User-Agent", "Go-http-client/1.1") // Set "random" valid user agent to prevent bot-detection (as it happens f.e. at amazon.com)
-		// TODO request.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/113.0") // Set "random" valid user agent to prevent bot-detection (as it happens f.e. at amazon.com)
-		engine.response, err = client.Do(request)
-		if err != nil {
-			fmt.Println(err, reflect.TypeOf(err))
 			return engine, err
 		}
 	}
 
-	if engine.isAvailableViaHttps && engine.HttpHeaderScan {
+	if engine.isAvailableViaHttps && engine.HttpHeaderScan { // TODO why only for https?
 		engine, err = engine.ScanHttpHeaders()
 		if err != nil {
 			return engine, err
 		}
 	}
 
-	if engine.isAvailableViaHttps && engine.HttpContentScan {
+	if engine.isAvailableViaHttps && engine.HttpContentScan { // TODO why only for https?
 		engine, err = engine.ScanHttpContent(input)
 		if err != nil {
 			return engine, err

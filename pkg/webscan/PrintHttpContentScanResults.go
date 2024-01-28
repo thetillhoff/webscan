@@ -9,11 +9,11 @@ func (engine Engine) PrintHttpContentScanResults() {
 	var (
 		sizeMessages = []string{}
 
-		stylesheetFileCount int     = 0
-		totalStylesheetSize float64 = 0
+		stylesheetFileCount int = 0
+		totalStylesheetSize int = 0
 
-		scriptFileCount int     = 0
-		totalScriptSize float64 = 0
+		scriptFileCount int = 0
+		totalScriptSize int = 0
 	)
 
 	if engine.HttpContentScan {
@@ -30,9 +30,9 @@ func (engine Engine) PrintHttpContentScanResults() {
 
 		// HTML
 
-		sizeMessages = append(sizeMessages, "HTML size: "+strconv.FormatFloat(engine.httpContentHtmlSizekB, 'f', -1, 64)+"kb")
-		if engine.httpContentHtmlSizekB > 200 { // Size is larger than 200kb
-			sizeMessages = append(sizeMessages, "  It's recommended to be smaller than 200kb.")
+		sizeMessages = append(sizeMessages, "HTML size: "+strconv.Itoa(engine.httpContentHtmlSize/1000)+"kB")
+		if engine.httpContentHtmlSize > 200000 { // Size is larger than 200kB
+			sizeMessages = append(sizeMessages, "  It's recommended to be smaller than 200kB.")
 		}
 
 		// Inline style
@@ -51,7 +51,7 @@ func (engine Engine) PrintHttpContentScanResults() {
 			stylesheetFileCount = stylesheetFileCount + 1
 			totalStylesheetSize = totalStylesheetSize + size
 		}
-		sizeMessages = append(sizeMessages, "External CSS size: "+strconv.FormatFloat(totalStylesheetSize, 'f', -1, 64)+"kb")
+		sizeMessages = append(sizeMessages, "External CSS size: "+strconv.Itoa(totalStylesheetSize/1000)+"kB")
 
 		// Scripts
 
@@ -59,13 +59,13 @@ func (engine Engine) PrintHttpContentScanResults() {
 			scriptFileCount = scriptFileCount + 1
 			totalScriptSize = totalScriptSize + size
 		}
-		sizeMessages = append(sizeMessages, "External JS size: "+strconv.FormatFloat(totalScriptSize, 'f', -1, 64)+"kb")
+		sizeMessages = append(sizeMessages, "External JS size: "+strconv.Itoa(totalScriptSize/1000)+"kB")
 
 		// Total
 
-		if engine.httpContentHtmlSizekB > 0 {
-			totalsize := engine.httpContentHtmlSizekB + totalStylesheetSize + totalScriptSize
-			sizeMessages = append(sizeMessages, "Total download size (without media): "+strconv.FormatFloat(totalsize, 'f', -1, 64)+"kb")
+		if engine.httpContentHtmlSize > 0 {
+			totalSize := engine.httpContentHtmlSize + totalStylesheetSize + totalScriptSize
+			sizeMessages = append(sizeMessages, "Total download size (without media): "+strconv.Itoa(totalSize/1000)+"kB")
 
 			fmt.Println()
 			for _, sizeMessage := range sizeMessages {
