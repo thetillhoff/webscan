@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## v.1.2.3
+## v1.2.3
 - Fixed bug where DNS scan results weren't shown with new input type 'domain with path'
 
 ## v1.2.2
