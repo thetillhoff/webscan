@@ -1,7 +1,10 @@
 # CHANGELOG
 
+## v.1.2.3
+- Fixed bug where DNS scan results weren't shown with new input type 'domain with path'
+
 ## v1.2.2
-- Fixed bug where TLS ciphers weren't tested with new input type 'domain with path
+- Fixed bug where TLS ciphers weren't tested with new input type 'domain with path'
 - Fixed bug where newline was printed between http content scan result headline and content
 
 ## v1.2.1
