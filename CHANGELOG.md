@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## v1.2.4
+- Update TLS cipher recommendations
+
 ## v1.2.3
 - Fixed bug where DNS scan results weren't shown with new input type 'domain with path'
 
