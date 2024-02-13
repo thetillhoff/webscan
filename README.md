@@ -26,18 +26,7 @@ If you're feeling fancy:
 curl -s https://raw.githubusercontent.com/thetillhoff/webscan/main/install.sh | sh
 ```
 
-or manually (requires `jq`):
-
-```sh
-OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
-WEBSCAN_VERSION="$(wget -qO- https://api.github.com/repos/thetillhoff/webscan/releases/latest | jq -r '.tag_name')"
-wget webscan "https://github.com/thetillhoff/webscan/releases/download/${WEBSCAN_VERSION}/webscan_${OS}_amd64"
-wget webscan.sha256 "https://github.com/thetillhoff/webscan/releases/download/${WEBSCAN_VERSION}/webscan_${OS}_amd64.sha256"
-echo "$(cat webscan.sha256) webscan" | sha256sum --check --status # If this fails, don't continue
-printf "Checksum validation complete, installing to /usr/local/bin/ ...\n"
-sudo install webscan /usr/local/bin/webscan # automatically sets rwxr-xr-x permissions
-rm webscan webscan.sha256
-```
+or manually from https://github.com/thetillhoff/webscan/releases/latest.
 
 ## Features
 

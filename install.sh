@@ -4,8 +4,10 @@ set -e # Fail and exit on error of any command
 
 REPO_OWNER='thetillhoff'
 REPO_NAME='webscan'
+CLI_NAME='webscan'
 
 OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
+ARCH="$(uname -m)"
 
 # Check if jq is available
 if [ ! 'command -v jq' ]; then
@@ -32,11 +34,11 @@ else
 fi
 
 LATEST_VERSION="$($DOWNLOAD_BODY_CMD https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest | jq -r '.tag_name')"
-echo https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${LATEST_VERSION}/webscan_${OS}_amd64
-echo https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${LATEST_VERSION}/webscan_${OS}_amd64.sha256
-$DOWNLOAD_FILE_CMD ${REPO_NAME} "https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${LATEST_VERSION}/webscan_${OS}_amd64"
-$DOWNLOAD_FILE_CMD ${REPO_NAME}.sha256 "https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${LATEST_VERSION}/webscan_${OS}_amd64.sha256"
-printf "$(cat ${REPO_NAME}.sha256) ${REPO_NAME}" | sha256sum --check --status
+echo https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${LATEST_VERSION}/${CLI_NAME}_${OS}_${ARCH}
+echo https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${LATEST_VERSION}/${CLI_NAME}_${OS}_${ARCH}.sha256
+$DOWNLOAD_FILE_CMD ${CLI_NAME} "https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${LATEST_VERSION}/${CLI_NAME}_${OS}_${ARCH}"
+$DOWNLOAD_FILE_CMD ${CLI_NAME}.sha256 "https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${LATEST_VERSION}/${CLI_NAME}_${OS}_${ARCH}.sha256"
+printf "$(cat ${CLI_NAME}.sha256) ${CLI_NAME}" | sha256sum --check --status
 printf "Checksum validation complete, installing to /usr/local/bin/ ...\n"
-sudo install ${REPO_NAME} /usr/local/bin/${REPO_NAME} # automatically sets rwxr-xr-x permissions
-rm ${REPO_NAME} ${REPO_NAME}.sha256
+sudo install ${CLI_NAME} /usr/local/bin/${CLI_NAME} # automatically sets rwxr-xr-x permissions
+rm ${CLI_NAME} ${CLI_NAME}.sha256
