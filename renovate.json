@@ -16,10 +16,5 @@
       "matchCurrentVersion": "!/^0/",
       "automerge": true
     }
-  ],
-  "changelog": {
-    "commitMessage": "chore(changelog): updated dependencies to ${nextVersion}",
-    "unreleased": true,
-    "groupByRelease": true
-  }
+  ]
 }
