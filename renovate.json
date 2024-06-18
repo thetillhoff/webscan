@@ -1,0 +1,25 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "schedule": [
+    "every weekend"
+  ],
+  "extends": [
+    "config:base",
+    ":disableDependencyDashboard"
+  ],
+  "postUpdateOptions": [
+    "gomodTidy"
+  ],
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "matchCurrentVersion": "!/^0/",
+      "automerge": true
+    }
+  ],
+  "changelog": {
+    "commitMessage": "chore(changelog): updated dependencies to ${nextVersion}",
+    "unreleased": true,
+    "groupByRelease": true
+  }
+}
