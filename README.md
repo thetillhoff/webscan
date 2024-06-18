@@ -200,29 +200,6 @@ Print recommendations on the html code.
 - [ ] check if sitemap exists
 - [ ] check if incompatible plugins like flash are used
 
-## Development
-
-### How to start from scratch
-
-```sh
-go mod init github.com/thetillhoff/webscan
-# go install github.com/spf13/cobra-cli@latest
-cobra-cli init --viper
-# cobra-cli add <command>
-```
-
-### How to test
-
-`go test ./...`
-
-### Decisions / best practices
-
-- Don't have global variables in a package -> they would be obstructed for the consumer and are not threadsafe
-- Don't use functional options -> they require a lot of code / maintenance. Also, having functions to set a context object every time a function is called is tedious
-- Use Context (called engine in this project). Not necessarily the go-context package, but implement "instance of package" as context and use that.
-- For packages that have "global" variables / arguments, use Context (called "engine" in this project) as well.
-- While making this tool available from commandline with the frameworks cobra and viper, I also tried WASM for running it in browsers.
-- WASM doesn't work in this case, because the http package isn't available there.
 
 
 ## Other todos
