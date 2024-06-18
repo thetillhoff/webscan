@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## v1.2.5
+- Update dependencies
+
 ## v1.2.4
 - Update TLS cipher recommendations
 
