@@ -15,9 +15,11 @@ In addition to the library, it also contains a cli-wrapper around it.
 ## Usage
 
 ```sh
-webscan google.com -a
-webscan 192.168.0.1 -a
+webscan google.com -a # Scan domain and website
+webscan 192.168.0.1 -a # Scan IP and website
+webscan https://github.com/thetillhoff/webscan -a # Scan domain and website at specific path
 ```
+
 
 ## Installation
 
@@ -27,6 +29,7 @@ curl -s https://raw.githubusercontent.com/thetillhoff/webscan/main/install.sh | 
 ```
 
 or manually from https://github.com/thetillhoff/webscan/releases/latest.
+
 
 ## Features
 
@@ -79,7 +82,7 @@ Display dns information about the provided URL, and give improvement recommendat
   - [ ] crawl the website itself and the links it has for subdomains
   - [ ] second source for cert-transparency-logs, f.e. https://github.com/SSLMate/certspotter
   - [ ] other 3rd party databases like virustotal, securitytrails, and dnsdumpster
-  - [ ] 3rd party apis like Amass and PassiveTotal
+  - [ ] 3rd party apis like Amass, PassiveTotal, and Shodan
 
 ### IPv6 readiness
 - [x] Check if both ipv4 and ipv6 entries were found.
@@ -95,7 +98,7 @@ Display dns information about the provided URL, and give improvement recommendat
 ### Open ports
 - [x] Check all found ipv4 and ipv6 entries for relevant open ports. Examples for relevant ports are SSH, FTP, SMB, SMTP, HTTP, POSTGRES
   - [ ] Check whether FTP is disabled completely (only use SFTP or FTPS)
-  - [?] Check whether SSH has password auth disabled and uses a secure configuration
+  - [ ] Check whether SSH has password auth disabled and uses a secure configuration
 - [x] Check ports in parallel, since the connection timeout is set to 2s, which can add up quite much.
 - [x] Check if open ports match across all IPs.
 - [x] If http detection feature is enabled, check HTTP and HTTPS ports even if this feature is not enabled.
@@ -110,7 +113,7 @@ Display dns information about the provided URL, and give improvement recommendat
 - [ ] TLS 1.3 should be supported
 
 - cipher recommendations like
-  - [x] Recommending against RSA, as it's possible to decrypt traffic at a later time should the certificate be compromised in the future.
+  <!-- - [x] Recommending against RSA, as it's possible to decrypt traffic at a later time should the certificate be compromised in the future. -->
   - [x] Recommending against 3DES, as it's vulnerable to birthday attacks (https://sweet32.info/).
   - [x] Recommending against RC4, as it's exploitable biases can lead to plaintext recovery without side channels (https://www.rc4nomore.com/).
   - [x] Recommending against CBC, as it seems fundamentally flawed since the Lucky13 vulnerability was discovered (https://en.wikipedia.org/wiki/Lucky_Thirteen_attack).
@@ -190,7 +193,7 @@ Print recommendations on the html code.
   - [ ] performance index (download speed ( first time, second time), render speed)
   - [ ] check for console errors
 
-- [ ] Check if there's a /.well-known/security.txt file.
+- [ ] Check if there's a /.well-known/security.txt file
 
 ### SEO recommendations
 - [ ] check if robots.txt exists
@@ -226,14 +229,10 @@ cobra-cli init --viper
 
 - Check readme of thetillhoff.de (accessibility, other features, plus caddyfile, ...)
 - make use of https://github.com/gosuri/uilive & https://github.com/gosuri/uiprogress for output
-- if advanced steps like "-w" are stated, warnings of all previous steps should be displayed anyway.
 - TTL for dns and html caching
 - urls with or without ending slash / filename & extension
 - Check favicons (https://css-tricks.com/favicons-how-to-make-sure-browsers-only-download-the-svg-version/, https://evilmartians.com/chronicles/how-to-favicon-in-2021-six-files-that-fit-most-needs)
 
-- version variable has to be injected at build/release time
-- `-a` should run all things, which means, print all available information, including dns, ip, ...
-  `-w` should be used for smaller checks
 - `-w` should tell about timings, too
 
 - inputUrl should be saved in each Result, so it can be used in print.
@@ -243,6 +242,8 @@ cobra-cli init --viper
 
 - Make renovate automerge bugfixes and minor versions
 - Make renovate autorelease a patch-version if bufixes or minor versions were updated/automerged
+
+- list all domains that are referenced (like fonts.google.com, ...)
 
 TODO add buildargs to example usage sections in all three repos for the actions
 
