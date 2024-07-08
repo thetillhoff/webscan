@@ -1,15 +1,23 @@
 # webscan
 
-This repository contains a library to verify things like
+Webscan tries to retrieve as much information from URLs and IPs as is possible from an external perspective.
+It covers
 
-- DNS
-- host-headers
+- DNS configuration
+- Domain and Nameserver ownerships
+- IPv4 and IPv6 availability
+- IP address ownerships
+- Blacklisting status
+- Open ports
 - SSL validity
+- SSL configuration safety
+- http/s configuration with redirects
+- host-headers
+- cookies
+- html, js, css sizes
 - ...
 
 of a specified url and give improvement recommendations based on best-practices.
-
-In addition to the library, it also contains a cli-wrapper around it.
 
 
 ## Usage
@@ -18,6 +26,8 @@ In addition to the library, it also contains a cli-wrapper around it.
 webscan google.com -a # Scan domain and website
 webscan 192.168.0.1 -a # Scan IP and website
 webscan https://github.com/thetillhoff/webscan -a # Scan domain and website at specific path
+
+webscan --help # Learn more about running specific scans
 ```
 
 
