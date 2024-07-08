@@ -7,8 +7,6 @@ REPO_NAME='webscan'
 CLI_NAME='webscan'
 
 OS="$(uname -s | tr '[:upper:]' '[:lower:]')" # f.e. 'darwin'
-ARCH="$(uname -m)" # f.e. 'arm64'
-
 # Verify OS
 case "${OS}" in
   darwin|linux|windows) ;;
@@ -19,6 +17,10 @@ EOF
   exit 0 ;;
 esac
 
+ARCH="$(uname -m)" # f.e. 'arm64'
+if [ "${ARCH}" == "x86_64" ]; then # Overwrite ARCH, required for WSL
+  ARCH=amd64
+fi
 # Verify ARCH
 case "${ARCH}" in
   amd64|arm64) ;;
