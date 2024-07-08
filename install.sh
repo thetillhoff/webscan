@@ -6,8 +6,29 @@ REPO_OWNER='thetillhoff'
 REPO_NAME='webscan'
 CLI_NAME='webscan'
 
-OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
-ARCH="$(uname -m)"
+OS="$(uname -s | tr '[:upper:]' '[:lower:]')" # f.e. 'darwin'
+ARCH="$(uname -m)" # f.e. 'arm64'
+
+# Verify OS
+case "${OS}" in
+  darwin|linux|windows) ;;
+  *) cat <<EOF
+Unsupported OS type ${OS} detected. Supported are darwin, linux, windows.
+Feel free to open an issue or PR for your OS at https://github.com/thetillhoff/webscan."
+EOF
+  exit 0 ;;
+esac
+
+# Verify ARCH
+case "${ARCH}" in
+  amd64|arm64) ;;
+  *) cat <<EOF
+Unsupported ARCH type ${ARCH} detected. Supported are amd64, arm64.
+Feel free to open an issue or PR for your ARCH at https://github.com/thetillhoff/webscan.
+EOF
+  exit 0 ;;
+esac
+
 
 # Check if jq is available
 if [ ! 'command -v jq' ]; then
