@@ -1,10 +1,15 @@
 # CHANGELOG
 
+## v1.2.6
+- Added support for `arm64` ARCH type
+- Added OS and ARCH verification to `install.sh` script.
+- Updated dependencies
+
 ## v1.2.5
-- Update dependencies
+- Updated dependencies
 
 ## v1.2.4
-- Update TLS cipher recommendations
+- Updated TLS cipher recommendations
 
 ## v1.2.3
 - Fixed bug where DNS scan results weren't shown with new input type 'domain with path'
