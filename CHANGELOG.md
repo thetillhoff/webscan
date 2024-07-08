@@ -1,5 +1,11 @@
 # CHANGELOG
 
+##
+- Added openssf badge - login delayed ... see https://github.com/coreinfrastructure/best-practices-badge/issues/2150
+
+## v1.2.7
+- Added goreportcard badge with automatic refresh on releases
+
 ## v1.2.6
 - Added support for `arm64` ARCH type
 - Added OS and ARCH verification to `install.sh` script.

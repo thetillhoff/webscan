@@ -1,5 +1,7 @@
 # webscan
 
+[![Go Report Card](https://goreportcard.com/badge/thetillhoff/webscan)](https://goreportcard.com/report/thetillhoff/webscan)
+
 Webscan tries to retrieve as much information from URLs and IPs as is possible from an external perspective.
 It covers
 
