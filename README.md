@@ -19,7 +19,7 @@ It covers
 - html, js, css sizes
 - ...
 
-of a specified url and give improvement recommendations based on best-practices.
+of a specified url or ip and gives improvement recommendations based on best-practices.
 
 
 ## Usage
