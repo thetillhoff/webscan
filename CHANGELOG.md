@@ -1,6 +1,7 @@
 # CHANGELOG
 
 ##
+- Removed `-a` (run all scans) argument and made it the default configuration if no specific scans are enabled
 - Added openssf badge - login delayed ... see https://github.com/coreinfrastructure/best-practices-badge/issues/2150
 
 ## v1.2.7

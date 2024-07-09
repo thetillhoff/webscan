@@ -25,6 +25,7 @@ type Engine struct {
 	IpScan           bool
 	DetailedPortScan bool
 	TlsScan          bool
+	HttpAllScans     bool
 	HttpProtocolScan bool
 	HttpHeaderScan   bool
 	HttpContentScan  bool
@@ -114,4 +115,74 @@ func EngineWithCustomDns(inputUrl string, dnsServer string) Engine {
 		},
 	}
 	return engine
+}
+
+func (engine *Engine) EnableDetailedDnsScan() {
+	engine.DetailedDnsScan = true
+}
+
+func (engine *Engine) EnableIpScan() {
+	engine.IpScan = true
+}
+
+func (engine *Engine) EnableDetailedPortScan() {
+	engine.DetailedPortScan = true
+}
+
+func (engine *Engine) EnableTlsScan() {
+	engine.TlsScan = true
+}
+
+func (engine *Engine) EnableHttpProtocolScan() {
+	engine.HttpProtocolScan = true
+}
+
+func (engine *Engine) EnableHttpHeaderScan() {
+	engine.HttpHeaderScan = true
+}
+
+func (engine *Engine) EnableHttpContentScan() {
+	engine.HttpContentScan = true
+}
+
+func (engine *Engine) EnableAllHttpScans() {
+	engine.EnableHttpProtocolScan()
+	engine.EnableHttpHeaderScan()
+	engine.EnableHttpContentScan()
+}
+
+func (engine *Engine) EnableMailConfigScan() {
+	engine.MailConfigScan = true
+}
+
+func (engine *Engine) EnableSubdomainScan() {
+	engine.SubdomainScan = true
+}
+
+func (engine *Engine) EnableAllScans() {
+	engine.EnableDetailedDnsScan()
+	engine.EnableIpScan()
+	engine.EnableDetailedPortScan()
+	engine.EnableTlsScan()
+	engine.EnableHttpProtocolScan()
+	engine.EnableHttpHeaderScan()
+	engine.EnableHttpContentScan()
+	engine.EnableMailConfigScan()
+	engine.EnableSubdomainScan()
+}
+
+func (engine *Engine) EnableAllScansIfNoneAreExplicitlySet() {
+
+	if !(engine.DetailedDnsScan ||
+		engine.IpScan ||
+		engine.DetailedPortScan ||
+		engine.TlsScan ||
+		engine.HttpProtocolScan ||
+		engine.HttpHeaderScan ||
+		engine.HttpContentScan ||
+		engine.MailConfigScan ||
+		engine.SubdomainScan) { // If no Scans are enabled, enable all by default
+
+		engine.EnableAllScans()
+	}
 }

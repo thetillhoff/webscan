@@ -16,7 +16,6 @@ import (
 var cfgFile string
 var dnsServer string
 var dkimSelector string
-var all bool
 var follow bool
 var verbose bool
 
@@ -55,27 +54,36 @@ var rootCmd = &cobra.Command{
 		engine.FollowRedirects = follow // follow is always optional
 		engine.Verbose = verbose        // verbose is always optional
 
-		if all {
-			engine.DetailedDnsScan = true
-			engine.IpScan = true
-			engine.DetailedPortScan = true
-			engine.TlsScan = true
-			engine.HttpProtocolScan = true
-			engine.HttpHeaderScan = true
-			engine.HttpContentScan = true
-			// engine.MailConfigScan = true // TODO
-			// engine.SubdomainScan = true // TODO
-		} else {
-			engine.DetailedDnsScan = detailedDnsScan
-			engine.IpScan = ipScan
-			engine.DetailedPortScan = detailedPortScan
-			engine.TlsScan = tlsScan
-			engine.HttpProtocolScan = httpProtocolScan || webScans
-			engine.HttpHeaderScan = httpHeaderScan || webScans
-			engine.HttpContentScan = httpContentScan || webScans
-			engine.MailConfigScan = mailConfigScan
-			engine.SubdomainScan = subdomainScan
+		if detailedDnsScan {
+			engine.EnableDetailedDnsScan()
 		}
+		if ipScan {
+			engine.EnableIpScan()
+		}
+		if detailedPortScan {
+			engine.EnableDetailedPortScan()
+		}
+		if tlsScan {
+			engine.EnableTlsScan()
+		}
+		if httpProtocolScan {
+			engine.EnableHttpProtocolScan()
+		}
+		if httpHeaderScan {
+			engine.EnableHttpHeaderScan()
+		}
+		if httpContentScan {
+			engine.EnableHttpContentScan()
+		}
+		if webScans {
+			engine.EnableAllHttpScans()
+		}
+		// if mailConfigScan { // TODO
+		// 	engine.EnableMailConfigScan()
+		// }
+		// if subdomainScan { // TODO
+		// 	engine.EnableSubdomainScan()
+		// }
 
 		engine, err = engine.Scan(url)
 		if err != nil {
@@ -83,7 +91,6 @@ var rootCmd = &cobra.Command{
 		}
 
 		engine.PrintScanResults()
-
 	},
 }
 
@@ -107,7 +114,6 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVar(&dnsServer, "ns", "", "custom dns server (default uses system dns)")
 	rootCmd.PersistentFlags().StringVar(&dkimSelector, "dkim-selector", "", "set dkim-selector as in <dkim-selector>._domainkey.<your-domain>.<tld>")
-	rootCmd.PersistentFlags().BoolVarP(&all, "all", "a", false, "enables all checks")
 	rootCmd.PersistentFlags().BoolVarP(&follow, "follow", "f", false, "enables following redirects and CNAME checks")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "increase verbosity")
 

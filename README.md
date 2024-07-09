@@ -25,9 +25,9 @@ of a specified url or ip and gives improvement recommendations based on best-pra
 ## Usage
 
 ```sh
-webscan google.com -a # Scan domain and website
-webscan 192.168.0.1 -a # Scan IP and website
-webscan https://github.com/thetillhoff/webscan -a # Scan domain and website at specific path
+webscan google.com # Scan domain and website
+webscan 192.168.0.1 # Scan IP and website
+webscan https://github.com/thetillhoff/webscan # Scan domain and website at specific path
 
 webscan --help # Learn more about running specific scans
 ```
