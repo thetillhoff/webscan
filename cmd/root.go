@@ -85,6 +85,8 @@ var rootCmd = &cobra.Command{
 		// 	engine.EnableSubdomainScan()
 		// }
 
+		engine.EnableAllScansIfNoneAreExplicitlySet()
+
 		engine, err = engine.Scan(url)
 		if err != nil {
 			log.Fatalln(err)
