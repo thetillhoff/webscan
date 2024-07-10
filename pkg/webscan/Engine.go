@@ -167,8 +167,8 @@ func (engine *Engine) EnableAllScans() {
 	engine.EnableHttpProtocolScan()
 	engine.EnableHttpHeaderScan()
 	engine.EnableHttpContentScan()
-	engine.EnableMailConfigScan()
-	engine.EnableSubdomainScan()
+	// engine.EnableMailConfigScan() // TODO
+	// engine.EnableSubdomainScan() // TODO
 }
 
 func (engine *Engine) EnableAllScansIfNoneAreExplicitlySet() {
