@@ -237,3 +237,11 @@ Print recommendations on the html code.
 TODO add buildargs to example usage sections in all three repos for the actions
 
 git describe --tags # for latest tag
+
+- check if both ipv4 and ipv6 mx records exist (follow cnames on mx records automatically)
+
+- add unit tests
+
+- add functional tests with expected results on example website (github-pages?)
+
+- add check of version in tcp greeting / header message. openssh tells the client about it's version there.
