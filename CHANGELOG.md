@@ -1,7 +1,8 @@
 # CHANGELOG
 
-##
-- Added openssf badge - login delayed ... see https://github.com/coreinfrastructure/best-practices-badge/issues/2150
+## v2.0.3
+- Added openssf badge - login delayed ... see https://github.com/coreinfrastructure/best-practices-badge/issues/2150.
+- Added Makefile to support brew in the future.
 
 ## v2.0.2
 - Disabled automatic mail-config and sub-domain scan for implication of `-a` (run all scans).
