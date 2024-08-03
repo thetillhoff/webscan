@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/PuerkitoBio/goquery v1.9.2
 	github.com/openrdap/rdap v0.9.1
-	github.com/quic-go/quic-go v0.45.1
+	github.com/quic-go/quic-go v0.45.2
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
 	golang.org/x/net v0.27.0
