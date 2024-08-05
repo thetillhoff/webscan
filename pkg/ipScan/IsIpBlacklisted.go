@@ -3,6 +3,7 @@ package ipScan
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"math/rand"
 	"net"
 	"net/netip"
@@ -34,6 +35,8 @@ func IsIpBlacklisted(ip string, verbose bool) ([]string, error) {
 		blacklistsWithMatches = []string{}
 	)
 
+	slog.Debug("ipScan: Checking for ip blacklisting started")
+
 	if IsIpv4(ip) { // If ip is ipv4
 		network = "ip4"
 		for _, snippet := range strings.Split(ip, ".") {
@@ -63,7 +66,7 @@ func IsIpBlacklisted(ip string, verbose bool) ([]string, error) {
 		}
 
 		if verbose {
-			fmt.Println("Checking ip blacklisting via", searchPrefix+blacklist)
+			slog.Debug("checking ip blacklisting", "blacklist", searchPrefix+blacklist)
 		}
 
 		response, err = resolver.LookupIP(context.Background(), network, searchPrefix+blacklist)
@@ -85,6 +88,8 @@ func IsIpBlacklisted(ip string, verbose bool) ([]string, error) {
 			}
 		}
 	}
+
+	slog.Debug("ipScan: Checking for ip blacklisting completed")
 
 	return blacklistsWithMatches, nil
 }

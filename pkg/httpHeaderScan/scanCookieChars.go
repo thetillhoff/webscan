@@ -2,6 +2,7 @@ package httpHeaderScan
 
 import (
 	"errors"
+	"log/slog"
 	"strings"
 )
 
@@ -31,6 +32,8 @@ func scanCookieChars(cookie string) error {
 		detectedInvalidChars = ""
 	)
 
+	slog.Debug("httpHeaderScan: Scanning cookie characters started")
+
 	for _, invalidChar := range invalidChars {
 		if strings.Contains(cookie, invalidChar) {
 			detectedInvalidChars = detectedInvalidChars + invalidChar
@@ -45,6 +48,8 @@ func scanCookieChars(cookie string) error {
 	default:
 		err = errors.New("Invalid characters are `" + detectedInvalidChars + "`.")
 	}
+
+	slog.Debug("httpHeaderScan: Scanning cookie characters completed")
 
 	return err
 }

@@ -1,5 +1,8 @@
 # CHANGELOG
 
+##
+- Added progress updates with spinner and - depending on type of scan `X/total` status updates with numbers
+
 ## v1.2.5
 - Update dependencies
 

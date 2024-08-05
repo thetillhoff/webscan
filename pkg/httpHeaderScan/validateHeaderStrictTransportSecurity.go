@@ -2,6 +2,7 @@ package httpHeaderScan
 
 import (
 	"errors"
+	"log/slog"
 	"strconv"
 	"strings"
 )
@@ -17,6 +18,8 @@ func validateHeaderStrictTransportSecurity(content string) error {
 		includeSubdomains bool
 		preload           bool
 	)
+
+	slog.Debug("httpHeaderScan: Validating HSTS started")
 
 	for _, directive := range directives {
 		directive = strings.TrimSpace(directive)
@@ -52,6 +55,8 @@ func validateHeaderStrictTransportSecurity(content string) error {
 	if !includeSubdomains && !preload {
 		return errors.New("'includeSubdomains' and 'preload' should be enabled when you are sure your https setup works fine")
 	}
+
+	slog.Debug("httpHeaderScan: Validating HSTS completed")
 
 	return nil
 }

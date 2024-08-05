@@ -2,6 +2,7 @@ package htmlContentScan
 
 import (
 	"bytes"
+	"log/slog"
 
 	"golang.org/x/net/html"
 )
@@ -14,6 +15,8 @@ func ValidateHtml(body []byte) (string, error) {
 		doc      *html.Node
 		htmlNode *html.Node
 	)
+
+	slog.Debug("htmlContentScan: Validating html started")
 
 	doc, err = html.Parse(bytes.NewReader(body))
 	if err != nil {
@@ -48,6 +51,8 @@ func ValidateHtml(body []byte) (string, error) {
 	if !langAttrExists {
 		return "invalid html5: `html` node doesn't have `lang` attribute set", nil
 	}
+
+	slog.Debug("htmlContentScan: Validating html completed")
 
 	return "", nil
 }

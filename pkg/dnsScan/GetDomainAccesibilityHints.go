@@ -1,11 +1,16 @@
 package dnsScan
 
-import "strings"
+import (
+	"log/slog"
+	"strings"
+)
 
-func (engine Engine) GetDomainAccessibilityHints(url string) Engine {
+func GetDomainAccessibilityHints(url string) []string {
 	var (
 		hints = []string{}
 	)
+
+	slog.Debug("dnsScan: Getting domain accessibility hints started")
 
 	domains := strings.Split(url, ".")
 
@@ -27,7 +32,7 @@ func (engine Engine) GetDomainAccessibilityHints(url string) Engine {
 		}
 	}
 
-	engine.OpinionatedHints = append(engine.OpinionatedHints, hints...)
+	slog.Debug("dnsScan: Getting domain accessibility hints started")
 
-	return engine
+	return hints
 }

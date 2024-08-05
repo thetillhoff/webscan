@@ -5,11 +5,13 @@ package cmd
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
+	"sync"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/thetillhoff/webscan/pkg/logger"
 	"github.com/thetillhoff/webscan/pkg/webscan"
 )
 
@@ -18,18 +20,23 @@ var dnsServer string
 var dkimSelector string
 var all bool
 var follow bool
-var verbose bool
+var verboseInfo bool
+var verboseDebug bool
 
-var detailedDnsScan bool
+var instant bool
+var noColor bool
+var quiet bool
+
+var advancedDnsScan bool
 var ipScan bool
-var detailedPortScan bool
+var advancedPortScan bool
 var tlsScan bool
 var webScans bool
 var httpProtocolScan bool
 var httpHeaderScan bool
-var httpContentScan bool
+var htmlContentScan bool
 var mailConfigScan bool
-var subdomainScan bool
+var subDomainScan bool
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -40,49 +47,91 @@ var rootCmd = &cobra.Command{
 	// has an action associated with it:
 	Run: func(cmd *cobra.Command, args []string) {
 		var (
-			err error
-			url = args[0] // Only one arg is allowed
+			err    error
+			target = args[0] // Only one arg is allowed
 
-			engine webscan.Engine
+			level slog.Level
+
+			engine webscan.Engine2
+
+			writeMutex sync.Mutex
 		)
 
-		if dnsServer != "" {
-			engine = webscan.EngineWithCustomDns(url, dnsServer)
-		} else {
-			engine = webscan.DefaultEngine(url)
-		}
-		engine.DkimSelector = dkimSelector
-		engine.FollowRedirects = follow // follow is always optional
-		engine.Verbose = verbose        // verbose is always optional
-
-		if all {
-			engine.DetailedDnsScan = true
-			engine.IpScan = true
-			engine.DetailedPortScan = true
-			engine.TlsScan = true
-			engine.HttpProtocolScan = true
-			engine.HttpHeaderScan = true
-			engine.HttpContentScan = true
-			// engine.MailConfigScan = true // TODO
-			// engine.SubdomainScan = true // TODO
-		} else {
-			engine.DetailedDnsScan = detailedDnsScan
-			engine.IpScan = ipScan
-			engine.DetailedPortScan = detailedPortScan
-			engine.TlsScan = tlsScan
-			engine.HttpProtocolScan = httpProtocolScan || webScans
-			engine.HttpHeaderScan = httpHeaderScan || webScans
-			engine.HttpContentScan = httpContentScan || webScans
-			engine.MailConfigScan = mailConfigScan
-			engine.SubdomainScan = subdomainScan
+		if verboseDebug { // Most verbose
+			level = slog.LevelDebug
+		} else if verboseInfo { // Verbose
+			level = slog.LevelInfo
+		} else { // Default
+			level = slog.LevelWarn // TODO Warn vs Error... for example if a request fails and the app continues anyway...
 		}
 
-		engine, err = engine.Scan(url)
+		// Logging
+
+		w := os.Stderr
+
+		// set global logger with custom options
+		slog.SetDefault(slog.New(
+			logger.NewHandler(
+				w,
+				&writeMutex,
+				&slog.HandlerOptions{
+					Level: level,
+				},
+				noColor,
+			),
+		))
+
+		engine, err = webscan.NewEngine(
+			quiet,
+			noColor,
+			dnsServer,
+			target,
+			follow,
+			instant,
+			advancedDnsScan,
+			ipScan,
+			advancedPortScan,
+			tlsScan,
+			httpProtocolScan,
+			httpHeaderScan,
+			htmlContentScan,
+			mailConfigScan,
+			subDomainScan,
+			&writeMutex,
+		)
 		if err != nil {
-			log.Fatalln(err)
+			slog.Error("could not create webscan engine with provided parameters", "error", err)
+			os.Exit(1)
 		}
 
-		engine.PrintScanResults()
+		// TODO
+		// engine.DkimSelector = dkimSelector
+		// engine.FollowRedirects = follow // follow is always optional
+		// engine.Verbose = verbose        // verbose is always optional
+
+		if webScans { // Enable webscans only
+			engine.EnableWebScans()
+		}
+
+		if !(advancedDnsScan ||
+			ipScan ||
+			advancedPortScan ||
+			tlsScan ||
+			httpProtocolScan ||
+			httpHeaderScan ||
+			htmlContentScan ||
+			mailConfigScan ||
+			subDomainScan) {
+			engine.EnableAllScans() // Enable all scans by default
+		}
+
+		err = engine.Scan(target)
+		if err != nil {
+			slog.Error("could not scan selected target", "error", err.Error())
+			os.Exit(2)
+		}
+
+		engine.PrintResults()
 
 	},
 }
@@ -109,18 +158,25 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&dkimSelector, "dkim-selector", "", "set dkim-selector as in <dkim-selector>._domainkey.<your-domain>.<tld>")
 	rootCmd.PersistentFlags().BoolVarP(&all, "all", "a", false, "enables all checks")
 	rootCmd.PersistentFlags().BoolVarP(&follow, "follow", "f", false, "enables following redirects and CNAME checks")
-	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "increase verbosity")
+	// rootCmd.PersistentFlags().BoolVarP(&verboseInfo, "verbose", "v", false, "increase verbosity to Info level")
+	// TODO due to neglecting of cobra, viper, pflags, a change to https://cli.urfave.org/v2/examples/flags/ is recommended
+	// By doing that, the goal would be that verboseDebug can be enabled with `-vvv` and verboseInfo with `-v`
+	rootCmd.PersistentFlags().BoolVarP(&verboseDebug, "debug", "v", false, "increase verbosity to Debug level")
 
-	rootCmd.PersistentFlags().BoolVarP(&detailedDnsScan, "dns", "d", false, "enable detailed DNS scan")
+	rootCmd.PersistentFlags().BoolVar(&instant, "instant", false, "print results immediately after each scan instead of after all scans completed")
+	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "disables coloring of results and logs")
+	rootCmd.PersistentFlags().BoolVar(&quiet, "quiet", false, "disables status updates and only prints results")
+
+	rootCmd.PersistentFlags().BoolVarP(&advancedDnsScan, "dns", "d", false, "enable detailed DNS scan")
 	rootCmd.PersistentFlags().BoolVarP(&ipScan, "ip", "i", false, "enable IP analysis")
-	rootCmd.PersistentFlags().BoolVar(&detailedPortScan, "port", false, "enable detailed port scanning")
+	rootCmd.PersistentFlags().BoolVar(&advancedPortScan, "port", false, "enable detailed port scanning")
 	rootCmd.PersistentFlags().BoolVarP(&tlsScan, "tls", "t", false, "enable TLS scan")
 	rootCmd.PersistentFlags().BoolVar(&httpProtocolScan, "protocol", false, "enable HTTP protocol scan")
 	rootCmd.PersistentFlags().BoolVar(&httpHeaderScan, "header", false, "enable HTTP header scan")
 	rootCmd.PersistentFlags().BoolVarP(&webScans, "web", "w", false, "enable all HTTP scans except content scans")
-	rootCmd.PersistentFlags().BoolVarP(&httpContentScan, "content", "c", false, "enable HTTP content scan")
+	rootCmd.PersistentFlags().BoolVarP(&htmlContentScan, "content", "c", false, "enable HTTP content scan")
 	rootCmd.PersistentFlags().BoolVarP(&mailConfigScan, "mail", "m", false, "enable mail config scan")
-	rootCmd.PersistentFlags().BoolVarP(&subdomainScan, "subdomains", "s", false, "enable subdomains search")
+	rootCmd.PersistentFlags().BoolVarP(&subDomainScan, "subdomains", "s", false, "enable subdomains search")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.

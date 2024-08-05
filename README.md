@@ -15,9 +15,9 @@ In addition to the library, it also contains a cli-wrapper around it.
 ## Usage
 
 ```sh
-webscan google.com -a # Scan domain and website
-webscan 192.168.0.1 -a # Scan IP and website
-webscan https://github.com/thetillhoff/webscan -a # Scan domain and website at specific path
+webscan google.com # Scan domain and website
+webscan 192.168.0.1 # Scan IP and website
+webscan https://github.com/thetillhoff/webscan # Scan domain and website at specific path
 ```
 
 
@@ -202,26 +202,71 @@ Print recommendations on the html code.
 
 
 
-## Other todos
+## Other todos or feature ideas
+
+### Upcoming release
+- [ ] Search for `TODO` in code
+- [ ] Clean this README
+- [ ] Check README of `pkg/status`
+- [ ] Check README of `pkg/logger`
+- [ ] Check github issues https://github.com/thetillhoff/webscan/issues
+- [ ] Ensure github actions build always has the correct version as output of `webscan version`
+  - add buildargs to example usage sections in all three repos for the actions
+- [ ] portscan on ipv4 and ipv6 might result in consistency-warning if your local machine only supports one of them!
+  but sometimes it works anyway :shrug: add a note to the output after diving deeper
+- [x] global printed result should be formatted like Markdown with `# Heading`, ...
+- [ ] HTTP header scan results and HTTPS header scan results could be merged into one if they are equal. Also, if they redirect, they should not be displayed (don't follow redirects by default).
+- [ ] HTTP content scan results and HTTPS content scan results could be merged into one if they are equal. Also, if they redirect, they should not be displayed (don't follow redirects by default).
+- [ ] in httpHeaderScan use parsedUrl as argument instead of strings - this also applies to the other modules
+- [ ] httpProtocolScan should check both http and https
+- [ ] subdomainscan should check body of all responses in cache of httpClient for referenced subdomains
+- [ ] use ruleset approach for http/https and forwarding evaluation
+- [ ] add repo url to help text, maybe even Issues link
+- [ ] add support to read $1 arg from stdin
+- [ ] add support to structure output as json with --json
+- [ ] find solution for crt.sh error - don't show it or whatever
+- [ ] `--subdomains triggers subdomainscan but not tls check, even though that's required for checking SANs of cert
+- [ ] subdomainScan should list in alphabetical order, and include *. as dedicated host, but maybe italic or dimmed
+- [ ] verify existing features aren't broken, extend with features completed in the upcoming release
+- [ ] change to different cli lib (urfav/cli or something)
+
+
+### Later
 
 - Check readme of thetillhoff.de (accessibility, other features, plus caddyfile, ...)
-- make use of https://github.com/gosuri/uilive & https://github.com/gosuri/uiprogress for output
 - TTL for dns and html caching
 - urls with or without ending slash / filename & extension
+  input-path and redirect locations should either end with filename.ext or `/`. `netlight.com` is "wrong" while `netlight.com/` or `netlight.com/index.html` are correct.
+  The reason is that the part after the last slash might be tried to parse as filename by some applications.
+  This is only a recommendation though.
 - Check favicons (https://css-tricks.com/favicons-how-to-make-sure-browsers-only-download-the-svg-version/, https://evilmartians.com/chronicles/how-to-favicon-in-2021-six-files-that-fit-most-needs)
-
-- `-w` should tell about timings, too
-
-- inputUrl should be saved in each Result, so it can be used in print.
-  DNS might have multiple ones, due to following CNAMEs, as can happen with HTTP redirects.
-
+- `-v` could tell about timings, too
 - Add `webscan status` or additional functionality to `webscan version` that checks if a new version is available (`status` could be used to check if internet connectivity is available, plus maybe scanning the local machine with it's public IP)
-
-- Make renovate automerge bugfixes and minor versions
-- Make renovate autorelease a patch-version if bufixes or minor versions were updated/automerged
-
-- list all domains that are referenced (like fonts.google.com, ...)
-
-TODO add buildargs to example usage sections in all three repos for the actions
-
-git describe --tags # for latest tag
+- RE: timeout timing: as soon as the first response came, wait for one more second, then stop waiting and continue
+- httpHeaderScan results should be shown as list of items formatted like
+  ```
+  - <Problem statement like "No CSP header set">;
+    <Recommendation like "To incease the security of the website, implement a CSP header.">
+    More information: <link>
+  ```
+- Also, key-value pairs contains in CSP etc should be in separate lines each for better readability.
+- tlsScan results should be shown as list of items formatted like
+  ```
+  - <Problem statement like "TLS ciphers using RC4 were prohibited to use by the IETF in 2015">;
+    <Recommendation like "Remove the affected ciphers from your TLS terminator.">
+    More information: <link>
+    Affected ciphers:
+    - <cipher name like "TLS_ECDHE_ECDSA_WITH_RC4_128_SHA">
+  ```
+- tlsScan could compare against known configurations like aws-tls-configs with different versions.
+  Then the recommendation can be more specific ("Are you using AWS? Find out how to change the available ciphers at <link>)
+- try to identify CMS system by checking known urls like `/wp-includes/...`
+- If a request fails (timeout, etc), skip it and the resulting scan.
+  Example: `netlight.com` with `https://netlight.com/wp-includes/css/dist/block-library/style.min.css\?ver\=5.3.2`
+  Print warning in such a case
+- think about whether, and if yes, where to add https://ssl-config.mozilla.org/
+- add tests for redirecting output to a file or pipe it and then write it into file
+  - test stdout result
+  - test stderr result
+    - should include logs and error messages
+- map most-common errors to non-0 and non-1 errors, so a unqiue error code is given for each

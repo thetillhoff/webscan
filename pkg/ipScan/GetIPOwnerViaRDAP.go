@@ -1,6 +1,7 @@
 package ipScan
 
 import (
+	"log/slog"
 	"strings"
 
 	"github.com/openrdap/rdap"
@@ -16,6 +17,8 @@ func GetIPOwnerViaRDAP(ip string) (string, error) {
 		emailDomainsUnique = map[string]struct{}{}
 		emailDomains       = []string{}
 	)
+
+	slog.Debug("ipScan: Checking for ip owner via rdap started")
 
 	rdapIPNetwork, err = client.QueryIP(ip)
 	if err != nil {
@@ -50,6 +53,8 @@ func GetIPOwnerViaRDAP(ip string) (string, error) {
 		emailDomains = append(emailDomains, emailDomain)
 	}
 	response = strings.Join(emailDomains, ", ")
+
+	slog.Debug("ipScan: Checking for ip owner via rdap completed")
 
 	return response, nil
 }
