@@ -10,7 +10,7 @@ func GetTXTRecords(url string, resolver *net.Resolver) ([]string, error) {
 	var (
 		err error
 
-		records = []string{}
+		records []string
 	)
 
 	slog.Debug("dnsScan: Getting TXT records started")

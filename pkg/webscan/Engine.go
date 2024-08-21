@@ -65,7 +65,6 @@ func NewEngine(
 	quiet bool,
 	noColor bool,
 	dnsServer string,
-	targetString string,
 	followRedirects bool,
 	instant bool,
 	advancedDnsScan bool,
@@ -81,9 +80,7 @@ func NewEngine(
 ) (Engine2, error) {
 
 	var (
-		err      error
 		engine   Engine2
-		target   Target
 		resolver *net.Resolver
 		client   httpClient.Client
 	)
@@ -125,12 +122,6 @@ func NewEngine(
 		mailConfigScan:   mailConfigScan,
 		subDomainScan:    subDomainScan,
 	}
-
-	target, err = NewTarget(targetString)
-	if err != nil {
-		return engine, err
-	}
-	engine.target = target
 
 	return engine, nil
 }

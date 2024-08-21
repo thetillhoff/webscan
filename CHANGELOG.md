@@ -1,6 +1,7 @@
 # CHANGELOG
 
 ##
+- Moved from `spf13/cobra` and `spf13/viper` to `urfave/cli` as cli-library due to maintenance issues.
 - Added progress updates with spinner and - depending on type of scan `X/total` status updates with numbers
 
 ## v1.2.5
