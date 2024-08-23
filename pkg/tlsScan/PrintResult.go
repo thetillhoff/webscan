@@ -18,6 +18,14 @@ func PrintResult(result Result) {
 
 	}
 
+	if len(result.CertNames) > 0 {
+		fmt.Println()
+		fmt.Println("Certificate names (SN first, then SANs):")
+		for certName := range result.CertNames {
+			fmt.Println("-", certName)
+		}
+	}
+
 	if result.tlsErr != nil {
 		fmt.Println()
 

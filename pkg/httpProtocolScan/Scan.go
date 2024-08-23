@@ -31,6 +31,8 @@ func Scan(status *status.Status, input string, isAvailableViaHttp bool, isAvaila
 	// TODO follow redirects if desired -> Probably not here, but in Scan().
 	// TODO Only check http versions when there is no redirect happening
 
+	// TODO check that redirectlocations either end with a `/` or with a filename (e.g. `index.html`).
+
 	if isAvailableViaHttp && result.httpRedirectLocation != "" {
 		// Scan http versions
 		result.httpVersions, err = CheckHttpVersions("http://", input)

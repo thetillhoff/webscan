@@ -46,13 +46,21 @@ func (engine *Engine2) PrintResults() {
 		}
 
 		if engine.httpHeaderScan {
-			httpHeaderScan.PrintResult(engine.httpHeaderScanResult, "http")
-			httpHeaderScan.PrintResult(engine.httpsHeaderScanResult, "https")
+			if engine.portScanResult.IsAvailableViaHttp() {
+				httpHeaderScan.PrintResult(engine.httpHeaderScanResult, "http")
+			}
+			if engine.portScanResult.IsAvailableViaHttps() {
+				httpHeaderScan.PrintResult(engine.httpsHeaderScanResult, "https")
+			}
 		}
 
 		if engine.htmlContentScan {
-			htmlContentScan.PrintResult(engine.httpHtmlContentScanResult, "http")
-			htmlContentScan.PrintResult(engine.httpsHtmlContentScanResult, "https")
+			if engine.portScanResult.IsAvailableViaHttp() {
+				htmlContentScan.PrintResult(engine.httpHtmlContentScanResult, "http")
+			}
+			if engine.portScanResult.IsAvailableViaHttps() {
+				htmlContentScan.PrintResult(engine.httpsHtmlContentScanResult, "https")
+			}
 		}
 	}
 

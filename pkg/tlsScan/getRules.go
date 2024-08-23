@@ -11,9 +11,9 @@ func getRules() []Rule {
 	)
 
 	rules = append(rules, Rule{
-		// TODO
+
 		// Verify ciphers (https://ciphersuite.info/cs/?tls=tls12&singlepage=true has some nice hints on the reasons behind deeming a cipher insecure)
-		description: `Ciphers deemed unsecure by Golang.
+		description: `Some ciphers are deemed unsecure by Golang.
 More information: https://ciphersuite.info/cs/?tls=tls12&singlepage=true`,
 		matchFunc: func(cipherSuite tls.CipherSuite) bool {
 			isCipherSecure := true

@@ -16,6 +16,11 @@ func ValidateHtml(body []byte) (string, error) {
 		htmlNode *html.Node
 	)
 
+	if len(body) == 0 {
+		slog.Debug("htmlContentScan: Skipped validating html due to empty body")
+		return "", nil
+	}
+
 	slog.Debug("htmlContentScan: Validating html started")
 
 	doc, err = html.Parse(bytes.NewReader(body))

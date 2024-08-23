@@ -3,7 +3,6 @@ package htmlContentScan
 import (
 	"fmt"
 	"log/slog"
-	"strconv"
 	"strings"
 )
 
@@ -36,7 +35,7 @@ func PrintResult(result Result, schemaName string) {
 
 	// HTML
 
-	sizeMessages = append(sizeMessages, "HTML size: "+strconv.Itoa(result.httpContentHtmlSize/1000)+"kB")
+	sizeMessages = append(sizeMessages, "HTML size: "+printByteSize(result.httpContentHtmlSize))
 
 	if result.httpContentHtmlSize > 0 { // Only print more information if len(body) > 0
 
@@ -47,12 +46,12 @@ func PrintResult(result Result, schemaName string) {
 
 		// Size of inline style
 		if result.httpContentInlineStyleSize > 0 {
-			sizeMessages = append(sizeMessages, "  Of this are inline Stylesheet (!= inline styles): "+strconv.Itoa(result.httpContentInlineStyleSize/1000)+"kB")
+			sizeMessages = append(sizeMessages, "  Of this are inline Stylesheet (!= inline styles): "+printByteSize(result.httpContentInlineStyleSize))
 		}
 
 		// Size of inline script
 		if result.httpContentInlineScriptSize > 0 {
-			sizeMessages = append(sizeMessages, "  Of this are inline Script: "+strconv.Itoa(result.httpContentInlineScriptSize/1000)+"kB")
+			sizeMessages = append(sizeMessages, "  Of this are inline Script: "+printByteSize(result.httpContentInlineScriptSize))
 		}
 
 		// Size of external stylesheets
@@ -63,7 +62,7 @@ func PrintResult(result Result, schemaName string) {
 				stylesheetFileCount = stylesheetFileCount + 1
 				totalStylesheetSize = totalStylesheetSize + size
 			}
-			sizeMessages = append(sizeMessages, "External CSS size: "+strconv.Itoa(totalStylesheetSize/1000)+"kB")
+			sizeMessages = append(sizeMessages, "Total size of external CSS files: "+printByteSize(totalStylesheetSize))
 
 		}
 
@@ -75,14 +74,14 @@ func PrintResult(result Result, schemaName string) {
 				scriptFileCount = scriptFileCount + 1
 				totalScriptSize = totalScriptSize + size
 			}
-			sizeMessages = append(sizeMessages, "External JS size: "+strconv.Itoa(totalScriptSize/1000)+"kB")
+			sizeMessages = append(sizeMessages, "total size of external JS files: "+printByteSize(totalScriptSize))
 
 		}
 
 		// Total size
 
 		totalSize := result.httpContentHtmlSize + totalStylesheetSize + totalScriptSize
-		sizeMessages = append(sizeMessages, "Total download size (without media): "+strconv.Itoa(totalSize/1000)+"kB")
+		sizeMessages = append(sizeMessages, "Total download size (without media): "+printByteSize(totalSize))
 
 		if len(result.httpContentRecommendations) > 0 { // Intermediate newline only needed if other text was already written
 			fmt.Println()

@@ -223,20 +223,20 @@ func (engine *Engine2) Scan(input string) error {
 
 		if engine.portScanResult.IsAvailableViaHttp() {
 			engine.httpHeaderScanResult = httpHeaderScan.Scan(&engine.status, httpResponse, "http")
-		}
 
-		if engine.instant {
-			slog.Debug("instant httpHeader result for http")
-			httpHeaderScan.PrintResult(engine.httpHeaderScanResult, "http")
+			if engine.instant {
+				slog.Debug("instant httpHeader result for http")
+				httpHeaderScan.PrintResult(engine.httpHeaderScanResult, "http")
+			}
 		}
 
 		if engine.portScanResult.IsAvailableViaHttps() {
 			engine.httpsHeaderScanResult = httpHeaderScan.Scan(&engine.status, httpsResponse, "https")
-		}
 
-		if engine.instant {
-			slog.Debug("instant httpHeader result for https")
-			httpHeaderScan.PrintResult(engine.httpsHeaderScanResult, "https")
+			if engine.instant {
+				slog.Debug("instant httpHeader result for https")
+				httpHeaderScan.PrintResult(engine.httpsHeaderScanResult, "https")
+			}
 		}
 	}
 
@@ -247,11 +247,11 @@ func (engine *Engine2) Scan(input string) error {
 			if err != nil {
 				return err
 			}
-		}
 
-		if engine.instant {
-			slog.Debug("instant htmlContent result for http")
-			htmlContentScan.PrintResult(engine.httpHtmlContentScanResult, "http")
+			if engine.instant {
+				slog.Debug("instant htmlContent result for http")
+				htmlContentScan.PrintResult(engine.httpHtmlContentScanResult, "http")
+			}
 		}
 
 		if engine.portScanResult.IsAvailableViaHttps() {
@@ -259,12 +259,13 @@ func (engine *Engine2) Scan(input string) error {
 			if err != nil {
 				return err
 			}
+
+			if engine.instant {
+				slog.Debug("instant htmlContent result for https")
+				htmlContentScan.PrintResult(engine.httpsHtmlContentScanResult, "https")
+			}
 		}
 
-		if engine.instant {
-			slog.Debug("instant htmlContent result for https")
-			htmlContentScan.PrintResult(engine.httpsHtmlContentScanResult, "https")
-		}
 	}
 
 	// if engine.MailConfigScan {
