@@ -281,10 +281,7 @@ Print recommendations on the html code.
   - test stderr result
     - should include logs and error messages
 - map most-common errors to non-0 and non-1 errors, so a unqiue error code is given for each
-- Show `Could not retrieve Domain Owner ...` message only in verbose mode
-- Show `Domain is not blacklisted` message only in verbose mode
 - Print DNS records with pretty formatting (CNAME is longest)
-- Show `No blocklist entry for IP...` messages only in verbose mode
 - Print IP RDAP info in pretty mode, depending on longest ip address
 - HTTP scan should check for latency, hops, download speed
 

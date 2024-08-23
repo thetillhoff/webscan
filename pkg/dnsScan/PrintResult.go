@@ -12,15 +12,11 @@ func PrintResult(result Result) {
 
 	fmt.Printf("\n\n## DNS scan results\n\n")
 
-	if len(result.DomainOwners) == 0 {
-		fmt.Println("Could not retrieve Domain Owner (country TLDs are not supported yet by RDAP)")
-	} else {
+	if len(result.DomainOwners) > 0 {
 		fmt.Println("Domain Registrar: ", strings.Join(result.DomainOwners, ", "))
 	}
 
-	if len(result.NameserverOwners) == 0 {
-		fmt.Println("Could not retrieve Nameserver Owner")
-	} else {
+	if len(result.NameserverOwners) > 0 {
 		fmt.Println("Nameserver Owner:", strings.Join(result.NameserverOwners, ", "))
 	}
 
@@ -29,8 +25,6 @@ func PrintResult(result Result) {
 		for _, blacklist := range result.DomainIsBlacklistedAt {
 			fmt.Println(blacklist)
 		}
-	} else {
-		fmt.Println("Domain is not blacklisted.")
 	}
 
 	fmt.Println("DNS records:")

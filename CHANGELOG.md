@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## v3.0.1
+- Reduced output if everything is alright, but a scan could not check for information that does not exist.
+
 ## v3.0.0
 - Moved from `spf13/cobra` and `spf13/viper` to `urfave/cli` as cli-library due to maintenance issues.
 - Added progress updates with spinner and - depending on type of scan `X/total` status updates with numbers

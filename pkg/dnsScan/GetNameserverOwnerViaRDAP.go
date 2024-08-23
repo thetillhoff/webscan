@@ -42,6 +42,10 @@ func GetNameserverOwnerViaRDAP(resolver *net.Resolver, nsRecords []string) ([]st
 		owners = append(owners, uniqueOwner)
 	}
 
+	if len(owners) == 0 {
+		slog.Info("Could not retrieve Nameserver Owner")
+	}
+
 	slog.Debug("dnsScan: Getting nameserver owner via rdap completed")
 
 	return owners, nil
