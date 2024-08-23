@@ -16,7 +16,7 @@ import (
 	"github.com/thetillhoff/webscan/pkg/tlsScan"
 )
 
-func (engine *Engine2) Scan(input string) error {
+func (engine *Engine) Scan(input string) error {
 	var (
 		err error
 

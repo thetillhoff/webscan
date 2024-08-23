@@ -14,7 +14,7 @@ import (
 	"github.com/thetillhoff/webscan/pkg/tlsScan"
 )
 
-func (engine *Engine2) PrintResults() {
+func (engine *Engine) PrintResults() {
 
 	if engine.instant { // If instant-output is enabled
 		slog.Debug("engine.instant is enabled, so printing of results at the end is skipped")

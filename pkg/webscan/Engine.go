@@ -23,7 +23,7 @@ import (
 
 // TODO remove "opinionated" flag: Either it's a valid recommendation or not.
 
-type Engine2 struct {
+type Engine struct {
 	status status.Status
 
 	target Target
@@ -77,10 +77,10 @@ func NewEngine(
 	mailConfigScan bool,
 	subDomainScan bool,
 	writeMutex *sync.Mutex,
-) (Engine2, error) {
+) (Engine, error) {
 
 	var (
-		engine   Engine2
+		engine   Engine
 		resolver *net.Resolver
 		client   httpClient.Client
 	)
@@ -106,7 +106,7 @@ func NewEngine(
 		"Go-http-client/1.1",
 	)
 
-	engine = Engine2{
+	engine = Engine{
 		status:           status.NewStatus(quiet, noColor, writeMutex),
 		resolver:         resolver,
 		client:           client,
@@ -125,112 +125,3 @@ func NewEngine(
 
 	return engine, nil
 }
-
-// TODO remove below
-
-// type Engine struct {
-// 	// Input
-// 	DkimSelector string
-
-// 	// Settings
-// 	Opinionated     bool
-// 	Verbose         bool
-// 	FollowRedirects bool
-
-// 	// Scan modes
-// 	DetailedDnsScan  bool
-// 	IpScan           bool
-// 	advancedPortScan bool
-// 	TlsScan          bool
-// 	HttpProtocolScan bool
-// 	HttpHeaderScan   bool
-// 	htmlContentScan  bool
-// 	MailConfigScan   bool
-// 	SubdomainScan    bool
-
-// 	// Internal variables
-// 	input         string
-// 	inputType     InputType
-// 	dnsServer     string
-// 	resolver      *net.Resolver
-// 	httpResponse  *http.Response
-// 	httpsResponse *http.Response
-// 	response      *http.Response
-// 	client        httpClient.Client
-
-// 	// Results
-// 	// dnsScanEngine dnsScan.Engine
-
-// 	ipOwners          []string
-// 	ipIsBlacklistedAt map[string][]string
-
-// 	openPorts               []uint16
-// 	openPortInconsistencies []string
-
-// 	isAvailableViaHttp    bool
-// 	isAvailableViaHttps   bool
-// 	httpStatusCode        int
-// 	httpRedirectLocation  string
-// 	httpsStatusCode       int
-// 	httpsRedirectLocation string
-// 	httpVersions          []string
-// 	httpsVersions         []string
-
-// 	httpHeaderRecommendations      []string
-// 	httpCookieRecommendations      map[string][]string
-// 	httpOtherCookieRecommendations []string
-
-// 	tlsResult  error
-// 	tlsCiphers []tlsScan.TlsCipher
-
-// 	httpContentRecommendations  []string
-// 	httpContentHtmlSize         int
-// 	httpContentInlineStyleSize  int
-// 	httpContentInlineScriptSize int
-// 	httpContentScriptSizes      map[string]int
-// 	httpContentStylesheetSizes  map[string]int
-
-// 	subdomains []string
-
-// 	mailConfigRecommendations []string
-// }
-
-// func DefaultEngine(inputUrl string) Engine {
-// 	return Engine{
-// 		Opinionated:     true,
-// 		Verbose:         false,
-// 		FollowRedirects: false,
-
-// 		dnsScanEngine: dnsScan.DefaultEngine(),
-// 		dnsServer:     "",
-// 		resolver:      nil, // Nil resolver is the same as a zero resolver which is the default system resolver
-
-// 		ipIsBlacklistedAt: map[string][]string{},
-
-// 		DetailedDnsScan:  false,
-// 		IpScan:           false,
-// 		advancedPortScan: false,
-// 		TlsScan:          false,
-// 		HttpProtocolScan: false,
-// 		HttpHeaderScan:   false,
-// 		htmlContentScan:  false,
-// 		MailConfigScan:   false,
-// 		SubdomainScan:    false,
-
-// 		DkimSelector: "",
-// 	}
-// }
-
-// func EngineWithCustomDns(inputUrl string, dnsServer string) Engine {
-// 	engine := DefaultEngine(inputUrl)
-// 	engine.dnsServer = dnsServer
-// 	engine.resolver = &net.Resolver{
-// 		PreferGo:     false,
-// 		StrictErrors: true,
-// 		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-// 			d := net.Dialer{Timeout: time.Millisecond * time.Duration(10000)}
-// 			return d.DialContext(ctx, network, net.JoinHostPort(dnsServer, "53"))
-// 		},
-// 	}
-// 	return engine
-// }

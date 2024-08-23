@@ -169,7 +169,7 @@ func main() {
 
 				level slog.Level
 
-				engine webscan.Engine2
+				engine webscan.Engine
 
 				writeMutex sync.Mutex
 			)
@@ -231,19 +231,7 @@ func main() {
 				engine.EnableWebScans()
 			}
 
-			if !(cCtx.Bool("advancedDnsScan") ||
-				cCtx.Bool("ipScan") ||
-				cCtx.Bool("advancedPortScan") ||
-				cCtx.Bool("tlsScan") ||
-				cCtx.Bool("httpProtocolScan") ||
-				cCtx.Bool("httpHeaderScan") ||
-				cCtx.Bool("htmlContentScan") ||
-				cCtx.Bool("mailConfigScan") ||
-				cCtx.Bool("subDomainScan") ||
-				cCtx.Bool("web")) {
-
-				engine.EnableAllScans()
-			}
+			engine.EnableAllScansIfNoneAreExplicitlySet()
 
 			err = engine.Scan(cCtx.Args().First())
 			if err != nil {

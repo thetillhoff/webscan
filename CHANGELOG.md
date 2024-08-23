@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## v2.0.0
+## v3.0.0
 - Moved from `spf13/cobra` and `spf13/viper` to `urfave/cli` as cli-library due to maintenance issues.
 - Added progress updates with spinner and - depending on type of scan `X/total` status updates with numbers
 - Don't show other sizes if html body size is 0 already
@@ -11,11 +11,32 @@
 - Added display of Server header if response contains it
 - Set version variable during build of release
 
+## v2.0.3
+- Added openssf badge - login delayed ... see https://github.com/coreinfrastructure/best-practices-badge/issues/2150.
+- Added Makefile to support brew in the future.
+
+## v2.0.2
+- Disabled automatic mail-config and sub-domain scan for implication of `-a` (run all scans).
+
+## v2.0.1
+- Fixed bug where implication of `-a` (run all scans) did not work
+
+## v2.0.0
+- Removed `-a` (run all scans) argument and made it the default configuration if no specific scans are enabled
+
+## v1.2.7
+- Added goreportcard badge with automatic refresh on releases
+
+## v1.2.6
+- Added support for `arm64` ARCH type
+- Added OS and ARCH verification to `install.sh` script.
+- Updated dependencies
+
 ## v1.2.5
-- Update dependencies
+- Updated dependencies
 
 ## v1.2.4
-- Update TLS cipher recommendations
+- Updated TLS cipher recommendations
 
 ## v1.2.3
 - Fixed bug where DNS scan results weren't shown with new input type 'domain with path'

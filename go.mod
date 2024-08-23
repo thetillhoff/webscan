@@ -9,7 +9,7 @@ require (
 	github.com/openrdap/rdap v0.9.1
 	github.com/quic-go/quic-go v0.46.0
 	github.com/urfave/cli/v2 v2.27.4
-	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa
+	golang.org/x/exp v0.0.0-20240823005443-9b4947da3948
 	golang.org/x/net v0.28.0
 )
 
@@ -23,7 +23,7 @@ require (
 	github.com/google/pprof v0.0.0-20240727154555-813a5fbdbec8 // indirect
 	github.com/jwalton/go-supportscolor v1.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
-	github.com/onsi/ginkgo/v2 v2.20.0 // indirect
+	github.com/onsi/ginkgo/v2 v2.20.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/quic-go/qpack v0.4.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect

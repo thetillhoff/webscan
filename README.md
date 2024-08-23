@@ -1,15 +1,25 @@
 # webscan
 
-This repository contains a library to verify things like
+[![Go Report Card](https://goreportcard.com/badge/thetillhoff/webscan)](https://goreportcard.com/report/thetillhoff/webscan)
 
-- DNS
-- host-headers
+Webscan tries to retrieve as much information from URLs and IPs as is possible from an external perspective.
+It covers
+
+- DNS configuration
+- Domain and Nameserver ownerships
+- IPv4 and IPv6 availability
+- IP address ownerships
+- Blacklisting status
+- Open ports
 - SSL validity
+- SSL configuration safety
+- http/s configuration with redirects
+- host-headers
+- cookies
+- html, js, css sizes
 - ...
 
-of a specified url and give improvement recommendations based on best-practices.
-
-In addition to the library, it also contains a cli-wrapper around it.
+of a specified url or ip and gives improvement recommendations based on best-practices.
 
 
 ## Usage
@@ -18,6 +28,8 @@ In addition to the library, it also contains a cli-wrapper around it.
 webscan google.com # Scan domain and website
 webscan 192.168.0.1 # Scan IP and website
 webscan https://github.com/thetillhoff/webscan # Scan domain and website at specific path
+
+webscan --help # Learn more about running specific scans
 ```
 
 
@@ -279,3 +291,16 @@ Print recommendations on the html code.
 - HTTP content size is 5kB even though it just redirects to https? Is there a follow-redirect set?
 
 - HTML content scan should depend on content type of response; for example it should verify if it's valid json for application/json
+- list all domains that are referenced (like fonts.google.com, ...)
+
+TODO add buildargs to example usage sections in all three repos for the actions
+
+git describe --tags # for latest tag
+
+- check if both ipv4 and ipv6 mx records exist (follow cnames on mx records automatically)
+
+- add unit tests
+
+- add functional tests with expected results on example website (github-pages?)
+
+- add check of version in tcp greeting / header message. openssh tells the client about it's version there.
