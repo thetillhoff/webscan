@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"net"
 
-	"github.com/thetillhoff/webscan/pkg/ipScan"
+	"github.com/thetillhoff/webscan/v3/pkg/ipScan"
 )
 
 func GetNameserverOwnerViaRDAP(resolver *net.Resolver, nsRecords []string) ([]string, error) {

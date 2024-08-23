@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/thetillhoff/webscan/pkg/status"
+	"github.com/thetillhoff/webscan/v3/pkg/status"
 )
 
 func checkCipher(status *status.Status, url string, tlsCipher tls.CipherSuite, allowedCiphers chan<- tls.CipherSuite) {

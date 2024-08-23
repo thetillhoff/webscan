@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"sync"
 
-	"github.com/thetillhoff/webscan/pkg/status"
+	"github.com/thetillhoff/webscan/v3/pkg/status"
 )
 
 // var wgIpScan sync.WaitGroup

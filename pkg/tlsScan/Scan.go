@@ -3,7 +3,7 @@ package tlsScan
 import (
 	"log/slog"
 
-	"github.com/thetillhoff/webscan/pkg/status"
+	"github.com/thetillhoff/webscan/v3/pkg/status"
 )
 
 func Scan(status *status.Status, inputUrl string) (Result, error) {

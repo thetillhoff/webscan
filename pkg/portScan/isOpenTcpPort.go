@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/thetillhoff/webscan/pkg/status"
+	"github.com/thetillhoff/webscan/v3/pkg/status"
 )
 
 // Checks whether a tcp connection can be established to the specified <ip>:<port> combo.

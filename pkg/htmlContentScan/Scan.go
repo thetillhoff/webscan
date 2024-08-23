@@ -14,8 +14,8 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/thetillhoff/webscan/pkg/httpClient"
-	"github.com/thetillhoff/webscan/pkg/status"
+	"github.com/thetillhoff/webscan/v3/pkg/httpClient"
+	"github.com/thetillhoff/webscan/v3/pkg/status"
 )
 
 // TODO return image / media / video / audio / svgs / ... as well

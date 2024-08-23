@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/thetillhoff/webscan/pkg/status"
+	"github.com/thetillhoff/webscan/v3/pkg/status"
 )
 
 func scanEnabledTlsCiphers(status *status.Status, url string) []tls.CipherSuite {

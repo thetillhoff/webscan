@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## v3.0.2
+- Adjusted module path to conform to go.mod spec, where the module path needs to contain the major version (aka `.../webscan/v3` instead of just `.../webscan`)
+
 ## v3.0.1
 - Reduced output if everything is alright, but a scan could not check for information that does not exist.
 

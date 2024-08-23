@@ -3,7 +3,7 @@ package portScan
 import (
 	"log/slog"
 
-	"github.com/thetillhoff/webscan/pkg/status"
+	"github.com/thetillhoff/webscan/v3/pkg/status"
 )
 
 func SimpleScan(status *status.Status, aRecords []string, aaaaRecords []string) (Result, error) {

@@ -3,7 +3,7 @@ package httpProtocolScan
 import (
 	"log/slog"
 
-	"github.com/thetillhoff/webscan/pkg/status"
+	"github.com/thetillhoff/webscan/v3/pkg/status"
 )
 
 func Scan(status *status.Status, input string, isAvailableViaHttp bool, isAvailableViaHttps bool) (Result, error) {

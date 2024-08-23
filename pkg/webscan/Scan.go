@@ -6,14 +6,14 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/thetillhoff/webscan/pkg/dnsScan"
-	"github.com/thetillhoff/webscan/pkg/htmlContentScan"
-	"github.com/thetillhoff/webscan/pkg/httpHeaderScan"
-	"github.com/thetillhoff/webscan/pkg/httpProtocolScan"
-	"github.com/thetillhoff/webscan/pkg/ipScan"
-	"github.com/thetillhoff/webscan/pkg/portScan"
-	"github.com/thetillhoff/webscan/pkg/subDomainScan"
-	"github.com/thetillhoff/webscan/pkg/tlsScan"
+	"github.com/thetillhoff/webscan/v3/pkg/dnsScan"
+	"github.com/thetillhoff/webscan/v3/pkg/htmlContentScan"
+	"github.com/thetillhoff/webscan/v3/pkg/httpHeaderScan"
+	"github.com/thetillhoff/webscan/v3/pkg/httpProtocolScan"
+	"github.com/thetillhoff/webscan/v3/pkg/ipScan"
+	"github.com/thetillhoff/webscan/v3/pkg/portScan"
+	"github.com/thetillhoff/webscan/v3/pkg/subDomainScan"
+	"github.com/thetillhoff/webscan/v3/pkg/tlsScan"
 )
 
 func (engine *Engine) Scan(input string) error {

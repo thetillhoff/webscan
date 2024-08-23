@@ -11,8 +11,8 @@ import (
 	"os"
 	"sync"
 
-	"github.com/thetillhoff/webscan/pkg/logger"
-	"github.com/thetillhoff/webscan/pkg/webscan"
+	"github.com/thetillhoff/webscan/v3/pkg/logger"
+	"github.com/thetillhoff/webscan/v3/pkg/webscan"
 	"github.com/urfave/cli/v2"
 )
 

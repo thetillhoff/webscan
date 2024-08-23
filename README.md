@@ -40,7 +40,7 @@ If you're feeling fancy:
 curl -s https://raw.githubusercontent.com/thetillhoff/webscan/main/install.sh | sh
 ```
 
-or manually from https://github.com/thetillhoff/webscan/releases/latest.
+or manually from https://github.com/thetillhoff/webscan/v3/releases/latest.
 
 
 ## Features
@@ -221,7 +221,7 @@ Print recommendations on the html code.
 - [ ] Clean this README
 - [ ] Check README of `pkg/status`
 - [ ] Check README of `pkg/logger`
-- [ ] Check github issues https://github.com/thetillhoff/webscan/issues
+- [ ] Check github issues https://github.com/thetillhoff/webscan/v3/issues
 - [ ] Ensure github actions build always has the correct version as output of `webscan version`
   - add buildargs to example usage sections in all three repos for the actions
 - [ ] portscan on ipv4 and ipv6 might result in consistency-warning if your local machine only supports one of them!

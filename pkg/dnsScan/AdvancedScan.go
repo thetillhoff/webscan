@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"net"
 
-	"github.com/thetillhoff/webscan/pkg/status"
+	"github.com/thetillhoff/webscan/v3/pkg/status"
 )
 
 // TODO put resolver always as first argument in all methods where it's needed

@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/thetillhoff/webscan/pkg/status"
+	"github.com/thetillhoff/webscan/v3/pkg/status"
 )
 
 func checkTlsVersion(status *status.Status, url string, tlsVersion uint16, allowedTlsVersions chan<- uint16) {
