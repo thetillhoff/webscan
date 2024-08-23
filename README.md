@@ -56,8 +56,8 @@ Display dns information about the provided URL, and give improvement recommendat
 - [x] Long DNS name (requires `--opinionated` flag)
 - [ ] DNS best practices (TTL values, SOA, ...)
 - [ ] DNSSEC
+- [ ] Warn if there are more than one CNAME redirects
 - [ ] Detect CNAME loops
-- [ ] Warn if there are too many CNAME redirects (>1)
 - [x] Domain blacklist detection
 - [x] Scan DNS of domain even if input is domain with path (like "github.com/webscan")
 
@@ -84,8 +84,8 @@ Display dns information about the provided URL, and give improvement recommendat
 
 ### Subdomain finder
 - [x] Search for subdomains of the provided domains and provide a list of them.
-  - [x] Search for subdomains listed in certificates logs (explanation at https://certificate.transparency.dev/, searched at crt.sh).
-- [ ] Search for subdomains in the subject and alternate name list of the original domain tls certificate.
+  - [x] Search for subdomains listed in certificates logs (explanation at https://certificate.transparency.dev/, searched at https://crt.sh).
+- [x] Search for subdomains in the subject and alternate name list of the original domain tls certificate.
 - [ ] Check other DNS entries (like PTR), certificate pointers, SPF record, certificate logs, reverse-ip-lookups
   - [ ] reverse ip lookup with https://hackertarget.com/reverse-ip-lookup/
   - [ ] Bing reverse ip lookup
@@ -94,7 +94,7 @@ Display dns information about the provided URL, and give improvement recommendat
   - [ ] crawl the website itself and the links it has for subdomains
   - [ ] second source for cert-transparency-logs, f.e. https://github.com/SSLMate/certspotter
   - [ ] other 3rd party databases like virustotal, securitytrails, and dnsdumpster
-  - [ ] 3rd party apis like Amass, PassiveTotal, and Shodan
+  - [ ] 3rd party subdomain apis like Amass, PassiveTotal, and Shodan
 
 ### IPv6 readiness
 - [x] Check if both ipv4 and ipv6 entries were found.
@@ -115,7 +115,7 @@ Display dns information about the provided URL, and give improvement recommendat
 - [x] Check if open ports match across all IPs.
 - [x] If http detection feature is enabled, check HTTP and HTTPS ports even if this feature is not enabled.
 
-### SSL check
+### SSL/TLS check
 - [x] Validate certificate only if port 443 is open.
 - [x] Check the validity of the ssl certificate. Subject, date, chain, ciphers, tls-min-version (if valid, but not recommended, don't fail, but print warning/s instead).
 - [ ] Write tests against badssl.com
@@ -125,17 +125,18 @@ Display dns information about the provided URL, and give improvement recommendat
 - [ ] TLS 1.3 should be supported
 
 - cipher recommendations like
-  <!-- - [x] Recommending against RSA, as it's possible to decrypt traffic at a later time should the certificate be compromised in the future. -->
   - [x] Recommending against 3DES, as it's vulnerable to birthday attacks (https://sweet32.info/).
   - [x] Recommending against RC4, as it's exploitable biases can lead to plaintext recovery without side channels (https://www.rc4nomore.com/).
   - [x] Recommending against CBC, as it seems fundamentally flawed since the Lucky13 vulnerability was discovered (https://en.wikipedia.org/wiki/Lucky_Thirteen_attack).
   - [x] Keep in mind ECDH_ ciphers don't support Perfect Forward Secrecy and shouldn't be used after 2026.
   - [x] Keep in mind DH_ ciphers don't support Perfect Forward Secrecy and shouldn't be used after 2026.
 
+- [ ] check who's the issuer of the certificate. If it's one of the most known paid providers, recommend to use a free one, like letsencrypt.
+
 ### HTTP detection
 By default `webscan` assumes you're using https. Yet, it will check whether it's available via http as well.
 
-- [ ] Follow redirects (status codes 30x)
+- [ ] Optionally follow HTTP redirects (status codes 30x)
 - [x] If http is available, it should be used for redirects only.
 - [x] If https is availabe, it should either redirect or respond with 200 status code.
 - [x] If both http and https are available
@@ -143,7 +144,6 @@ By default `webscan` assumes you're using https. Yet, it will check whether it's
   - [x] and both are redirecting, the destination should be a https location
   - [x] and https does not redirect, http should redirect to it with 301 or 308 status code. (https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#http-redirect-code)
 - [x] Check which http versions are supported by the webserver (like HTTP/1.1, HTTP/2, HTTP/3 aka QUIC)
-- [ ] Additional flag to follow redirects and check them as well - recursive with exact same flags enabled
 
 ### HTTP headers
 [x] Analyze host-headers of the response and recommend best-practices.
@@ -162,7 +162,7 @@ Print recommendations on the html code.
 - [x] Scan HTML contents of path even if input is domain with path (like "github.com/webscan")
 - [x] Check if compression is enabled
 - [x] HTML validation -> It has to be parsable to look further into the details
-- [x] HTML5 check
+- [x] HTML5 check if size of body > 0
   - [x] `<!DOCTYPE html>` is first node
   - [x] `<html lang="en-US">` `html` node has `lang` attribute set (it's value isn't validated)
   <!-- - [ ] `<meta charset="utf-8"/>` charset is set -->
@@ -172,18 +172,18 @@ Print recommendations on the html code.
     - [x] validation
     - [ ] minification
     - [x] html5 validation
-  - [~] check css
+  - [~] check css (if size of html > 0)
     - [x] size
     - [ ] validation
     - [ ] minification
     - [ ] feature support recommendation
-  - [~] check js
+  - [~] check js (if size of html > 0)
     - [x] size
     - [ ] validation
     - [ ] minification
     - [ ] feature support recommendation
     - [ ] Outdated Javascript dependencies referenced
-  - [ ] check images
+  - [ ] check images (if size of html > 0)
     - [ ] size (< 500kb)
     - [ ] image format -> webp
     - [ ] images one-by-one, shouldn't be too large each, plus not too large in total
@@ -194,8 +194,8 @@ Print recommendations on the html code.
     - [ ] amount of custom fonts & their size
     - [ ] viewport configured correctly
       - [ ] `<meta name="viewport" content="width=device-width"/>` set viewport
-      - [ ] Die Seite enthält keine viewport-Angabe, die es Browsern ermöglicht, die Größe und Skalierung der Seite an den jeweiligen Bildschirm anzupassen. https://web.dev/responsive-web-design-basics/#viewport
-      - [ ] Darstellungsbereich nicht auf „device-width“ festgelegt: Die Seite weist eine feste Breite für den viewport auf und kann sich dadurch nicht an verschiedene Bildschirmgrößen anpassen.
+            - Die Seite enthält keine viewport-Angabe, die es Browsern ermöglicht, die Größe und Skalierung der Seite an den jeweiligen Bildschirm anzupassen. https://web.dev/responsive-web-design-basics/#viewport
+            - Darstellungsbereich nicht auf „device-width“ festgelegt: Die Seite weist eine feste Breite für den viewport auf und kann sich dadurch nicht an verschiedene Bildschirmgrößen anpassen.
     - [ ] Inhalt breiter als Bildschirm: Horizontales Scrollen ist notwendig, um Text und Bilder auf der Seite sehen zu können Dies ist dann der Fall, wenn Seiten absolute Werte in CSS-Deklarationen verwenden oder Bilder nutzen, die für eine bestimmte Browserbreite optimiert sind, zum Beispiel 980 Pixel. Problem beheben: Achten Sie darauf, dass für die Seite relative Breiten- und Positionswerte für CSS-Elemente verwendet werden und Bilder ebenfalls skaliert werden können. Hier erfahren Sie, wie Sie die Größe von Inhalten an den Darstellungsbereich anpassen. https://web.dev/responsive-web-design-basics/#size-content
     - [ ] Text ist zu klein zum Lesen: Ein bedeutender Teil des Textes wird im Verhältnis zur Breite der Seite zu klein dargestellt. Dadurch wird der Text auf einem Mobilgerät schwer lesbar. Werfen Sie einen Blick auf den Test-Screenshot Ihres Geräts, um den problematischen Text zu finden. Problem beheben: Legen Sie einen Darstellungsbereich für Ihre Webseiten fest und wählen Sie die Schriftgrößen so aus, dass der Text innerhalb des Darstellungsbereichs entsprechend skaliert wird und auf dem Gerät sichtbar ist. Hier erfahren Sie mehr über Best Practices für die Schriftgröße. https://web.dev/font-size/
     - [ ] Anklickbare Elemente liegen zu dicht beieinander: Touch-Elemente wie Schaltflächen und Navigationslinks sind so dicht nebeneinander, dass mobile Nutzer beim Tippen auf ein gewünschtes Element versehentlich auch das benachbarte Element berühren. Problem beheben: Werfen Sie einen Blick auf den Testscreenshot, um alle betroffenen Schaltflächen, Links und Berührungszielbereiche zu finden. Achten Sie darauf, dass Ihre Berührungszielbereiche nicht näher beieinander liegen als die durchschnittliche Breite einer Fingerspitze, oder dass sich nicht mehr als ein Zielbereich berühren lässt. Weitere Informationen zur optimalen Größe von Tippzielen finden Sie hier. https://web.dev/accessible-tap-targets/
@@ -214,24 +214,83 @@ Print recommendations on the html code.
 
 
 
-## Other todos
+## Other todos or feature ideas
+
+### Upcoming release
+- [ ] Search for `TODO` in code
+- [ ] Clean this README
+- [ ] Check README of `pkg/status`
+- [ ] Check README of `pkg/logger`
+- [ ] Check github issues https://github.com/thetillhoff/webscan/issues
+- [ ] Ensure github actions build always has the correct version as output of `webscan version`
+  - add buildargs to example usage sections in all three repos for the actions
+- [ ] portscan on ipv4 and ipv6 might result in consistency-warning if your local machine only supports one of them!
+  but sometimes it works anyway :shrug: add a note to the output after diving deeper
+- [x] global printed result should be formatted like Markdown with `# Heading`, ...
+- [ ] HTTP header scan results and HTTPS header scan results could be merged into one if they are equal. Also, if they redirect, they should not be displayed (don't follow redirects by default).
+- [ ] HTTP content scan results and HTTPS content scan results could be merged into one if they are equal. Also, if they redirect, they should not be displayed (don't follow redirects by default).
+- [ ] in httpHeaderScan use parsedUrl as argument instead of strings - this also applies to the other modules
+- [ ] httpProtocolScan should check both http and https
+- [ ] subdomainscan should check body of all responses in cache of httpClient for referenced subdomains
+- [ ] use ruleset approach for http/https and forwarding evaluation
+- [ ] add repo url to help text, maybe even Issues link
+- [ ] add support to read $1 arg from stdin
+- [ ] add support to structure output as json with --json
+- [ ] find solution for crt.sh error - don't show it or whatever
+- [ ] `--subdomains triggers subdomainscan but not tls check, even though that's required for checking SANs of cert
+- [ ] subdomainScan should list in alphabetical order, and include *. as dedicated host, but maybe italic or dimmed
+- [ ] verify existing features aren't broken, extend with features completed in the upcoming release
+- [ ] change to different cli lib (urfav/cli or something)
+
+
+### Later
 
 - Check readme of thetillhoff.de (accessibility, other features, plus caddyfile, ...)
-- make use of https://github.com/gosuri/uilive & https://github.com/gosuri/uiprogress for output
 - TTL for dns and html caching
 - urls with or without ending slash / filename & extension
+  input-path and redirect locations should either end with filename.ext or `/`. `netlight.com` is "wrong" while `netlight.com/` or `netlight.com/index.html` are correct.
+  The reason is that the part after the last slash might be tried to parse as filename by some applications.
+  This is only a recommendation though.
 - Check favicons (https://css-tricks.com/favicons-how-to-make-sure-browsers-only-download-the-svg-version/, https://evilmartians.com/chronicles/how-to-favicon-in-2021-six-files-that-fit-most-needs)
-
-- `-w` should tell about timings, too
-
-- inputUrl should be saved in each Result, so it can be used in print.
-  DNS might have multiple ones, due to following CNAMEs, as can happen with HTTP redirects.
-
 - Add `webscan status` or additional functionality to `webscan version` that checks if a new version is available (`status` could be used to check if internet connectivity is available, plus maybe scanning the local machine with it's public IP)
+- RE: timeout timing: as soon as the first response came, wait for one more second, then stop waiting and continue
+- httpHeaderScan results should be shown as list of items formatted like
+  ```
+  - <Problem statement like "No CSP header set">;
+    <Recommendation like "To incease the security of the website, implement a CSP header.">
+    More information: <link>
+  ```
+- Also, key-value pairs contains in CSP etc should be in separate lines each for better readability.
+- tlsScan results should be shown as list of items formatted like
+  ```
+  - <Problem statement like "TLS ciphers using RC4 were prohibited to use by the IETF in 2015">;
+    <Recommendation like "Remove the affected ciphers from your TLS terminator.">
+    More information: <link>
+    Affected ciphers:
+    - <cipher name like "TLS_ECDHE_ECDSA_WITH_RC4_128_SHA">
+  ```
+- tlsScan could compare against known configurations like aws-tls-configs with different versions.
+  Then the recommendation can be more specific ("Are you using AWS? Find out how to change the available ciphers at <link>)
+- try to identify CMS system by checking known urls like `/wp-includes/...`
+- If a request fails (timeout, etc), skip it and the resulting scan.
+  Example: `netlight.com` with `https://netlight.com/wp-includes/css/dist/block-library/style.min.css\?ver\=5.3.2`
+  Print warning in such a case
+- think about whether, and if yes, where to add https://ssl-config.mozilla.org/
+- add tests for redirecting output to a file or pipe it and then write it into file
+  - test stdout result
+  - test stderr result
+    - should include logs and error messages
+- map most-common errors to non-0 and non-1 errors, so a unqiue error code is given for each
+- Show `Could not retrieve Domain Owner ...` message only in verbose mode
+- Show `Domain is not blacklisted` message only in verbose mode
+- Print DNS records with pretty formatting (CNAME is longest)
+- Show `No blocklist entry for IP...` messages only in verbose mode
+- Print IP RDAP info in pretty mode, depending on longest ip address
+- HTTP scan should check for latency, hops, download speed
 
-- Make renovate automerge bugfixes and minor versions
-- Make renovate autorelease a patch-version if bufixes or minor versions were updated/automerged
+- HTTP content size is 5kB even though it just redirects to https? Is there a follow-redirect set?
 
+- HTML content scan should depend on content type of response; for example it should verify if it's valid json for application/json
 - list all domains that are referenced (like fonts.google.com, ...)
 
 TODO add buildargs to example usage sections in all three repos for the actions

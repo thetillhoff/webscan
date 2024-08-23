@@ -1,47 +1,56 @@
 package dnsScan
 
-import "net"
+import (
+	"log/slog"
+	"net"
+)
 
-func (engine Engine) GetAllRecords(url string, resolver *net.Resolver) (Engine, error) {
+func GetAllRecords(url string, resolver *net.Resolver) (Result, error) {
 	var (
 		err error
+
+		result = Result{}
 	)
 
+	slog.Debug("dnsScan: Getting all records started")
+
 	// NS records
-	engine, err = engine.GetNSRecords(url, resolver)
+	result.NSRecords, err = GetNSRecords(url, resolver)
 	if err != nil {
-		return engine, err
+		return result, err
 	}
 
 	// A records
-	engine, err = engine.GetARecords(url, resolver)
+	result.ARecords, err = GetARecords(url, resolver)
 	if err != nil {
-		return engine, err
+		return result, err
 	}
 
 	// AAAA records
-	engine, err = engine.GetAAAARecords(url, resolver)
+	result.AAAARecords, err = GetAAAARecords(url, resolver)
 	if err != nil {
-		return engine, err
+		return result, err
 	}
 
 	// CNAME record
-	engine, err = engine.GetCNAMERecord(url, resolver)
+	result.CNAMERecord, err = GetCNAMERecord(url, resolver)
 	if err != nil {
-		return engine, err
+		return result, err
 	}
 
 	// MX record
-	engine, err = engine.GetMXRecords(url, resolver)
+	result.MXRecords, err = GetMXRecords(url, resolver)
 	if err != nil {
-		return engine, err
+		return result, err
 	}
 
 	// TXT record
-	engine, err = engine.GetTXTRecords(url, resolver)
+	result.TXTRecords, err = GetTXTRecords(url, resolver)
 	if err != nil {
-		return engine, err
+		return result, err
 	}
 
-	return engine, nil
+	slog.Debug("dnsScan: Getting all records completed")
+
+	return result, nil
 }

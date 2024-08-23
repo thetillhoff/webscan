@@ -1,12 +1,13 @@
 package dnsScan
 
 import (
+	"log/slog"
 	"strings"
 
 	"github.com/openrdap/rdap"
 )
 
-func (engine Engine) GetDomainOwnerViaRDAP(url string) (Engine, error) {
+func GetDomainOwnerViaRDAP(url string) ([]string, error) {
 	var (
 		err        error
 		client     *rdap.Client = &rdap.Client{}
@@ -16,9 +17,11 @@ func (engine Engine) GetDomainOwnerViaRDAP(url string) (Engine, error) {
 		emailDomains       = []string{}
 	)
 
+	slog.Debug("dnsScan: Getting domain owner via rdap started")
+
 	rdapDomain, err = client.QueryDomain(url)
 	if err != nil {
-		return engine, err
+		return emailDomains, err
 	}
 
 	for _, entity := range rdapDomain.Entities {
@@ -48,7 +51,8 @@ func (engine Engine) GetDomainOwnerViaRDAP(url string) (Engine, error) {
 	for emailDomain := range emailDomainsUnique {
 		emailDomains = append(emailDomains, emailDomain)
 	}
-	engine.DomainOwners = emailDomains
 
-	return engine, nil
+	slog.Debug("dnsScan: Getting domain owner via rdap completed")
+
+	return emailDomains, nil
 }

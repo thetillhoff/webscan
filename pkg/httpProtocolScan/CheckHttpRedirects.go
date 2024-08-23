@@ -3,6 +3,7 @@ package httpProtocolScan
 import (
 	"crypto/tls"
 	"errors"
+	"log/slog"
 	"net/http"
 	"os"
 	"time"
@@ -22,6 +23,8 @@ func CheckHttpRedirects(url string, isAvailableViaHttp bool, isAvailableViaHttps
 		httpsStatusCode       int    = 0
 		httpsRedirectLocation string = "" // Might contain a trailing '/'
 	)
+
+	slog.Debug("httpProtocolScan: Getting http redirects started")
 
 	client := &http.Client{
 		Timeout: 5 * time.Second, // TODO 5s might be a bit long?
@@ -72,6 +75,8 @@ func CheckHttpRedirects(url string, isAvailableViaHttp bool, isAvailableViaHttps
 			httpsRedirectLocation = httpsResp.Header.Get("Location") // Get Location
 		}
 	}
+
+	slog.Debug("httpProtocolScan: Getting http redirects completed")
 
 	return httpStatusCode, httpRedirectLocation, httpsStatusCode, httpsRedirectLocation, nil
 }

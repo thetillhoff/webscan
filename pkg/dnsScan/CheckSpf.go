@@ -2,7 +2,7 @@ package dnsScan
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"regexp"
 	"strings"
@@ -11,7 +11,7 @@ import (
 // TODO
 // Add `--evaluate-mail-server <mail-server>` that will be checked against the verified spf record
 
-func (engine Engine) CheckSpf() string {
+func CheckSpf(txtRecords []string) string {
 	var (
 		spfRecord string = ""
 		word      string
@@ -20,7 +20,9 @@ func (engine Engine) CheckSpf() string {
 		existingRedirect bool = false
 	)
 
-	for _, txtRecord := range engine.TXTRecords {
+	slog.Debug("dnsScan: Checking spf started")
+
+	for _, txtRecord := range txtRecords {
 		if txtRecord == "v=spf1" || strings.HasPrefix(txtRecord, "v=spf1 ") {
 			if spfRecord == "" { // Check if there was a spf record detected before
 				spfRecord = strings.ToLower(spfRecord) // spf records are case insensitive
@@ -121,7 +123,8 @@ func (engine Engine) CheckSpf() string {
 				// ip4-cidr-length  = "/" ("0" / %x31-39 0*1DIGIT) ; value range 0-32
 				_, _, err := net.ParseCIDR(word)
 				if err != nil || !IsIpv4(word) { // Check if ip is really ipv4, not ipv6
-					log.Fatalln("Invalid IPv4 address / cidr-range in SPF record:", word)
+					slog.Error("Invalid IPv4 address / cidr-range", "spf-record", word)
+					return "" // TODO should this continue to run or exit?
 				}
 				// It is not permitted to omit parts of the IP address instead of using CIDR notations. That is, use 192.0.2.0/24 instead of 192.0.2.
 
@@ -131,7 +134,8 @@ func (engine Engine) CheckSpf() string {
 				// If ip4-cidr-length is omitted, it is taken to be "/32".
 				parsedIp := net.ParseIP(word)
 				if parsedIp == nil || !IsIpv4(word) { // Check if ip is really ipv4, not ipv6
-					log.Fatalln("Invalid IPv4 address in SPF record:", word)
+					slog.Error("Invalid IPv4 address", "spf-record", word)
+					return "" // TODO should this continue to run or exit?
 				}
 			}
 
@@ -149,7 +153,8 @@ func (engine Engine) CheckSpf() string {
 				// ip6-cidr-length  = "/" ("0" / %x31-39 0*2DIGIT) ; value range 0-128
 				_, _, err := net.ParseCIDR(word)
 				if err != nil || IsIpv4(word) {
-					log.Fatalln("Invalid IPv6 address / cidr-range in SPF record:", word)
+					slog.Error("Invalid IPv6 address / cidr-range", "spf-record", word)
+					return "" // TODO should this continue to run or exit?
 				}
 				// It is not permitted to omit parts of the IP address instead of using CIDR notations. That is, use 192.0.2.0/24 instead of 192.0.2.
 
@@ -158,7 +163,8 @@ func (engine Engine) CheckSpf() string {
 				// If ip6-cidr-length is omitted, it is taken to be "/128".
 				parsedIp := net.ParseIP(word)
 				if parsedIp == nil || IsIpv4(word) { // Check if ip is really ipv6, not ipv4
-					log.Fatalln("Invalid IPv6 address in SPF record:", word)
+					slog.Error("Invalid IPv6 address", "spf-record", word)
+					return "" // TODO should this continue to run or exit?
 				}
 			}
 
@@ -213,10 +219,7 @@ func (engine Engine) CheckSpf() string {
 					modifier := strings.SplitN(word, "=", 2)
 					name, macroString := modifier[0], modifier[1]
 
-					matched, err := regexp.MatchString(`^[[:alpha:]]([[:alnum:]]|-|_|.)*$`, name)
-					if err != nil {
-						log.Fatalln(err)
-					}
+					matched := regexp.MustCompile(`^[[:alpha:]]([[:alnum:]]|-|_|.)*$`).MatchString(name)
 
 					if !matched {
 						return "Hint: Unknown SPF modifier name `" + name + "` is invalid."
@@ -244,6 +247,8 @@ func (engine Engine) CheckSpf() string {
 
 	// If none of the mechanisms match and there is no "redirect" modifier, then the check_host() returns a result of "neutral", just as if "?all" were specified as the last directive.  If there is a "redirect" modifier, check_host() proceeds as defined in Section 6.1.
 	// It is better to use either a "redirect" modifier or an "all" mechanism to explicitly terminate processing.  Although there is an implicit "?all" at the end of every record that is not explicitly terminated, it aids debugging efforts when it is explicitly provided.
+
+	slog.Debug("dnsScan: Checking spf completed")
 
 	return "" // No issues found
 }

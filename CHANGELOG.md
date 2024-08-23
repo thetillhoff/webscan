@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## v3.0.0
+- Moved from `spf13/cobra` and `spf13/viper` to `urfave/cli` as cli-library due to maintenance issues.
+- Added progress updates with spinner and - depending on type of scan `X/total` status updates with numbers
+- Don't show other sizes if html body size is 0 already
+- Automatically format file sizes to use kB if >1000B or B otherwise
+- Don't show scan results for web scans on http or https if the respective ports are not open - there will not be anything to show either way
+- Added list of SN & SAN to output of TLS scan
+- Grouped TLS cipher issues by rule instead of just tuples of cipher and rule as before
+- Added display of Server header if response contains it
+- Set version variable during build of release
+
 ## v2.0.3
 - Added openssf badge - login delayed ... see https://github.com/coreinfrastructure/best-practices-badge/issues/2150.
 - Added Makefile to support brew in the future.

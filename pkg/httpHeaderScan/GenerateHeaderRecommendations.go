@@ -1,6 +1,7 @@
 package httpHeaderScan
 
 import (
+	"log/slog"
 	"net/http"
 	"strings"
 )
@@ -13,6 +14,16 @@ func GenerateHeaderRecommendations(response *http.Response) []string {
 		headerName  string
 		headerValue string
 	)
+
+	slog.Debug("httpHeaderScan: Generating header recommendations started")
+
+	// Server
+	headerName = "Server"
+	headerValue = response.Header.Get(headerName)
+	headerValue = strings.ToLower(headerValue)
+	if headerValue != "" { // If 'Server' header is set
+		headerRecommendations = append(headerRecommendations, headerName+" header: "+headerValue)
+	}
 
 	// HSTS
 	headerName = "Strict-Transport-Security"
@@ -31,10 +42,17 @@ func GenerateHeaderRecommendations(response *http.Response) []string {
 	headerName = "Content-Security-Policy"
 	headerValue = response.Header.Get(headerName)
 	headerValue = strings.ToLower(headerValue)
+	cspPolicies := strings.Split(headerValue, ";")
+	for index, cspPolicy := range cspPolicies {
+		cspPolicies[index] = "  " + strings.TrimSpace(cspPolicy)
+	}
+	headerValue = strings.Join(cspPolicies, ";\n")
 	if headerValue == "" {
 		headerRecommendations = append(headerRecommendations, headerName+" header should be implemented: https://infosec.mozilla.org/guidelines/web_security#content-security-policy")
 	} else {
-		headerRecommendations = append(headerRecommendations, headerName+" header: "+headerValue) // TODO instead of just printing the header value check it against the best practices described in the link above
+
+		headerRecommendations = append(headerRecommendations, headerName+" header:")
+		headerRecommendations = append(headerRecommendations, headerValue) // TODO instead of just printing the header value check it against the best practices described in the link above
 	}
 
 	// X-Frame-Options
@@ -93,6 +111,8 @@ func GenerateHeaderRecommendations(response *http.Response) []string {
 	} else {
 		headerRecommendations = append(headerRecommendations, headerName+" header: "+headerValue) // TODO instead of just printing the header value check it against the best practices described in the link above
 	}
+
+	slog.Debug("httpHeaderScan: Generating header recommendations completed")
 
 	return headerRecommendations
 }

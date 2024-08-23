@@ -1,6 +1,10 @@
 package htmlContentScan
 
-import "github.com/PuerkitoBio/goquery"
+import (
+	"log/slog"
+
+	"github.com/PuerkitoBio/goquery"
+)
 
 func GetInlineScriptSize(document *goquery.Document) (int, error) {
 	var (
@@ -8,6 +12,8 @@ func GetInlineScriptSize(document *goquery.Document) (int, error) {
 
 		inlineScriptSize int = 0
 	)
+
+	slog.Debug("htmlContentScan: Getting inline script size started")
 
 	// Find all `script` elements
 	document.Find("script").Each(func(i int, s *goquery.Selection) {
@@ -17,6 +23,8 @@ func GetInlineScriptSize(document *goquery.Document) (int, error) {
 			inlineScriptSize = inlineScriptSize + len(content)
 		}
 	})
+
+	slog.Debug("htmlContentScan: Getting inline script size completed")
 
 	return inlineScriptSize, nil
 }

@@ -2,10 +2,11 @@ package dnsScan
 
 import (
 	"context"
+	"log/slog"
 	"net"
 )
 
-func (engine Engine) IsDomainBlacklisted(domain string, resolver *net.Resolver) ([]string, error) {
+func IsDomainBlacklisted(domain string, resolver *net.Resolver) ([]string, error) {
 	var (
 		err        error
 		blacklists = []string{
@@ -14,6 +15,8 @@ func (engine Engine) IsDomainBlacklisted(domain string, resolver *net.Resolver) 
 
 		blacklistsWithMatches = []string{}
 	)
+
+	slog.Debug("dnsScan: Checking for domain blacklisting started")
 
 	for _, blacklist := range blacklists {
 		_, err = resolver.LookupIP(context.Background(), "ip4", domain+"."+blacklist)
@@ -25,6 +28,8 @@ func (engine Engine) IsDomainBlacklisted(domain string, resolver *net.Resolver) 
 			blacklistsWithMatches = append(blacklistsWithMatches, blacklist)
 		}
 	}
+
+	slog.Debug("dnsScan: Checking for domain blacklisting completed")
 
 	return blacklistsWithMatches, nil
 }

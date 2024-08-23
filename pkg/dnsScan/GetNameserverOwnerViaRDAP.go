@@ -2,12 +2,13 @@ package dnsScan
 
 import (
 	"context"
+	"log/slog"
 	"net"
 
 	"github.com/thetillhoff/webscan/pkg/ipScan"
 )
 
-func (engine Engine) GetNameserverOwnerViaRDAP(resolver *net.Resolver) (Engine, error) {
+func GetNameserverOwnerViaRDAP(resolver *net.Resolver, nsRecords []string) ([]string, error) {
 	var (
 		err error
 
@@ -18,17 +19,19 @@ func (engine Engine) GetNameserverOwnerViaRDAP(resolver *net.Resolver) (Engine, 
 		owners       = []string{}
 	)
 
-	for _, nameserver := range engine.NSRecords {
+	slog.Debug("dnsScan: Getting nameserver owner via rdap started")
+
+	for _, nameserver := range nsRecords {
 
 		aRecords, err = resolver.LookupIP(context.Background(), "ip4", nameserver)
 		if err != nil {
-			return engine, err
+			return owners, err
 		}
 
 		for _, aRecord := range aRecords {
 			owner, err = ipScan.GetIPOwnerViaRDAP(aRecord.String())
 			if err != nil {
-				return engine, err
+				return owners, err
 			}
 			uniqueOwners[owner] = struct{}{}
 		}
@@ -38,7 +41,8 @@ func (engine Engine) GetNameserverOwnerViaRDAP(resolver *net.Resolver) (Engine, 
 	for uniqueOwner := range uniqueOwners {
 		owners = append(owners, uniqueOwner)
 	}
-	engine.NameserverOwners = owners
 
-	return engine, nil
+	slog.Debug("dnsScan: Getting nameserver owner via rdap completed")
+
+	return owners, nil
 }

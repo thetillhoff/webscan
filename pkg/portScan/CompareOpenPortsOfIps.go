@@ -1,6 +1,7 @@
 package portScan
 
 import (
+	"log/slog"
 	"sort"
 	"strconv"
 	"strings"
@@ -8,7 +9,7 @@ import (
 
 // Checks whether the open ports are the same of all ip addresses
 // Returns list of ports that where open on all ip addresses,
-// a list of inconsistencies
+// and a list of inconsistencies
 func CompareOpenPortsOfIps(openPortsPerIp map[string][]uint16) ([]uint16, []string) {
 	var (
 		uniqueRelevantPorts       = map[uint16]struct{}{}
@@ -19,6 +20,8 @@ func CompareOpenPortsOfIps(openPortsPerIp map[string][]uint16) ([]uint16, []stri
 		openPorts       = []uint16{}
 		inconsistencies = []string{}
 	)
+
+	slog.Debug("portScan: Comparison of open ports of ips started")
 
 	// Create map where each uint16 value of all ips is an empty struct -> result is a list of unique relevant ports
 	for _, openPorts := range openPortsPerIp { // Iterate over ips
@@ -65,6 +68,8 @@ func CompareOpenPortsOfIps(openPortsPerIp map[string][]uint16) ([]uint16, []stri
 					" but closed at "+strings.Join(ipsWithoutPortOpened, ", "))
 		}
 	}
+
+	slog.Debug("portScan: Comparison of open ports of ips completed")
 
 	return openPorts, inconsistencies
 }

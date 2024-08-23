@@ -1,6 +1,8 @@
 package htmlContentScan
 
 import (
+	"log/slog"
+
 	"github.com/PuerkitoBio/goquery"
 )
 
@@ -8,6 +10,8 @@ func GetExternalStylesheetSources(document *goquery.Document) []string {
 	var (
 		stylesheetSources = []string{}
 	)
+
+	slog.Debug("htmlContentScan: Getting external stylesheet sources started")
 
 	// Find all `script` elements
 	// <link rel="stylesheet" href="mystyle.css">
@@ -19,6 +23,8 @@ func GetExternalStylesheetSources(document *goquery.Document) []string {
 			}
 		}
 	})
+
+	slog.Debug("htmlContentScan: Getting external stylesheet sources completed")
 
 	return stylesheetSources
 }
