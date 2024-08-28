@@ -2,6 +2,7 @@ package webscan
 
 import (
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -22,6 +23,9 @@ func (engine *Engine) Scan(input string) error {
 
 		httpResponse  *http.Response
 		httpsResponse *http.Response
+
+		httpResponseBody  []byte
+		httpsResponseBody []byte
 	)
 
 	// TODO If tty supports color, use custom logger, else use structured logger with zerolog or slog
@@ -208,6 +212,12 @@ func (engine *Engine) Scan(input string) error {
 			if err != nil {
 				return err
 			}
+
+			httpResponseBody, err = io.ReadAll(httpResponse.Body) // Read the body
+			if err != nil {
+				return err
+			}
+			defer httpResponse.Body.Close()
 		}
 
 		// Make https request for later analysis of response
@@ -216,6 +226,12 @@ func (engine *Engine) Scan(input string) error {
 			if err != nil {
 				return err
 			}
+
+			httpsResponseBody, err = io.ReadAll(httpsResponse.Body) // Read the body
+			if err != nil {
+				return err
+			}
+			defer httpsResponse.Body.Close()
 		}
 
 	}
@@ -244,7 +260,7 @@ func (engine *Engine) Scan(input string) error {
 	if engine.htmlContentScan {
 
 		if engine.portScanResult.IsAvailableViaHttp() {
-			engine.httpHtmlContentScanResult, err = htmlContentScan.Scan(&engine.status, input, httpResponse, engine.client, "http")
+			engine.httpHtmlContentScanResult, err = htmlContentScan.Scan(&engine.status, input, httpResponse, httpResponseBody, engine.client, "http")
 			if err != nil {
 				return err
 			}
@@ -256,7 +272,7 @@ func (engine *Engine) Scan(input string) error {
 		}
 
 		if engine.portScanResult.IsAvailableViaHttps() {
-			engine.httpsHtmlContentScanResult, err = htmlContentScan.Scan(&engine.status, input, httpsResponse, engine.client, "https")
+			engine.httpsHtmlContentScanResult, err = htmlContentScan.Scan(&engine.status, input, httpsResponse, httpsResponseBody, engine.client, "https")
 			if err != nil {
 				return err
 			}

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"log/slog"
 	"net/http"
@@ -20,7 +19,7 @@ import (
 
 // TODO return image / media / video / audio / svgs / ... as well
 
-func Scan(status *status.Status, inputUrl string, response *http.Response, client httpClient.Client, schemaName string) (Result, error) {
+func Scan(status *status.Status, inputUrl string, response *http.Response, responseBody []byte, client httpClient.Client, schemaName string) (Result, error) {
 	var (
 		err    error
 		result = Result{
@@ -49,19 +48,13 @@ func Scan(status *status.Status, inputUrl string, response *http.Response, clien
 		messages = append(messages, message)
 	}
 
-	body, err = io.ReadAll(response.Body) // Read the body
-	if err != nil {
-		return result, err
-	}
-	defer response.Body.Close()
-
-	result.httpContentHtmlSize = len(body)
+	result.httpContentHtmlSize = len(responseBody)
 
 	// HTML
 
-	if len(body) > 0 {
+	if len(responseBody) > 0 {
 
-		message, err = ValidateHtml(body)
+		message, err = ValidateHtml(responseBody)
 		if err != nil { // HTML content is not valid HTML
 			return result, errors.New("invalid html: " + err.Error())
 		}
@@ -70,7 +63,7 @@ func Scan(status *status.Status, inputUrl string, response *http.Response, clien
 		}
 
 		// Load the HTML document
-		document, err = goquery.NewDocumentFromReader(bytes.NewReader(body))
+		document, err = goquery.NewDocumentFromReader(bytes.NewReader(responseBody))
 		if err != nil {
 			return result, err
 		}

@@ -2,6 +2,7 @@
 
 ## v3.0.3
 - Fixed bug, where tlsScan failed for urls with hostname and path, like `abc.de/path`.
+- Fixed bug, where htmlContentScan couldn't read the response body correctly.
 
 ## v3.0.2
 - Adjusted module path to conform to go.mod spec, where the module path needs to contain the major version (aka `.../webscan/v3` instead of just `.../webscan`)
