@@ -166,6 +166,7 @@ func (engine *Engine) Scan(input string) error {
 			engine.tlsScanResult, err = tlsScan.Scan(
 				&engine.status,
 				input,
+				engine.target.parsedUrl,
 			)
 			if err != nil {
 				return err

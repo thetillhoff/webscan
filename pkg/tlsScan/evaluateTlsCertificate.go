@@ -10,7 +10,7 @@ import (
 )
 
 // checks whether the certificate is valid
-func evaluateTlsCertificate(url string) (map[string]struct{}, error) {
+func evaluateTlsCertificate(url string, host string) (map[string]struct{}, error) {
 	var (
 		err error
 
@@ -38,7 +38,7 @@ func evaluateTlsCertificate(url string) (map[string]struct{}, error) {
 
 	//
 
-	conn, err := tls.Dial("tcp", url+":443", &tls.Config{
+	conn, err := tls.Dial("tcp", host+":443", &tls.Config{
 		InsecureSkipVerify: true,
 	})
 	if err != nil {
