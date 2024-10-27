@@ -2,6 +2,7 @@ package ipScan
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
 
 	"github.com/thetillhoff/webscan/pkg/status"
@@ -40,13 +41,26 @@ func Scan(status *status.Status, aRecords []string, aaaaRecords []string) (Resul
 
 	}
 
+	
+	maxLength := 0
+	for _, aRecord := range aRecords {
+		if len(aRecord) > maxLength {
+			maxLength = len(aRecord)
+		}
+	}
+	for _, aaaaRecord := range aaaaRecords {
+		if len(aaaaRecord) > maxLength {
+			maxLength = len(aaaaRecord)
+		}
+	}
+
 	for _, aRecord := range aRecords {
 		response, err = GetIPOwnerViaRDAP(aRecord)
 		if err != nil {
 			slog.Debug("ipScan: error on getting ip owner via rdap for ip4 address", "ipv6", aRecord, "error", err.Error())
 			return result, err
 		}
-		result.IpOwners = append(result.IpOwners, "According to RDAP information, IP "+aRecord+" is registered at "+response)
+		result.IpOwners = append(result.IpOwners, fmt.Sprintf("According to RDAP information, IP %-*s is registered at %s", maxLength, aRecord, response))
 
 		blacklistMatches, err = IsIpBlacklisted(aRecord, true) // TODO check verbose bool
 		if err != nil {
@@ -67,7 +81,7 @@ func Scan(status *status.Status, aRecords []string, aaaaRecords []string) (Resul
 			slog.Debug("ipScan: error on getting ip owner via rdap for ip6 address", "ipv6", aaaaRecord, "error", err.Error())
 			return result, err
 		}
-		result.IpOwners = append(result.IpOwners, "According to RDAP information, IP "+aaaaRecord+" is registered at "+response)
+		result.IpOwners = append(result.IpOwners, fmt.Sprintf("According to RDAP information, IP %-*s is registered at %s", maxLength, aaaaRecord, response))
 
 		blacklistMatches, err = IsIpBlacklisted(aaaaRecord, true) // TODO check verbose bool
 		if err != nil {

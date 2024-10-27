@@ -3,6 +3,7 @@ package ipScan
 import (
 	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 )
 
@@ -14,6 +15,7 @@ func PrintResult(result Result, aRecords []string, aaaaRecords []string) {
 
 	if len(result.IpIsBlacklistedAt) > 0 {
 		for ip, blacklists := range result.IpIsBlacklistedAt {
+			slices.Sort(blacklists)
 			fmt.Println(ip, "is blacklisted at", strings.Join(blacklists, ", ")+"!")
 		}
 	} else {

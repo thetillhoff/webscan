@@ -236,7 +236,7 @@ Print recommendations on the html code.
 - Check readme of thetillhoff.de (accessibility, other features, plus caddyfile, ...)
 - TTL for dns and html caching
 - urls with or without ending slash / filename & extension
-  input-path and redirect locations should either end with filename.ext or `/`. `netlight.com` is "wrong" while `netlight.com/` or `netlight.com/index.html` are correct.
+  input-path and redirect locations should either end with filename.ext or `/`. `example.com` is "wrong" while `example.com/` or `example.com/index.html` are correct.
   The reason is that the part after the last slash might be tried to parse as filename by some applications.
   This is only a recommendation though.
 - Check favicons (https://css-tricks.com/favicons-how-to-make-sure-browsers-only-download-the-svg-version/, https://evilmartians.com/chronicles/how-to-favicon-in-2021-six-files-that-fit-most-needs)

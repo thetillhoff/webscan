@@ -4,6 +4,7 @@
 
 Provide a unified and simple way for the whole application to print information.
 It should be easy to use, and capable of displaying a nice terminal-ui in all contexts.
+And it hsould be thread-safe.
 
 Important: It needs to be compatible with logging, so logs and status messages are atomic.
 

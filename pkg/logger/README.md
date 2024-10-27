@@ -4,6 +4,7 @@
 
 Provide a unified and simple way for the whole application to print information.
 It should be easy to use, and capable of displaying a nice terminal-ui in all contexts.
+And it should be thread-safe.
 
 ## Usage
 
@@ -55,8 +56,6 @@ log.Info("hello world")
 
 ## Todo's
 
-- Braille-spinner for in-progress
-  replace with green, yellow, red ['✓'] on completion - for yellow and red show messages in stderr
 - Check compatibility with piping, stdin, redirecting to file
 
 - FAIL level is always enabled

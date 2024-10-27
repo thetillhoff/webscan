@@ -3,6 +3,7 @@ package dnsScan
 import (
 	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 )
 
@@ -15,12 +16,14 @@ func PrintResult(result Result) {
 	if len(result.DomainOwners) == 0 {
 		fmt.Println("Could not retrieve Domain Owner (country TLDs are not supported yet by RDAP)")
 	} else {
+		slices.Sort(result.DomainOwners)
 		fmt.Println("Domain Registrar: ", strings.Join(result.DomainOwners, ", "))
 	}
 
 	if len(result.NameserverOwners) == 0 {
 		fmt.Println("Could not retrieve Nameserver Owner")
 	} else {
+		slices.Sort(result.NameserverOwners)
 		fmt.Println("Nameserver Owner:", strings.Join(result.NameserverOwners, ", "))
 	}
 

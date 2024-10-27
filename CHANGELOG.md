@@ -1,13 +1,16 @@
 # CHANGELOG
 
-##
+## v1.3.0
 - Added progress updates with spinner and - depending on type of scan `X/total` status updates with numbers
+- Added sorting of ip owners and blacklists
+- Ensured RDAP IP owner messages are aligned by the longest IP address
+- Updated dependencies
 
 ## v1.2.5
-- Update dependencies
+- Updated dependencies
 
 ## v1.2.4
-- Update TLS cipher recommendations
+- Updated TLS cipher recommendations
 
 ## v1.2.3
 - Fixed bug where DNS scan results weren't shown with new input type 'domain with path'
@@ -40,7 +43,7 @@
 - Adjusted pipelines
 
 ## v0.3.0
-- Upgrade go version from 1.20 to 1.21
+- Upgraded go version from 1.20 to 1.21
 - `webscan version` now prints the currently used version
 - inputUrl is not stored in webScan.Engine any more, but has to be passed as argument to the Scan functions. It's stored in the Result fields instead.
 - Added Verbose flag
@@ -69,5 +72,5 @@
 - Allow IP addresses (IPv4 and IPv6) as input. If that's the case, dns checking and dns entry retrieval is skipped. Also ipv4 & ipv6 compatibility checks are skipped then.
 
 ## v0.1.0
-- initial release
-- added github actions release workflow
+- Initial release
+- Added github actions release workflow

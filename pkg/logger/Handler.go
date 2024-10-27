@@ -115,15 +115,3 @@ func NewHandler(w io.Writer, writeMutex *sync.Mutex, opts *slog.HandlerOptions, 
 
 	return handler
 }
-
-// TODO remove the following
-
-// func (h *handler) appendSource(buf *buffer, src *slog.Source) {
-// 	dir, file := filepath.Split(src.File)
-
-// 	buf.WriteStringIf(!h.noColor, ansiFaint)
-// 	buf.WriteString(filepath.Join(filepath.Base(dir), file))
-// 	buf.WriteByte(':')
-// 	buf.WriteString(strconv.Itoa(src.Line))
-// 	buf.WriteStringIf(!h.noColor, ansiReset)
-// }

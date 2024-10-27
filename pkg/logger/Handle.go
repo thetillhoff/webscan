@@ -17,8 +17,6 @@ func (handler Handler) Handle(ctx context.Context, r slog.Record) error {
 		firstAttr = true
 	)
 
-	// TODO
-
 	buf.WriteString("\r\033[K") // Reset current last line
 
 	buf.WriteString(handler.timeFormatter(r.Time.Format(time.TimeOnly))) // Append formatted time // TODO Dimming
