@@ -301,3 +301,7 @@ git describe --tags # for latest tag
 - add functional tests with expected results on example website (github-pages?)
 
 - add check of version in tcp greeting / header message. openssh tells the client about it's version there.
+
+- check FTP headers
+- scan robots.txt
+- scan for sitemap

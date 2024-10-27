@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v3.0.4
+- Updated readme
+- Updated dependencies
+
 ## v3.0.3
 - Fixed bug, where tlsScan failed for urls with hostname and path, like `abc.de/path`.
 - Fixed bug, where htmlContentScan couldn't read the response body correctly.
