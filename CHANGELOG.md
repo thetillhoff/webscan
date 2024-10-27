@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## v3.0.5
+- Fixed bug where version was not printed to output of `webscan version`
+
 ## v3.0.4
 - Updated readme
 - Updated dependencies
