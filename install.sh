@@ -52,13 +52,12 @@ elif [ 'command -v wget' ]; then
   DOWNLOAD_FILE_CMD="wget -O"
   DOWNLOAD_BODY_CMD="wget -qO-"
 else
-  printf "Either curl or wget are required to run this script"
+  printf "Neither curl or wget are available, please install one of them to run this script"
   exit 2
 fi
 
 LATEST_VERSION="$($DOWNLOAD_BODY_CMD https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest | jq -r '.tag_name')"
-echo https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${LATEST_VERSION}/${CLI_NAME}_${OS}_${ARCH}
-echo https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${LATEST_VERSION}/${CLI_NAME}_${OS}_${ARCH}.sha256
+printf "Downloading ${CLI_NAME} ${LATEST_VERSION} for ${OS} ${ARCH}\n"
 $DOWNLOAD_FILE_CMD ${CLI_NAME} "https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${LATEST_VERSION}/${CLI_NAME}_${OS}_${ARCH}"
 $DOWNLOAD_FILE_CMD ${CLI_NAME}.sha256 "https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${LATEST_VERSION}/${CLI_NAME}_${OS}_${ARCH}.sha256"
 printf "$(cat ${CLI_NAME}.sha256) ${CLI_NAME}" | sha256sum --check --status
