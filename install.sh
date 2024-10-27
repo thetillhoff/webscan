@@ -18,8 +18,8 @@ EOF
 esac
 
 ARCH="$(uname -m)" # f.e. 'arm64'
-if [ "${ARCH}" == "x86_64" ]; then # Overwrite ARCH, required for WSL
-  ARCH=amd64
+if [ "${ARCH}" = "x86_64" ]; then # Overwrite ARCH, required for WSL
+  ARCH="amd64"
 fi
 # Verify ARCH
 case "${ARCH}" in
@@ -65,3 +65,4 @@ printf "$(cat ${CLI_NAME}.sha256) ${CLI_NAME}" | sha256sum --check --status
 printf "Checksum validation complete, installing to /usr/local/bin/ ...\n"
 sudo install ${CLI_NAME} /usr/local/bin/${CLI_NAME} # automatically sets rwxr-xr-x permissions
 rm ${CLI_NAME} ${CLI_NAME}.sha256
+printf "Installation complete!\n"
