@@ -1,6 +1,6 @@
 # CHANGELOG
 
-##
+## v3.0.7
 - Fixed bug where subdomain scan would fail silently if crt.sh was not reachable.
 
 ## v3.0.6
