@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## v3.0.6
+- Revert change from v3.0.5 as the bug did not exist and was a local issue
+
 ## v3.0.5
 - Fixed bug where version was not printed to output of `webscan version`
 
