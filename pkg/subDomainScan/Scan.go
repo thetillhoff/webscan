@@ -36,7 +36,7 @@ func Scan(status *status.Status, inputUrl string, certNames map[string]struct{})
 
 	result.subdomainsFromCrtSh, err = CheckCertLogs(inputUrl)
 	if err != nil {
-		slog.Warn("could not retrieve subdomains from crt.sh")
+		slog.Warn("could not retrieve subdomains from crt.sh: " + err.Error())
 	}
 
 	status.SpinningComplete("Scan of subdomains complete.")

@@ -47,20 +47,20 @@ func CheckCertLogs(url string) (map[string]struct{}, error) {
 		return domainNames, errors.New("timeout while fetching subdomain data from crt.sh")
 	}
 	if err != nil {
-		log.Fatalln("error retrieving the response from crt.sh:", err)
+		return domainNames, errors.New("error retrieving the response from crt.sh: " + err.Error())
 	}
 
 	log.Println(resp.StatusCode)
 
 	body, err = io.ReadAll(resp.Body) // Read the response
 	if err != nil {
-		log.Fatalln("error reading the response from crt.sh:", err)
+		return domainNames, errors.New("error reading the response from crt.sh: " + err.Error())
 	}
 	resp.Body.Close()
 
 	err = json.Unmarshal(body, &certs) // Parse the json
 	if err != nil {
-		log.Fatalln("error parsing the response from crt.sh:", err, "\n", string(body))
+		return domainNames, errors.New("error parsing the response from crt.sh: " + err.Error() + "\n" + string(body))
 	}
 
 	for _, cert := range certs {
