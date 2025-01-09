@@ -1,6 +1,7 @@
 package httpProtocolScan
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -12,7 +13,11 @@ func checkHttp3(fullUrl string) (string, error) {
 	var (
 		err    error
 		client = &http.Client{
-			Transport: &http3.Transport{}, // Required for http3
+			Transport: &http3.Transport{
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: true, // SSL verification is a different scan
+				},
+			}, // Required for http3
 		}
 		parsedUrl *url.URL
 		request   *http.Request
@@ -33,19 +38,17 @@ func checkHttp3(fullUrl string) (string, error) {
 	// Add the Host header
 	request.Header.Add("Host", parsedUrl.Host) // This is needed server-side to identify which vhost-config to use
 
+	// Add the HTTP/3 header
+	request.Header.Add("Alt-Svc", "h3=\":443\"")
+
 	// Perform the HTTP request
 	response, err = client.Do(request)
-	if err != nil {
-		return "", err
-	}
-	defer response.Body.Close()
 
-	// Check if the response indicates HTTP/3 support
-	if response.ProtoMajor == 3 {
-		fmt.Println("HTTP/3 (QUIC) is supported")
+	if err == nil {
+		defer response.Body.Close()
+		fmt.Println("proto3", response.Proto)
 		return response.Proto, nil
 	} else {
-		fmt.Println("HTTP/3 (QUIC) is not supported")
 		return "", nil
 	}
 }

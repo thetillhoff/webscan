@@ -1,17 +1,22 @@
 package httpProtocolScan
 
 import (
+	"crypto/tls"
+	"fmt"
 	"net/http"
 	"net/url"
-
-	"golang.org/x/net/http2"
 )
 
 func checkHttp2(fullUrl string) (string, error) {
 	var (
 		err    error
 		client = &http.Client{
-			Transport: &http2.Transport{}, // Required for http2
+			Transport: &http.Transport{
+				ForceAttemptHTTP2: true, // Force HTTP/2
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: true, // SSL verification is a different scan
+				},
+			}, // Required for http2
 		}
 		parsedUrl *url.URL
 		request   *http.Request
@@ -32,6 +37,8 @@ func checkHttp2(fullUrl string) (string, error) {
 
 	response, err = client.Do(request)
 	if err == nil {
+		defer response.Body.Close()
+		fmt.Println("proto2", response.Proto)
 		return response.Proto, nil
 	} else {
 		return "", nil

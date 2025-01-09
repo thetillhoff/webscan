@@ -1,14 +1,24 @@
 package httpProtocolScan
 
 import (
+	"crypto/tls"
+	"fmt"
 	"net/http"
 	"net/url"
 )
 
 func checkHttp1(fullUrl string) (string, error) {
 	var (
-		err       error
-		client    = &http.Client{}
+		err    error
+		client = &http.Client{
+			Transport: &http.Transport{
+				ForceAttemptHTTP2: false, // Disable HTTP/2
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: true, // SSL verification is a different scan
+				},
+				TLSNextProto: make(map[string]func(authority string, c *tls.Conn) http.RoundTripper, 0), // Disable HTTP/2
+			},
+		}
 		parsedUrl *url.URL
 		request   *http.Request
 		response  *http.Response
@@ -27,10 +37,11 @@ func checkHttp1(fullUrl string) (string, error) {
 	request.Header.Add("Host", parsedUrl.Host) // This is needed server-side to identify which vhost-config to use
 
 	response, err = client.Do(request)
-	if err != nil {
-		return "", err
+	if err == nil {
+		defer response.Body.Close()
+		fmt.Println("proto1", response.Proto)
+		return response.Proto, nil
+	} else {
+		return "", nil
 	}
-	defer response.Body.Close()
-
-	return response.Proto, nil
 }
