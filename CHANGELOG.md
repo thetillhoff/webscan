@@ -1,7 +1,8 @@
 # CHANGELOG
 
 ##
-- Fixed bug where ip blacklisting error/warning would break formatting with its error message
+- Fixed bug, where ip blacklisting error/warning would break formatting with its error message.
+- Fixed bug, where cli-args were not picked up correctly, and the old `--all` was implicitely active at all times.
 
 ## v3.0.8
 - Fixed support for ipv4 and ipv6 as input

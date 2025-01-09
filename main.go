@@ -108,11 +108,6 @@ func main() {
 				Usage: "disable status updates and only prints results",
 			},
 			&cli.BoolFlag{
-				Name:  "all",
-				Value: true,
-				Usage: "enable all checks",
-			},
-			&cli.BoolFlag{
 				Name:  "dns",
 				Value: false,
 				Usage: "enable detailed DNS scan",
@@ -150,7 +145,7 @@ func main() {
 			&cli.BoolFlag{
 				Name:  "web",
 				Value: false,
-				Usage: "enable all HTTP scans except content scan",
+				Usage: "enable all HTTP scans",
 			},
 			&cli.BoolFlag{
 				Name:  "mail",
@@ -225,6 +220,42 @@ func main() {
 			if err != nil {
 				slog.Error("could not create webscan engine with provided parameters", "error", err)
 				os.Exit(1)
+			}
+
+			if cCtx.Bool("dns") { // Enable advanced dns scans
+				engine.EnableDetailedDnsScan()
+			}
+
+			if cCtx.Bool("ip") { // Enable ip scans
+				engine.EnableIpScan()
+			}
+
+			if cCtx.Bool("port") { // Enable detailed port scans
+				engine.EnableDetailedPortScan()
+			}
+
+			if cCtx.Bool("tls") { // Enable tls scans
+				engine.EnableTlsScan()
+			}
+
+			if cCtx.Bool("protocol") { // Enable http protocol scans
+				engine.EnableHttpProtocolScan()
+			}
+
+			if cCtx.Bool("header") { // Enable http header scans
+				engine.EnableHttpHeaderScan()
+			}
+
+			if cCtx.Bool("content") { // Enable http content scans
+				engine.EnableHtmlContentScan()
+			}
+
+			if cCtx.Bool("mail") { // Enable mail scans
+				engine.EnableMailConfigScan()
+			}
+
+			if cCtx.Bool("subdomains") { // Enable subdomain scans
+				engine.EnableSubdomainScan()
 			}
 
 			if cCtx.Bool("web") { // Enable webscans only
