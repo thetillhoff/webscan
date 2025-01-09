@@ -1,9 +1,11 @@
 package webscan
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
+	"net"
 	"net/http"
 	"strconv"
 
@@ -87,7 +89,7 @@ func (engine *Engine) Scan(input string) error {
 
 	if engine.target.isDomain {
 
-		slog.Info("hostname identified as domain")
+		slog.Info("input identified as domain")
 
 		// Since hostname is domain, dns is relevant
 
@@ -111,6 +113,20 @@ func (engine *Engine) Scan(input string) error {
 			if err != nil {
 				return err
 			}
+		}
+	} else {
+
+		ip := net.ParseIP(input)
+		if ip == nil {
+			return errors.New("input is neither a domain nor a valid ip address")
+		}
+
+		if ipScan.IsIpv4(input) {
+			slog.Debug("input identified as ipv4", "ip", ip)
+			engine.dnsScanResult.ARecords = []string{input}
+		} else {
+			slog.Debug("input identified as ipv6", "ip", ip)
+			engine.dnsScanResult.AAAARecords = []string{input}
 		}
 	}
 

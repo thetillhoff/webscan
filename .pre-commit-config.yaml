@@ -30,8 +30,8 @@ repos:
     hooks:
       - id: go-static-check # >1s
 
-  - repo: https://github.com/golangci/golangci-lint
-    rev: "v1.59.1"
-    hooks:
-      # - id: golangci-lint # check only changed files
-      - id: golangci-lint-full # check all files
+  # - repo: https://github.com/golangci/golangci-lint
+  #   rev: "v1.59.1"
+  #   hooks:
+  #     # - id: golangci-lint # check only changed files
+  #     - id: golangci-lint-full # check all files

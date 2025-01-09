@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## v3.0.8
+- Fixed support for ipv4 and ipv6 as input
+- Fixed bug, where subdomainResults contained ip addresses if they were in the certificate SAN list
+- Updated dependencies
+
 ## v3.0.7
 - Fixed bug where subdomain scan would fail silently if crt.sh was not reachable.
 
