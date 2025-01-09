@@ -2,7 +2,7 @@ package httpProtocolScan
 
 import (
 	"crypto/tls"
-	"fmt"
+	"log/slog"
 	"net/http"
 	"net/url"
 )
@@ -38,7 +38,7 @@ func checkHttp2(fullUrl string) (string, error) {
 	response, err = client.Do(request)
 	if err == nil {
 		defer response.Body.Close()
-		fmt.Println("proto2", response.Proto)
+		slog.Debug("Result of check for http/2 protocol support", "proto", response.Proto)
 		return response.Proto, nil
 	} else {
 		return "", nil

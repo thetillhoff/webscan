@@ -2,7 +2,7 @@ package httpProtocolScan
 
 import (
 	"crypto/tls"
-	"fmt"
+	"log/slog"
 	"net/http"
 	"net/url"
 
@@ -46,7 +46,7 @@ func checkHttp3(fullUrl string) (string, error) {
 
 	if err == nil {
 		defer response.Body.Close()
-		fmt.Println("proto3", response.Proto)
+		slog.Debug("Result of check for http/3 protocol support", "proto", response.Proto)
 		return response.Proto, nil
 	} else {
 		return "", nil

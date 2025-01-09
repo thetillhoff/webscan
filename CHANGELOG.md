@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## v3.0.10
+- Fix formatting of logs of http protocol scan.
+
 ## v3.0.9
 - Fixed bug, where ip blacklisting error/warning would break formatting with its error message.
 - Fixed bug, where cli-args were not picked up correctly, and the old `--all` was implicitely active at all times.
