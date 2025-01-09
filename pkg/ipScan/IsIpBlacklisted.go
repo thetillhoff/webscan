@@ -2,7 +2,6 @@ package ipScan
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"math/rand"
 	"net"
@@ -82,7 +81,7 @@ func IsIpBlacklisted(ip string, verbose bool) ([]string, error) {
 			}
 
 			if len(response) == 1 && ipv4Net.Contains(response[0]) { // If response is in error range
-				fmt.Println("Couldn't check ip blacklisting because of error code", response) // Display error
+				slog.Warn("Couldn't check ip blacklisting because of error code", "ip", ip, "response", response)
 			} else { // If response isn't in error range
 				blacklistsWithMatches = append(blacklistsWithMatches, blacklist) // Add blacklist match
 			}

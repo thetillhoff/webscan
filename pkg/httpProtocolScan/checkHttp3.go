@@ -12,7 +12,7 @@ func checkHttp3(fullUrl string) (string, error) {
 	var (
 		err    error
 		client = &http.Client{
-			Transport: &http3.RoundTripper{}, // Required for http2
+			Transport: &http3.Transport{}, // Required for http3
 		}
 		parsedUrl *url.URL
 		request   *http.Request
