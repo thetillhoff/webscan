@@ -2,6 +2,7 @@ package subDomainScan
 
 import (
 	"log/slog"
+	"net"
 	"strings"
 
 	"github.com/thetillhoff/webscan/v3/pkg/status"
@@ -27,10 +28,17 @@ func Scan(status *status.Status, inputUrl string, certNames map[string]struct{})
 		}
 
 		subdomain = strings.TrimPrefix(subdomain, "*.") // Remove wildcards, as they are invalid dns names, but might contain valid subdomains
-		if subdomain != inputUrl {                      // Remove names that equal the input domain
-			if _, ok := result.subdomainsFromTlsScan[subdomain]; !ok { // Skip duplicates
-				result.subdomainsFromTlsScan[subdomain] = struct{}{} // Add unique entries
-			}
+		if subdomain == inputUrl {                      // Remove names that equal the input domain
+			continue
+		}
+
+		ip := net.ParseIP(subdomain) // Check if "subdomain" is an ip address
+		if ip != nil {               // Not nil means it is an ip address
+			continue // Skip ip addresses
+		}
+
+		if _, ok := result.subdomainsFromTlsScan[subdomain]; !ok { // Skip duplicates
+			result.subdomainsFromTlsScan[subdomain] = struct{}{} // Add unique entries
 		}
 	}
 
