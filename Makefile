@@ -13,3 +13,7 @@ test:
 
 build:
 	go build
+
+upgrade:
+	go get -u ./...
+	go mod tidy

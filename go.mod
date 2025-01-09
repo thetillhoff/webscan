@@ -25,7 +25,7 @@ require (
 	github.com/google/pprof v0.0.0-20241023014458-598669927662 // indirect
 	github.com/jwalton/go-supportscolor v1.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
-	github.com/onsi/ginkgo/v2 v2.20.2 // indirect
+	github.com/onsi/ginkgo/v2 v2.22.2 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
