@@ -1,6 +1,6 @@
 module github.com/thetillhoff/webscan/v3
 
-go 1.23
+go 1.23.0
 
 toolchain go1.24.0
 
@@ -11,7 +11,7 @@ require (
 	github.com/openrdap/rdap v0.9.1
 	github.com/quic-go/quic-go v0.49.0
 	github.com/urfave/cli/v2 v2.27.5
-	golang.org/x/exp v0.0.0-20250210185358-939b2ce775ac
+	golang.org/x/exp v0.0.0-20250215185904-eff6e970281f
 	golang.org/x/net v0.35.0
 )
 
