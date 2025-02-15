@@ -5,7 +5,7 @@ go 1.23
 toolchain go1.23.6
 
 require (
-	github.com/PuerkitoBio/goquery v1.10.1
+	github.com/PuerkitoBio/goquery v1.10.2
 	github.com/jwalton/gchalk v1.3.0
 	github.com/mattn/go-isatty v0.0.20
 	github.com/openrdap/rdap v0.9.1
