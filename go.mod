@@ -9,7 +9,7 @@ require (
 	github.com/jwalton/gchalk v1.3.0
 	github.com/mattn/go-isatty v0.0.20
 	github.com/openrdap/rdap v0.9.1
-	github.com/quic-go/quic-go v0.50.0
+	github.com/quic-go/quic-go v0.50.1
 	github.com/urfave/cli/v2 v2.27.6
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394
 	golang.org/x/net v0.37.0
