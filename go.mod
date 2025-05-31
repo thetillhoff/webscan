@@ -11,7 +11,7 @@ require (
 	github.com/openrdap/rdap v0.9.1
 	github.com/quic-go/quic-go v0.52.0
 	github.com/urfave/cli/v2 v2.27.6
-	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6
+	golang.org/x/exp v0.0.0-20250531010427-b6e5de432a8b
 	golang.org/x/net v0.40.0
 )
 
