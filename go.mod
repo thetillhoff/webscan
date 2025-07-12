@@ -2,7 +2,7 @@ module github.com/thetillhoff/webscan/v3
 
 go 1.23.0
 
-toolchain go1.24.4
+toolchain go1.24.5
 
 require (
 	github.com/PuerkitoBio/goquery v1.10.3
