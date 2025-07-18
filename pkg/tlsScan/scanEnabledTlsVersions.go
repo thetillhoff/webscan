@@ -3,12 +3,12 @@ package tlsScan
 import (
 	"crypto/tls"
 	"log/slog"
-	"strings"
 
 	"github.com/thetillhoff/webscan/v3/pkg/status"
+	"github.com/thetillhoff/webscan/v3/pkg/types"
 )
 
-func scanEnabledTlsVersions(status *status.Status, url string) []uint16 {
+func scanEnabledTlsVersions(status *status.Status, target types.Target, ip string) []uint16 {
 	var (
 		tlsVersions = []uint16{
 			tls.VersionTLS13,
@@ -24,13 +24,11 @@ func scanEnabledTlsVersions(status *status.Status, url string) []uint16 {
 
 	slog.Debug("tlsScan: Scanning enabled tls versions started", "len(versions)", len(tlsVersions))
 
-	urlHost := strings.SplitN(url, "/", 2)[0] // Get base url (removing Path)
-
 	status.SpinningXOfInit(len(tlsVersions), "Scanning enabled tls versions...")
 
 	for _, tlsVersion := range tlsVersions { // For each cipher
-		wg.Add(1)                                                               // Wait for one more goroutine to finish
-		go checkTlsVersion(status, urlHost, tlsVersion, enabledTlsVersionsChan) // Start goroutine that checks if tlsVersion is enabled
+		wg.Add(1)                                                                  // Wait for one more goroutine to finish
+		go checkTlsVersion(status, target, ip, tlsVersion, enabledTlsVersionsChan) // Start goroutine that checks if tlsVersion is enabled
 	}
 
 	wg.Wait()                     // Wait until all goroutines are finished

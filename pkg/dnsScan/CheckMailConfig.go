@@ -2,10 +2,11 @@ package dnsScan
 
 import (
 	"log/slog"
-	"net"
+
+	"github.com/miekg/dns"
 )
 
-func CheckMailConfig(url string, resolver *net.Resolver, txtRecords []string, dkimSelector string) []string {
+func CheckMailConfig(url string, dnsClient *dns.Client, nameserver string, txtRecords []string, dkimSelector string) []string {
 	var (
 		messages []string
 		message  string
@@ -18,12 +19,12 @@ func CheckMailConfig(url string, resolver *net.Resolver, txtRecords []string, dk
 		messages = append(messages, message)
 	}
 
-	message = CheckDkim(dkimSelector+"._domainkey."+url, resolver)
+	message = CheckDkim(dkimSelector+"._domainkey."+url, dnsClient, nameserver)
 	if message != "" {
 		messages = append(messages, message)
 	}
 
-	message = CheckDmarc(url, resolver)
+	message = CheckDmarc(url, dnsClient, nameserver)
 	if message != "" {
 		messages = append(messages, message)
 	}

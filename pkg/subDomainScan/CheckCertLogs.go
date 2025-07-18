@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"log"
 	"log/slog"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/thetillhoff/webscan/v3/pkg/types"
 )
 
 type Cert struct {
@@ -25,7 +26,7 @@ type Cert struct {
 }
 
 // Queries crt.sh for any related certificates in the transparent certificate logs (https://certificate.transparency.dev/)
-func CheckCertLogs(url string) (map[string]struct{}, error) {
+func CheckCertLogs(target types.Target) (map[string]struct{}, error) {
 	var (
 		err         error
 		domainNames = map[string]struct{}{}
@@ -41,34 +42,47 @@ func CheckCertLogs(url string) (map[string]struct{}, error) {
 
 	slog.Debug("subDomainScan: Checking cert logs started")
 
-	resp, err = httpClient.Get("https://crt.sh?output=json&q=" + url) // Make the request
-	if os.IsTimeout(err) {
-		// A timeout error occurred
-		return domainNames, errors.New("timeout while fetching subdomain data from crt.sh")
-	}
+	resp, err = httpClient.Get("https://crt.sh?output=json&q=" + target.Hostname()) // Make the request
 	if err != nil {
+		if os.IsTimeout(err) {
+			// A timeout error occurred
+			return domainNames, errors.New("timeout while fetching subdomain data from crt.sh")
+		}
 		return domainNames, errors.New("error retrieving the response from crt.sh: " + err.Error())
 	}
 
-	log.Println(resp.StatusCode)
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			slog.Debug("subDomainScan: Error closing response body", "error", closeErr)
+		}
+	}()
 
-	body, err = io.ReadAll(resp.Body) // Read the response
-	if err != nil {
-		return domainNames, errors.New("error reading the response from crt.sh: " + err.Error())
-	}
-	resp.Body.Close()
+	if resp.StatusCode == http.StatusOK {
 
-	err = json.Unmarshal(body, &certs) // Parse the json
-	if err != nil {
-		return domainNames, errors.New("error parsing the response from crt.sh: " + err.Error() + "\n" + string(body))
-	}
+		slog.Debug("subDomainScan: Cert logs response received", "status", resp.StatusCode)
 
-	for _, cert := range certs {
-		if strings.HasSuffix(cert.CommonName, url) { // Clear out third-parties
-			if _, ok := domainNames[cert.CommonName]; !ok { // Clear out duplicates
-				domainNames[cert.CommonName] = struct{}{}
+		body, err = io.ReadAll(resp.Body) // Read the response
+		if err != nil {
+			return domainNames, errors.New("error reading the response from crt.sh: " + err.Error())
+		}
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			slog.Debug("subDomainScan: Error closing response body", "error", closeErr)
+		}
+
+		err = json.Unmarshal(body, &certs) // Parse the json
+		if err != nil {
+			return domainNames, errors.New("error parsing the response from crt.sh: " + err.Error() + "\n" + string(body))
+		}
+
+		for _, cert := range certs {
+			if strings.HasSuffix(cert.CommonName, target.ParsedUrl().Host) { // Clear out third-parties
+				if _, ok := domainNames[cert.CommonName]; !ok { // Clear out duplicates
+					domainNames[cert.CommonName] = struct{}{}
+				}
 			}
 		}
+	} else {
+		slog.Error("subDomainScan: Cert logs response not 200", "status", resp.StatusCode)
 	}
 
 	slog.Debug("subDomainScan: Checking cert logs completed")

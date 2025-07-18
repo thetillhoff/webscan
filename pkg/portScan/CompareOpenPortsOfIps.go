@@ -2,7 +2,7 @@ package portScan
 
 import (
 	"log/slog"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -37,7 +37,7 @@ func CompareOpenPortsOfIps(openPortsPerIp map[string][]uint16) ([]uint16, []stri
 		sortedUniqueRelevantPorts[portIndex] = key // Add openPort to slice
 		portIndex++                                // Increase index in slice
 	}
-	sort.Slice(sortedUniqueRelevantPorts, func(i, j int) bool { return sortedUniqueRelevantPorts[i] < sortedUniqueRelevantPorts[j] }) // Sort slice
+	slices.Sort(sortedUniqueRelevantPorts) // Sort slice
 
 	// compare open ports per ip against global list of open ports
 	for _, uniqueRelevantPort := range sortedUniqueRelevantPorts { // Iterate over unique relevant ports and compare to actual open ports of each ip

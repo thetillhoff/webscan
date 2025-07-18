@@ -1,4 +1,4 @@
-package httpClient
+package cachedHttpGetClient
 
 import (
 	"crypto/tls"
@@ -7,10 +7,10 @@ import (
 )
 
 type Client struct {
-	client         *http.Client
-	userAgent      string
-	responses      map[string]*http.Response
-	responseBodies map[string][]byte
+	client    *http.Client
+	userAgent string
+	verifyTls bool
+	responses map[string]Response
 }
 
 func NewClient(timeout time.Duration, followRedirects int, verifyTls bool, userAgent string) Client {
@@ -31,8 +31,8 @@ func NewClient(timeout time.Duration, followRedirects int, verifyTls bool, userA
 	}
 
 	client.userAgent = userAgent
-	client.responses = map[string]*http.Response{}
-	client.responseBodies = map[string][]byte{}
+	client.verifyTls = verifyTls
+	client.responses = map[string]Response{}
 
 	return client
 }

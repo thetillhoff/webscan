@@ -2,55 +2,55 @@ package dnsScan
 
 import (
 	"log/slog"
-	"net"
+
+	"github.com/miekg/dns"
 )
 
-func GetAllRecords(url string, resolver *net.Resolver) (Result, error) {
+func GetAllRecords(url string, dnsClient *dns.Client, nameserver string) (Result, error) {
 	var (
 		err error
 
 		result = Result{}
 	)
 
-	slog.Debug("dnsScan: Getting all records started")
+	slog.Debug("dnsScan: Getting all records started", "url", url)
 
-	// NS records
-	result.NSRecords, err = GetNSRecords(url, resolver)
+	result.ARecords, err = GetARecords(url, dnsClient, nameserver)
 	if err != nil {
 		return result, err
 	}
 
-	// A records
-	result.ARecords, err = GetARecords(url, resolver)
+	result.AAAARecords, err = GetAAAARecords(url, dnsClient, nameserver)
 	if err != nil {
 		return result, err
 	}
 
-	// AAAA records
-	result.AAAARecords, err = GetAAAARecords(url, resolver)
+	result.CNAMERecord, err = GetCNAMERecord(url, dnsClient, nameserver)
 	if err != nil {
 		return result, err
 	}
 
-	// CNAME record
-	result.CNAMERecord, err = GetCNAMERecord(url, resolver)
+	result.MXRecords, err = GetMXRecords(url, dnsClient, nameserver)
 	if err != nil {
 		return result, err
 	}
 
-	// MX record
-	result.MXRecords, err = GetMXRecords(url, resolver)
+	result.NSRecords, err = GetNSRecords(url, dnsClient, nameserver)
 	if err != nil {
 		return result, err
 	}
 
-	// TXT record
-	result.TXTRecords, err = GetTXTRecords(url, resolver)
+	result.TXTRecords, err = GetTXTRecords(url, dnsClient, nameserver)
 	if err != nil {
 		return result, err
 	}
 
-	slog.Debug("dnsScan: Getting all records completed")
+	result.SRVRecords, err = GetSRVRecords(url, dnsClient, nameserver)
+	if err != nil {
+		return result, err
+	}
+
+	slog.Debug("dnsScan: Getting all records completed", "url", url)
 
 	return result, nil
 }

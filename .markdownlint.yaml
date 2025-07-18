@@ -1,0 +1,10 @@
+# Markdown linting configuration
+# Ignores duplicate heading rule which is common in changelogs
+
+# Ignore duplicate heading rule (MD024)
+# This is useful for changelogs where you have multiple "Bug Fixes", "New Features", etc. sections
+MD024: false
+
+# Ignore line length rule (MD013)
+# This is useful for changelogs where the line length is not important
+MD013: false

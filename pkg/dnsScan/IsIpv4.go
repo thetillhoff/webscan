@@ -1,8 +1,9 @@
 package dnsScan
 
-import "strings"
+import "net"
 
 func IsIpv4(ip string) bool {
-	// TODO find better way to do this - is this even needed?
-	return strings.Count(ip, ":") < 2 // Explanation why this is accurate at https://stackoverflow.com/a/48519490
+	// return strings.Count(ip, ":") < 2 // Explanation why this is accurate at https://stackoverflow.com/a/48519490
+	parsedIP := net.ParseIP(ip)
+	return parsedIP != nil && parsedIP.To4() != nil
 }

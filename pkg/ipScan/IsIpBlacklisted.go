@@ -10,13 +10,13 @@ import (
 	"time"
 )
 
-func IsIpBlacklisted(ip string, verbose bool) ([]string, error) {
+func IsIpBlacklisted(ip string) ([]string, error) {
 	var (
 		err error
 
 		resolver *net.Resolver
 
-		searchPrefix string = "" // includes trailing '.'
+		searchPrefix = "" // includes trailing '.'
 		network      string
 
 		blacklistWithNameservers = map[string][]string{
@@ -64,9 +64,7 @@ func IsIpBlacklisted(ip string, verbose bool) ([]string, error) {
 			},
 		}
 
-		if verbose {
-			slog.Debug("checking ip blacklisting", "blacklist", searchPrefix+blacklist)
-		}
+		slog.Debug("ipScan: Checking for ip blacklisting", "blacklist", searchPrefix+blacklist)
 
 		response, err = resolver.LookupIP(context.Background(), network, searchPrefix+blacklist)
 		if err, ok := err.(*net.DNSError); ok && err.IsNotFound {

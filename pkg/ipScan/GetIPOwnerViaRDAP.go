@@ -10,7 +10,7 @@ import (
 func GetIPOwnerViaRDAP(ip string) (string, error) {
 	var (
 		err           error
-		client        *rdap.Client = &rdap.Client{}
+		client        = &rdap.Client{}
 		rdapIPNetwork *rdap.IPNetwork
 
 		response           string

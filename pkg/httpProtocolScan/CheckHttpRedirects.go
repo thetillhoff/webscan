@@ -1,82 +1,53 @@
 package httpProtocolScan
 
 import (
-	"crypto/tls"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
-	"time"
+
+	"github.com/thetillhoff/webscan/v3/pkg/cachedHttpGetClient"
+	"github.com/thetillhoff/webscan/v3/pkg/types"
 )
 
 // Verifies http and https configuration for best practices
 // Returns http and https status codes & redirect locations, which are "" if they don't redirect plus an potential error
-func CheckHttpRedirects(url string, isAvailableViaHttp bool, isAvailableViaHttps bool) (int, string, int, string, error) {
+func CheckHttpRedirects(target types.Target, client cachedHttpGetClient.Client) (int, string, error) {
 	var (
-		err       error
-		httpResp  *http.Response
-		httpsResp *http.Response
+		err  error
+		resp *http.Response
 
-		httpStatusCode       int    = 0
-		httpRedirectLocation string = "" // Might contain a trailing '/'
-
-		httpsStatusCode       int    = 0
-		httpsRedirectLocation string = "" // Might contain a trailing '/'
+		statusCode       = 0
+		redirectLocation = "" // Might contain a trailing '/'
 	)
 
-	slog.Debug("httpProtocolScan: Getting http redirects started")
+	slog.Debug(fmt.Sprintf("httpProtocolScan: Checking %s redirects started", target.Schema().String()))
 
-	client := &http.Client{
-		Timeout: 5 * time.Second, // TODO 5s might be a bit long?
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		}, // Don't follow redirects
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // Ignore invalid tls certificates here (certificates are checked in another step, and might be interesting what's behind it anyway)
-		},
-	}
+	resp, _, err = client.Get(target.UrlString())
 
-	if isAvailableViaHttp { // If HTTP is available, check the status code
-		// Get the page in HTTP
-		httpResp, err = client.Get("http://" + url)
-		if err != nil {
-			if os.IsTimeout(err) { // If err is timeout, tell user about it
-				return httpStatusCode, httpRedirectLocation, httpsStatusCode, httpsRedirectLocation, errors.New("http call exceeded 5s timeout")
-			} else {
-				return httpStatusCode, httpRedirectLocation, httpsStatusCode, httpsRedirectLocation, err
-			}
-		}
-
-		defer httpResp.Body.Close()
-
-		// 301 & 308 are permanent redirects, 302, 303, 307 are temporary redirects, 300 and 304 are special cases are not meant for normal redirects
-		httpStatusCode = httpResp.StatusCode                                                                                           // Get status code
-		if httpStatusCode == 301 || httpStatusCode == 302 || httpStatusCode == 303 || httpStatusCode == 307 || httpStatusCode == 308 { // Check against existing redirect status codes
-			httpRedirectLocation = httpResp.Header.Get("Location") // Get Location
+	if err != nil {
+		if os.IsTimeout(err) { // If err is timeout, tell user about it
+			return statusCode, redirectLocation, errors.New("http call exceeded 5s timeout")
+		} else {
+			slog.Debug(fmt.Sprintf("httpProtocolScan: Checking %s redirects unsuccessful", target.Schema().String()), "error", err)
+			return statusCode, redirectLocation, err
 		}
 	}
 
-	if isAvailableViaHttps { // If HTTPS is available, check the status code
-		// Get the page in HTTPS
-		httpsResp, err = client.Get("https://" + url)
-		if err != nil {
-			if os.IsTimeout(err) { // If err is timeout, tell user about it
-				return httpStatusCode, httpRedirectLocation, httpsStatusCode, httpsRedirectLocation, errors.New("https call exceeded 5s timeout")
-			} else {
-				return httpStatusCode, httpRedirectLocation, httpsStatusCode, httpsRedirectLocation, err
-			}
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			slog.Debug("httpProtocolScan: Error closing response body", "error", closeErr)
 		}
+	}()
 
-		defer httpsResp.Body.Close()
-
-		// 301 & 308 are permanent redirects, 302, 303, 307 are temporary redirects, 300 and 304 are special cases not meant for normal redirects
-		httpsStatusCode = httpsResp.StatusCode                                                                                          // Get status code
-		if httpsStatusCode == 301 || httpStatusCode == 302 || httpStatusCode == 303 || httpStatusCode == 307 || httpStatusCode == 308 { // Check against existing redirect status codes
-			httpsRedirectLocation = httpsResp.Header.Get("Location") // Get Location
-		}
+	// 301 & 308 are permanent redirects, 302, 303, 307 are temporary redirects, 300 and 304 are special cases are not meant for normal redirects
+	statusCode = resp.StatusCode                                                                               // Get status code
+	if statusCode == 301 || statusCode == 302 || statusCode == 303 || statusCode == 307 || statusCode == 308 { // Check against existing redirect status codes
+		redirectLocation = resp.Header.Get("Location") // Get Location
 	}
 
-	slog.Debug("httpProtocolScan: Getting http redirects completed")
+	slog.Debug(fmt.Sprintf("httpProtocolScan: Checking %s redirects completed", target.Schema().String()), "statusCode", statusCode, "redirectLocation", redirectLocation)
 
-	return httpStatusCode, httpRedirectLocation, httpsStatusCode, httpsRedirectLocation, nil
+	return statusCode, redirectLocation, nil
 }

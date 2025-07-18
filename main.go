@@ -4,8 +4,10 @@ Copyright © 2023 Till Hoffmann <till@thetillhoff.de>
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"log/slog"
 	"os"
@@ -13,7 +15,7 @@ import (
 
 	"github.com/thetillhoff/webscan/v3/pkg/logger"
 	"github.com/thetillhoff/webscan/v3/pkg/webscan"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 var version = "dev" // This is just the default. The actual value is injected at compiletime
@@ -21,31 +23,51 @@ var verbosity int
 
 func main() {
 
-	app := &cli.App{
-		Name:                 "webscan",
-		Usage:                "Verifies web things",
-		Version:              version,
-		HideVersion:          true, // Disable `-v`, `--version` flags
-		HideHelpCommand:      true, // Disable `help` subcommand
-		EnableBashCompletion: true,
+	cli.VersionFlag = &cli.BoolFlag{
+		Name:  "version",
+		Usage: "prints just the version of webscan",
+	}
+	cli.VersionPrinter = func(cmd *cli.Command) {
+		fmt.Println(cmd.Root().Version)
+	}
+	cli.RootCommandHelpTemplate = `NAME:
+	{{.Name}} - {{.Usage}}
+ USAGE:
+	{{.HelpName}} {{if .VisibleFlags}}[global options]{{end}}{{if .Commands}} command [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}
+	{{if len .Authors}}
+ AUTHOR:
+	{{range .Authors}}{{ . }}{{end}}
+	{{end}}{{if .Commands}}
+ COMMANDS:
+ {{range .Commands}}{{if not .HideHelp}}   {{join .Names ", "}}{{ "\t"}}{{.Usage}}{{ "\n" }}{{end}}{{end}}{{end}}{{if .VisibleFlags}}
+ GLOBAL OPTIONS:
+	{{range .VisibleFlags}}{{.}}
+	{{end}}{{end}}{{if .Copyright }}
+ COPYRIGHT:
+	{{.Copyright}}
+	{{end}}{{if .Version}}
+ VERSION:
+	{{.Version}}
+	{{end}}
+ `
+
+	app := cli.Command{
+		Name:                   "webscan",
+		Usage:                  "Verifies web things",
+		Version:                version,
+		HideHelpCommand:        true,
+		EnableShellCompletion:  true,
+		UseShortOptionHandling: true, // Allow not only `-v -v -v`, but also `-vvv`
 		Commands: []*cli.Command{
-			{
-				Name:  "version",
-				Usage: "Prints the version of webscan",
-				Action: func(cCtx *cli.Context) error {
-					fmt.Printf("%s\n", cCtx.App.Version)
-					return nil
-				},
-			},
 			{
 				Name:            "completion",
 				Usage:           "Generate the autocompletion script for the specified shell",
 				HideHelpCommand: true, // Disable `help` subcommand
-				Subcommands: []*cli.Command{
+				Commands: []*cli.Command{
 					{
 						Name:  "bash",
 						Usage: "Generate the autocompletion script for bash",
-						Action: func(ctx *cli.Context) error {
+						Action: func(ctx context.Context, cmd *cli.Command) error {
 							autocomplete_bash()
 							return nil
 						},
@@ -53,7 +75,7 @@ func main() {
 					{
 						Name:  "powershell",
 						Usage: "Generate the autocompletion script for powershell",
-						Action: func(ctx *cli.Context) error {
+						Action: func(ctx context.Context, cmd *cli.Command) error {
 							autocomplete_powershell()
 							return nil
 						},
@@ -61,7 +83,7 @@ func main() {
 					{
 						Name:  "zsh",
 						Usage: "Generate the autocompletion script for zsh",
-						Action: func(ctx *cli.Context) error {
+						Action: func(ctx context.Context, cmd *cli.Command) error {
 							autocomplete_zsh()
 							return nil
 						},
@@ -90,12 +112,9 @@ func main() {
 				Aliases: []string{"v"},
 				Value:   false,
 				Usage:   "increase verbosity to Debug level",
-				Count:   &verbosity,
-			},
-			&cli.BoolFlag{
-				Name:  "instant",
-				Value: false,
-				Usage: "print results immediately after each scan instead of after all scans completed",
+				Config: cli.BoolConfig{
+					Count: &verbosity,
+				},
 			},
 			&cli.BoolFlag{
 				Name:  "no-color",
@@ -106,6 +125,11 @@ func main() {
 				Name:  "quiet",
 				Value: false,
 				Usage: "disable status updates and only prints results",
+			},
+			&cli.BoolFlag{
+				Name:  "follow",
+				Value: false,
+				Usage: "follow CNAME and HTTP redirects",
 			},
 			&cli.BoolFlag{
 				Name:  "dns",
@@ -158,7 +182,7 @@ func main() {
 				Usage: "enable subdomains search",
 			},
 		},
-		Action: func(cCtx *cli.Context) error {
+		Action: func(ctx context.Context, cmd *cli.Command) error {
 			var (
 				err error
 
@@ -169,52 +193,58 @@ func main() {
 				writeMutex sync.Mutex
 			)
 
-			if cCtx.Args().Len() != 1 {
-				log.Fatalln(errors.New("exactly one argument expected"))
-			}
-
 			// Logging
 
 			switch verbosity {
-			case -1: // If it's not set at all, the number is -1, not 0
+			case 0: // If it's not set at all, the number is -1, not 0
 				level = slog.LevelWarn
 			case 1:
 				level = slog.LevelInfo
 			case 3:
 				level = slog.LevelDebug
 			default:
-				log.Fatalln(errors.New("invalid verbosity amount"))
+				log.Fatalln(errors.New("invalid amount of verbosity flags"))
 			}
-
-			w := os.Stderr
 
 			// set global logger with custom options
 			slog.SetDefault(slog.New(
 				logger.NewHandler(
-					w,
+					os.Stderr,
 					&writeMutex,
 					&slog.HandlerOptions{
 						Level: level,
 					},
-					cCtx.Bool("no-color"),
+					cmd.Bool("no-color"),
 				),
 			))
 
+			// Args
+
+			if cmd.Args().Len() != 1 {
+				log.Fatalln(errors.New("exactly one argument expected"))
+			}
+
+			var stdout io.Writer
+			if cmd.Bool("quiet") {
+				stdout = io.Discard
+			} else {
+				stdout = os.Stdout
+			}
+
 			engine, err = webscan.NewEngine(
-				cCtx.Bool("quiet"),
-				cCtx.Bool("noColor"),
-				cCtx.String("dnsServer"),
-				cCtx.Bool("follow"),
-				cCtx.Bool("instant"),
-				cCtx.Bool("advancedDnsScan"),
-				cCtx.Bool("ipScan"),
-				cCtx.Bool("advancedPortScan"),
-				cCtx.Bool("tlsScan"),
-				cCtx.Bool("httpProtocolScan"),
-				cCtx.Bool("httpHeaderScan"),
-				cCtx.Bool("htmlContentScan"),
-				cCtx.Bool("mailConfigScan"),
-				cCtx.Bool("subDomainScan"),
+				stdout,
+				cmd.Bool("no-color"),
+				cmd.String("dnsServer"),
+				cmd.Bool("follow"),
+				cmd.Bool("advancedDnsScan"),
+				cmd.Bool("ipScan"),
+				cmd.Bool("advancedPortScan"),
+				cmd.Bool("tlsScan"),
+				cmd.Bool("httpProtocolScan"),
+				cmd.Bool("httpHeaderScan"),
+				cmd.Bool("htmlContentScan"),
+				cmd.Bool("mailConfigScan"),
+				cmd.Bool("subDomainScan"),
 				&writeMutex,
 			)
 			if err != nil {
@@ -222,61 +252,59 @@ func main() {
 				os.Exit(1)
 			}
 
-			if cCtx.Bool("dns") { // Enable advanced dns scans
+			if cmd.Bool("dns") { // Enable advanced dns scans
 				engine.EnableDetailedDnsScan()
 			}
 
-			if cCtx.Bool("ip") { // Enable ip scans
+			if cmd.Bool("ip") { // Enable ip scans
 				engine.EnableIpScan()
 			}
 
-			if cCtx.Bool("port") { // Enable detailed port scans
+			if cmd.Bool("port") { // Enable detailed port scans
 				engine.EnableDetailedPortScan()
 			}
 
-			if cCtx.Bool("tls") { // Enable tls scans
+			if cmd.Bool("tls") { // Enable tls scans
 				engine.EnableTlsScan()
 			}
 
-			if cCtx.Bool("protocol") { // Enable http protocol scans
+			if cmd.Bool("protocol") { // Enable http protocol scans
 				engine.EnableHttpProtocolScan()
 			}
 
-			if cCtx.Bool("header") { // Enable http header scans
+			if cmd.Bool("header") { // Enable http header scans
 				engine.EnableHttpHeaderScan()
 			}
 
-			if cCtx.Bool("content") { // Enable http content scans
+			if cmd.Bool("content") { // Enable http content scans
 				engine.EnableHtmlContentScan()
 			}
 
-			if cCtx.Bool("mail") { // Enable mail scans
+			if cmd.Bool("mail") { // Enable mail scans
 				engine.EnableMailConfigScan()
 			}
 
-			if cCtx.Bool("subdomains") { // Enable subdomain scans
+			if cmd.Bool("subdomains") { // Enable subdomain scans
 				engine.EnableSubdomainScan()
 			}
 
-			if cCtx.Bool("web") { // Enable webscans only
+			if cmd.Bool("web") { // Enable webscans only
 				engine.EnableWebScans()
 			}
 
 			engine.EnableAllScansIfNoneAreExplicitlySet()
 
-			err = engine.Scan(cCtx.Args().First())
+			err = engine.Scan(cmd.Args().First())
 			if err != nil {
 				slog.Error("could not scan selected target", "error", err.Error())
 				os.Exit(2)
 			}
 
-			engine.PrintResults()
-
 			return nil
 		},
 	}
 
-	if err := app.Run(os.Args); err != nil {
+	if err := app.Run(context.Background(), os.Args); err != nil {
 		log.Fatal(err)
 	}
 

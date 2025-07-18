@@ -1,10 +1,11 @@
 package portScan
 
 type Result struct {
-	openPorts []uint16
+	OpenPortsPerIp map[string][]uint16
 
+	openPorts               []uint16
 	openPortInconsistencies []string
 
-	isAvailableViaHttp  bool
-	isAvailableViaHttps bool
+	isPort80Open  bool
+	isPort443Open bool
 }

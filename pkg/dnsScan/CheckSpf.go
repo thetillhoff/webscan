@@ -1,10 +1,10 @@
 package dnsScan
 
 import (
-	"fmt"
 	"log/slog"
 	"net"
 	"regexp"
+	"slices"
 	"strings"
 )
 
@@ -13,11 +13,11 @@ import (
 
 func CheckSpf(txtRecords []string) string {
 	var (
-		spfRecord string = ""
+		spfRecord = ""
 		word      string
 
-		existingExp      bool = false
-		existingRedirect bool = false
+		existingExp      = false
+		existingRedirect = false
 	)
 
 	slog.Debug("dnsScan: Checking spf started")
@@ -39,15 +39,15 @@ func CheckSpf(txtRecords []string) string {
 	spfRecord = strings.TrimPrefix(spfRecord, "v=spf1") // Remove spf prefix, since it's always the same
 	words := strings.Split(spfRecord, " ")
 
-	fmt.Println(words)
-
 	qualifiers := []string{"", "+", "-", "?", "~"}
 	mechanisms := []string{"all", "include", "a", "mx", "ptr", "ip4", "ip6", "exists"}
 
 	for len(words) > 0 {
 		word, words = words[0], words[1:] // Get word for processing and remove it from list
 
-		if listContains(generateCartesianProduct(qualifiers, []string{"all"}), word) {
+		switch {
+
+		case slices.Contains(generateCartesianProduct(qualifiers, []string{"all"}), word):
 			for _, remainingWord := range words { // Mechanisms listed after "all" MUST be ignored.
 				for _, prefix := range generateCartesianProduct(qualifiers, mechanisms) {
 					if strings.HasPrefix(remainingWord, prefix) {
@@ -65,12 +65,12 @@ func CheckSpf(txtRecords []string) string {
 					return "Hint: SPF modifiers like `redirect` are ignored when placed after the `all` mechanism."
 				}
 			}
-		} else if listContains(generateCartesianProduct(qualifiers, []string{"include"}), word) {
+		case slices.Contains(generateCartesianProduct(qualifiers, []string{"include"}), word):
 			// TODO
 			// "include:<domain-spec>"
 			// Include will check whether the spf record of the specified domain matches. if it does, this include matches and processing ends.
 			// It might make sense to verify SPF records in an recursive way because of this.
-		} else if listContains(generateCartesianProduct(qualifiers, []string{"a"}), word) {
+		case slices.Contains(generateCartesianProduct(qualifiers, []string{"a"}), word):
 			// a[:<domain-spec>][<dual-cidr-length>]
 			// the "a" mechanism also matches AAAA records.
 
@@ -100,15 +100,14 @@ func CheckSpf(txtRecords []string) string {
 				// 	}
 				// }
 			}
-		} else if listContains(generateCartesianProduct(qualifiers, []string{"mx"}), word) {
+		case slices.Contains(generateCartesianProduct(qualifiers, []string{"mx"}), word):
 			// TODO
 			// mx[:<domain-spec>][<dual-cidr-length>]
 			// the "mx" mechanism also matches AAAA records.
-		} else if listContains(generateCartesianProduct(qualifiers, []string{"ptr"}), word) {
+		case slices.Contains(generateCartesianProduct(qualifiers, []string{"ptr"}), word):
 			// The "ptr" mechanism SHOULD NOT be used because it is slow and inefficient.
 			return "Hint: PTR records should not be used inSPF records as they are slow and inefficient."
-
-		} else if listContains(generateCartesianProduct(qualifiers, []string{"ip4"}), word) {
+		case slices.Contains(generateCartesianProduct(qualifiers, []string{"ip4"}), word):
 
 			for _, qualifier := range qualifiers { // Remove qualifier prefix if exists
 				word = strings.TrimPrefix(word, qualifier)
@@ -139,7 +138,7 @@ func CheckSpf(txtRecords []string) string {
 				}
 			}
 
-		} else if listContains(generateCartesianProduct(qualifiers, []string{"ip6"}), word) {
+		case slices.Contains(generateCartesianProduct(qualifiers, []string{"ip6"}), word):
 
 			for _, qualifier := range qualifiers { // Remove qualifier prefix if exists
 				word = strings.TrimPrefix(word, qualifier)
@@ -168,11 +167,11 @@ func CheckSpf(txtRecords []string) string {
 				}
 			}
 
-		} else if listContains(generateCartesianProduct(qualifiers, []string{"exists"}), word) {
+		case slices.Contains(generateCartesianProduct(qualifiers, []string{"exists"}), word):
 			// TODO
 			// "exists:<domain-spec>"
 			// The resulting domain name is used for a DNS A RR lookup (even when the connection type is IPv6).  If any A record is returned, this mechanism matches.
-		} else if strings.Contains(word, "=") { // Modifiers always have an "=" separating the name and the value.
+		case strings.Contains(word, "="): // Modifiers always have an "=" separating the name and the value.
 			if strings.HasPrefix(word, "redirect=") {
 				// "redirect=<domain-spec>"
 				word = strings.TrimPrefix(word, "redirect=") // Remove modifier prefix

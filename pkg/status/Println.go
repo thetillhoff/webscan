@@ -2,11 +2,13 @@ package status
 
 import (
 	"fmt"
-	"os"
+	"log/slog"
 )
 
 func (status *Status) Println(message string) {
 
-	fmt.Fprintf(os.Stdout, "%s\n", message)
+	if _, err := fmt.Fprintf(status.out, "%s\n", message); err != nil {
+		slog.Debug("status: Error writing to output", "error", err)
+	}
 
 }

@@ -2,28 +2,42 @@ package portScan
 
 import (
 	"fmt"
+	"io"
 	"log/slog"
 )
 
-func PrintResult(result Result) {
+func PrintResult(result Result, out io.Writer) {
+	var (
+		messages = []string{}
+	)
 
 	slog.Debug("portScan: Printing result started")
 
-	fmt.Printf("\n\n## TCP port scan results\n\n")
-
 	if len(result.openPorts) > 0 {
-		fmt.Println("Relevant open ports:")
+		messages = append(messages, "Relevant open ports:")
 		for _, relevantOpenPort := range result.openPorts {
-			fmt.Println("-", relevantOpenPort)
+			messages = append(messages, fmt.Sprintf("- %d", relevantOpenPort))
 		}
 	} else {
-		fmt.Println("No relevant open ports found.")
+		messages = append(messages, "No relevant open ports found.")
 	}
 
 	if len(result.openPortInconsistencies) > 0 {
-		for _, portInconsistency := range result.openPortInconsistencies {
-			fmt.Println(portInconsistency)
+		messages = append(messages, "Open port inconsistencies:")
+		messages = append(messages, result.openPortInconsistencies...)
+	}
+
+	if len(messages) > 0 {
+		if _, err := fmt.Fprintf(out, "\n## TCP port scan results\n\n"); err != nil {
+			slog.Debug("portScan: Error writing to output", "error", err)
 		}
+		for _, message := range messages {
+			if _, err := fmt.Fprintf(out, "%s\n", message); err != nil {
+				slog.Debug("portScan: Error writing to output", "error", err)
+			}
+		}
+	} else {
+		slog.Debug("portScan: No information found")
 	}
 
 	slog.Debug("portScan: Printing result completed")

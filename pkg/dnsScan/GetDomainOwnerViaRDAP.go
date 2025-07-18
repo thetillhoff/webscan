@@ -10,14 +10,14 @@ import (
 func GetDomainOwnerViaRDAP(url string) ([]string, error) {
 	var (
 		err        error
-		client     *rdap.Client = &rdap.Client{}
+		client     = &rdap.Client{}
 		rdapDomain *rdap.Domain
 
 		emailDomainsUnique = map[string]struct{}{}
 		emailDomains       = []string{}
 	)
 
-	slog.Debug("dnsScan: Getting domain owner via rdap started")
+	slog.Debug("dnsScan: Checking domain owner via rdap started", "url", url)
 
 	rdapDomain, err = client.QueryDomain(url)
 	if err != nil {
@@ -56,7 +56,7 @@ func GetDomainOwnerViaRDAP(url string) ([]string, error) {
 		slog.Info("Could not retrieve Domain Owner (country TLDs are not supported yet by RDAP)")
 	}
 
-	slog.Debug("dnsScan: Getting domain owner via rdap completed")
+	slog.Debug("dnsScan: Checking domain owner via rdap completed", "url", url)
 
 	return emailDomains, nil
 }

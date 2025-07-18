@@ -1,35 +1,45 @@
 package dnsScan
 
 import (
-	"context"
 	"log/slog"
-	"net"
+
+	"github.com/miekg/dns"
 )
 
-func IsDomainBlacklisted(domain string, resolver *net.Resolver) ([]string, error) {
+func IsDomainBlacklisted(domain string, dnsClient *dns.Client, nameserver string) ([]string, error) {
 	var (
-		err        error
-		blacklists = []string{
-			"zen.spamhaus.org",
-		}
-
-		blacklistsWithMatches = []string{}
+		blacklists = []string{}
 	)
 
-	slog.Debug("dnsScan: Checking for domain blacklisting started")
+	slog.Debug("dnsScan: Checking if domain is blacklisted started", "domain", domain)
 
-	for _, blacklist := range blacklists {
-		_, err = resolver.LookupIP(context.Background(), "ip4", domain+"."+blacklist)
-		if err, ok := err.(*net.DNSError); ok && err.IsNotFound {
-			// No A record available -> Not blacklisted
-		} else if err != nil { // Unknown error occurred
-			return blacklistsWithMatches, err
-		} else { // Record was found
-			blacklistsWithMatches = append(blacklistsWithMatches, blacklist)
+	// List of DNSBLs to check
+	dnsBlacklists := []string{
+		"zen.spamhaus.org",
+		"bl.spamcop.net",
+		"dnsbl.sorbs.net",
+		"b.barracudacentral.org",
+		"bl.blocklist.de",
+	}
+
+	for _, dnsbl := range dnsBlacklists {
+		query := domain + "." + dnsbl
+
+		m := new(dns.Msg)
+		m.SetQuestion(dns.Fqdn(query), dns.TypeA)
+
+		response, _, err := dnsClient.Exchange(m, nameserver)
+		if err != nil {
+			slog.Debug("dnsScan: DNSBL query failed", "dnsbl", dnsbl, "error", err)
+			continue
+		}
+
+		if len(response.Answer) > 0 {
+			blacklists = append(blacklists, dnsbl)
 		}
 	}
 
-	slog.Debug("dnsScan: Checking for domain blacklisting completed")
+	slog.Debug("dnsScan: Checking if domain is blacklisted completed", "domain", domain, "blacklists", blacklists)
 
-	return blacklistsWithMatches, nil
+	return blacklists, nil
 }

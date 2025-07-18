@@ -10,7 +10,7 @@ func GetInlineStyleSize(document *goquery.Document) (int, error) {
 	var (
 		content string
 
-		inlineStyleSize int = 0
+		inlineStyleSize = 0
 	)
 
 	slog.Debug("htmlContentScan: Getting inline style size started")

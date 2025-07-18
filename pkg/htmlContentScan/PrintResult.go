@@ -2,56 +2,47 @@ package htmlContentScan
 
 import (
 	"fmt"
+	"io"
 	"log/slog"
 	"strings"
 )
 
-func PrintResult(result Result, schemaName string) {
+func PrintResult(result Result, schemaName string, out io.Writer) {
 	var (
-		sizeMessages = []string{}
+		messages = []string{}
 
-		stylesheetFileCount int = 0
-		totalStylesheetSize int = 0
+		stylesheetFileCount = 0
+		totalStylesheetSize = 0
 
-		scriptFileCount int = 0
-		totalScriptSize int = 0
+		scriptFileCount = 0
+		totalScriptSize = 0
 	)
 
 	slog.Debug("htmlContentScan: Printing result started")
 
-	// First calculate all displayed values, then display them in one go
-
-	// TODO
-
-	//
-
-	fmt.Printf("\n\n## %s content scan results\n\n", strings.ToUpper(schemaName))
-
 	// TODO include images, custom fonts
 
-	for _, message := range result.httpContentRecommendations {
-		fmt.Println(message)
-	}
+	messages = append(messages, result.httpContentRecommendations...)
 
 	// HTML
 
-	sizeMessages = append(sizeMessages, "HTML size: "+printByteSize(result.httpContentHtmlSize))
+	messages = append(messages, "HTML size: "+printByteSize(result.httpContentHtmlSize))
 
 	if result.httpContentHtmlSize > 0 { // Only print more information if len(body) > 0
 
 		// Size of html
 		if result.httpContentHtmlSize > 200000 { // Size is larger than 200kB
-			sizeMessages = append(sizeMessages, "  It's recommended to be smaller than 200kB.")
+			messages = append(messages, "  It's recommended to be smaller than 200kB.")
 		}
 
 		// Size of inline style
 		if result.httpContentInlineStyleSize > 0 {
-			sizeMessages = append(sizeMessages, "  Of this are inline Stylesheet (!= inline styles): "+printByteSize(result.httpContentInlineStyleSize))
+			messages = append(messages, "  Of this are inline Stylesheet (!= inline styles): "+printByteSize(result.httpContentInlineStyleSize))
 		}
 
 		// Size of inline script
 		if result.httpContentInlineScriptSize > 0 {
-			sizeMessages = append(sizeMessages, "  Of this are inline Script: "+printByteSize(result.httpContentInlineScriptSize))
+			messages = append(messages, "  Of this are inline Script: "+printByteSize(result.httpContentInlineScriptSize))
 		}
 
 		// Size of external stylesheets
@@ -62,7 +53,7 @@ func PrintResult(result Result, schemaName string) {
 				stylesheetFileCount = stylesheetFileCount + 1
 				totalStylesheetSize = totalStylesheetSize + size
 			}
-			sizeMessages = append(sizeMessages, "Total size of external CSS files: "+printByteSize(totalStylesheetSize))
+			messages = append(messages, "Total size of external CSS files: "+printByteSize(totalStylesheetSize))
 
 		}
 
@@ -74,25 +65,29 @@ func PrintResult(result Result, schemaName string) {
 				scriptFileCount = scriptFileCount + 1
 				totalScriptSize = totalScriptSize + size
 			}
-			sizeMessages = append(sizeMessages, "total size of external JS files: "+printByteSize(totalScriptSize))
+			messages = append(messages, "total size of external JS files: "+printByteSize(totalScriptSize))
 
 		}
 
 		// Total size
 
 		totalSize := result.httpContentHtmlSize + totalStylesheetSize + totalScriptSize
-		sizeMessages = append(sizeMessages, "Total download size (without media): "+printByteSize(totalSize))
+		messages = append(messages, "Total download size (without media): "+printByteSize(totalSize))
+	}
 
-		if len(result.httpContentRecommendations) > 0 { // Intermediate newline only needed if other text was already written
-			fmt.Println()
+	if len(messages) > 0 {
+		if _, err := fmt.Fprintf(out, "\n## %s content scan results\n\n", strings.ToUpper(schemaName)); err != nil {
+			slog.Debug("htmlContentScan: Error writing to output", "error", err)
 		}
 
-		for _, sizeMessage := range sizeMessages {
-			fmt.Println(sizeMessage)
+		for _, message := range messages {
+			if _, err := fmt.Fprintf(out, "%s\n", message); err != nil {
+				slog.Debug("htmlContentScan: Error writing to output", "error", err)
+			}
 		}
-
+	} else {
+		slog.Debug("htmlContentScan: No information found")
 	}
 
 	slog.Debug("htmlContentScan: Printing result completed")
-
 }

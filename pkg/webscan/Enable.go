@@ -2,15 +2,15 @@ package webscan
 
 func (engine *Engine) EnableAllScansIfNoneAreExplicitlySet() {
 
-	if !(engine.advancedDnsScan ||
-		engine.ipScan ||
-		engine.advancedPortScan ||
-		engine.tlsScan ||
-		engine.httpProtocolScan ||
-		engine.httpHeaderScan ||
-		engine.htmlContentScan ||
-		engine.mailConfigScan ||
-		engine.subDomainScan) { // If no Scans are enabled, enable all by default
+	if !engine.advancedDnsScan &&
+		!engine.ipScan &&
+		!engine.advancedPortScan &&
+		!engine.tlsScan &&
+		!engine.httpProtocolScan &&
+		!engine.httpHeaderScan &&
+		!engine.htmlContentScan &&
+		!engine.mailConfigScan &&
+		!engine.subDomainScan { // If no Scans are enabled, enable all by default
 
 		engine.EnableAllScans()
 	}

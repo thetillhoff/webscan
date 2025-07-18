@@ -32,9 +32,9 @@ func GenerateHeaderRecommendations(response *http.Response) []string {
 	if headerValue == "" {
 		headerRecommendations = append(headerRecommendations, headerName+" header should be implemented: https://infosec.mozilla.org/guidelines/web_security#http-strict-transport-security")
 	} else {
-		err = validateHeaderStrictTransportSecurity(headerValue)
+		err = validateSTS(headerValue)
 		if err != nil {
-			headerRecommendations = append(headerRecommendations, "Recommended action for "+headerName+": "+err.Error())
+			headerRecommendations = append(headerRecommendations, headerName+" header: "+err.Error())
 		}
 	}
 
@@ -50,9 +50,8 @@ func GenerateHeaderRecommendations(response *http.Response) []string {
 	if headerValue == "" {
 		headerRecommendations = append(headerRecommendations, headerName+" header should be implemented: https://infosec.mozilla.org/guidelines/web_security#content-security-policy")
 	} else {
-
 		headerRecommendations = append(headerRecommendations, headerName+" header:")
-		headerRecommendations = append(headerRecommendations, headerValue) // TODO instead of just printing the header value check it against the best practices described in the link above
+		headerRecommendations = append(headerRecommendations, headerValue) // TODO instead of just printing the header value, check it against the best practices described in the link above
 	}
 
 	// X-Frame-Options

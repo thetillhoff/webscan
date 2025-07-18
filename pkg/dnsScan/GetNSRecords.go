@@ -1,33 +1,34 @@
 package dnsScan
 
 import (
-	"context"
 	"log/slog"
-	"net"
+
+	"github.com/miekg/dns"
 )
 
-func GetNSRecords(url string, resolver *net.Resolver) ([]string, error) {
+func GetNSRecords(url string, dnsClient *dns.Client, nameserver string) ([]string, error) {
 	var (
-		err error
-
-		records   = []string{}
-		nsRecords []*net.NS
+		records = []string{}
 	)
 
-	slog.Debug("dnsScan: Getting MX records started")
+	slog.Debug("dnsScan: Checking for NS records started", "url", url)
 
-	nsRecords, err = resolver.LookupNS(context.Background(), url)
-	if err, ok := err.(*net.DNSError); ok && err.IsNotFound {
-		// No NS record available
-	} else if err != nil {
+	m := new(dns.Msg)
+	m.SetQuestion(dns.Fqdn(url), dns.TypeNS)
+
+	response, _, err := dnsClient.Exchange(m, nameserver)
+	if err != nil {
+		slog.Debug("dnsScan: No NS records found", "url", url, "error", err)
 		return records, err
 	}
 
-	for _, record := range nsRecords {
-		records = append(records, record.Host)
+	for _, answer := range response.Answer {
+		if nsRecord, ok := answer.(*dns.NS); ok {
+			records = append(records, nsRecord.Ns)
+		}
 	}
 
-	slog.Debug("dnsScan: Getting MX records completed")
+	slog.Debug("dnsScan: Checking for NS records completed", "url", url)
 
 	return records, nil
 }

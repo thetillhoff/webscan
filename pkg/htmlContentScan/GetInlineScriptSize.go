@@ -10,7 +10,7 @@ func GetInlineScriptSize(document *goquery.Document) (int, error) {
 	var (
 		content string
 
-		inlineScriptSize int = 0
+		inlineScriptSize = 0
 	)
 
 	slog.Debug("htmlContentScan: Getting inline script size started")

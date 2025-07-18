@@ -2,12 +2,15 @@ package httpProtocolScan
 
 import (
 	"crypto/tls"
+	"errors"
 	"log/slog"
 	"net/http"
-	"net/url"
+	"strings"
+
+	"github.com/thetillhoff/webscan/v3/pkg/types"
 )
 
-func checkHttp1(fullUrl string) (string, error) {
+func checkHttp1(target types.Target) (string, error) {
 	var (
 		err    error
 		client = &http.Client{
@@ -19,29 +22,39 @@ func checkHttp1(fullUrl string) (string, error) {
 				TLSNextProto: make(map[string]func(authority string, c *tls.Conn) http.RoundTripper, 0), // Disable HTTP/2
 			},
 		}
-		parsedUrl *url.URL
-		request   *http.Request
-		response  *http.Response
+		request  *http.Request
+		response *http.Response
 	)
 
-	parsedUrl, err = url.Parse(fullUrl)
+	slog.Debug("httpProtocolScan: Checking http/1 started", "url", target.UrlString())
+
+	request, err = http.NewRequest("GET", target.UrlString(), nil)
 	if err != nil {
+		slog.Debug("httpProtocolScan: Checking http/1 failed", "url", target.UrlString(), "error", err)
 		return "", err
 	}
 
-	request, err = http.NewRequest("GET", fullUrl, nil)
-	if err != nil {
-		return "", err
-	}
-
-	request.Header.Add("Host", parsedUrl.Host) // This is needed server-side to identify which vhost-config to use
+	request.Header.Add("Host", target.Host()) // This is needed server-side to identify which vhost-config to use
 
 	response, err = client.Do(request)
 	if err == nil {
-		defer response.Body.Close()
-		slog.Debug("Result of check for http/1.1 protocol support", "proto", response.Proto)
-		return response.Proto, nil
+		defer func() {
+			if closeErr := response.Body.Close(); closeErr != nil {
+				slog.Debug("httpProtocolScan: Error closing response body", "error", closeErr)
+			}
+		}()
+
+		if strings.HasPrefix(response.Proto, "HTTP/1") {
+			slog.Debug("httpProtocolScan: Checking http/1 completed", "url", target.UrlString(), "proto", response.Proto)
+			return response.Proto, nil
+		} else {
+			err = errors.New("http/1 is not supported")
+			slog.Debug("httpProtocolScan: Checking http/1 failed", "url", target.UrlString(), "proto", response.Proto, "error", err)
+			return response.Proto, err
+		}
+
 	} else {
-		return "", nil
+		slog.Debug("httpProtocolScan: Checking http/1 failed", "url", target.UrlString(), "error", err)
+		return "", err
 	}
 }

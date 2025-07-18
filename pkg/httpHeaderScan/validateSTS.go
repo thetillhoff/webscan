@@ -7,19 +7,19 @@ import (
 	"strings"
 )
 
-func validateHeaderStrictTransportSecurity(content string) error {
+func validateSTS(content string) error {
 	var (
 		err error
 
-		directives = strings.Split(content, ";")
+		directives = strings.Split(strings.TrimSuffix(content, ";"), ";")
 
-		maxAge int = -1
+		maxAge = -1
 
 		includeSubdomains bool
 		preload           bool
 	)
 
-	slog.Debug("httpHeaderScan: Validating HSTS started")
+	slog.Debug("httpHeaderScan: Validating STS started", "content", content)
 
 	for _, directive := range directives {
 		directive = strings.TrimSpace(directive)

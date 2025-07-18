@@ -6,9 +6,24 @@ import (
 	"strings"
 
 	"github.com/thetillhoff/webscan/v3/pkg/status"
+	"github.com/thetillhoff/webscan/v3/pkg/types"
 )
 
-func Scan(status *status.Status, inputUrl string, certNames map[string]struct{}) Result {
+type scanConfig struct {
+	certNames []string
+}
+
+// ConfigOption represents a configuration option for subdomain scanning
+type ConfigOption func(*scanConfig)
+
+// WithCertNames sets the certificate names
+func WithCertNames(certNames []string) ConfigOption {
+	return func(sc *scanConfig) {
+		sc.certNames = certNames
+	}
+}
+
+func Scan(target types.Target, status *status.Status, options ...ConfigOption) Result {
 	var (
 		err    error
 		result = Result{
@@ -17,32 +32,43 @@ func Scan(status *status.Status, inputUrl string, certNames map[string]struct{})
 		}
 	)
 
+	// Apply configuration options
+	config := &scanConfig{}
+	for _, option := range options {
+		option(config)
+	}
+
 	slog.Debug("subDomainScan: Scan started")
 
 	status.SpinningUpdate("Scanning subdomains...")
 
-	for subdomain := range certNames {
+	for _, subdomain := range config.certNames {
 
-		if strings.Contains(subdomain, "=") { // If "subdomain" contains strings like `CN=X,O=Y,C=Z`
-			continue // Skip this entry
-		}
-
-		subdomain = strings.TrimPrefix(subdomain, "*.") // Remove wildcards, as they are invalid dns names, but might contain valid subdomains
-		if subdomain == inputUrl {                      // Remove names that equal the input domain
+		switch {
+		case subdomain == "": // If subdomain candidate is empty
+			slog.Debug("subDomainScan: Skipping empty subdomain")
+			continue
+		case strings.Contains(subdomain, "="): // If subdomain candidate contains strings like `CN=X,O=Y,C=Z`
+			slog.Debug("subDomainScan: Skipping subdomain containing '='", "subdomain", subdomain)
+			continue
+		case net.ParseIP(subdomain) != nil: // If subdomain candidate is an ip address
+			slog.Debug("subDomainScan: Skipping ip address", "ip", subdomain)
+			continue
+		case !strings.HasSuffix(subdomain, target.Hostname()): // If subdomain candidate is a completely different domain
+			slog.Debug("subDomainScan: Skipping subdomain that is not a subdomain of the target domain", "subdomain", subdomain)
+			continue
+		case subdomain == target.Hostname(): // If subdomain candidate is the same as the target domain
+			slog.Debug("subDomainScan: Skipping subdomain that is the same as the target domain", "subdomain", subdomain)
 			continue
 		}
 
-		ip := net.ParseIP(subdomain) // Check if "subdomain" is an ip address
-		if ip != nil {               // Not nil means it is an ip address
-			continue // Skip ip addresses
-		}
+		// TODO: Think about this later, since it adds insights on existing subdomains with the '*.', which is lost if it's removed
+		// subdomain = strings.TrimPrefix(subdomain, "*.") // Remove wildcards, as they are invalid dns names, but might contain valid subdomains
 
-		if _, ok := result.subdomainsFromTlsScan[subdomain]; !ok { // Skip duplicates
-			result.subdomainsFromTlsScan[subdomain] = struct{}{} // Add unique entries
-		}
+		result.subdomainsFromTlsScan[subdomain] = struct{}{} // Add unique entries
 	}
 
-	result.subdomainsFromCrtSh, err = CheckCertLogs(inputUrl)
+	result.subdomainsFromCrtSh, err = CheckCertLogs(target)
 	if err != nil {
 		slog.Warn("could not retrieve subdomains from crt.sh: " + err.Error())
 	}

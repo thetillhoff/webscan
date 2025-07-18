@@ -2,11 +2,12 @@ package dnsScan
 
 import (
 	"log/slog"
-	"net"
 	"strings"
+
+	"github.com/miekg/dns"
 )
 
-func CheckDkim(selectorUrl string, resolver *net.Resolver) string {
+func CheckDkim(selectorUrl string, dnsClient *dns.Client, nameserver string) string {
 	var (
 		err         error
 		txtRecords  []string
@@ -15,10 +16,10 @@ func CheckDkim(selectorUrl string, resolver *net.Resolver) string {
 
 	slog.Debug("dnsScan: Checking dkim started")
 
-	txtRecords, err = GetTXTRecords(selectorUrl, resolver)
+	txtRecords, err = GetTXTRecords(selectorUrl, dnsClient, nameserver)
 	if err != nil {
 		// TODO add "Could not retrieve txt record" err/wrn/inf
-		cnameRecord, err = GetCNAMERecord(selectorUrl, resolver)
+		cnameRecord, err = GetCNAMERecord(selectorUrl, dnsClient, nameserver)
 		if err != nil {
 			return "Hint: Neither TXT nor CNAME found at specified DKIM selector."
 		}

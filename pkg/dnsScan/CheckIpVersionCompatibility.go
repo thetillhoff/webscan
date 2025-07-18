@@ -4,7 +4,7 @@ import "log/slog"
 
 func CheckIpVersionCompatibility(aRecords []string, aaaaRecords []string) string {
 	var (
-		message string = ""
+		message = ""
 	)
 
 	slog.Debug("dnsScan: Checking ip version compatibility started")

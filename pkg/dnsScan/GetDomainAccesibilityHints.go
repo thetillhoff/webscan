@@ -10,7 +10,7 @@ func GetDomainAccessibilityHints(url string) []string {
 		hints = []string{}
 	)
 
-	slog.Debug("dnsScan: Getting domain accessibility hints started")
+	slog.Debug("dnsScan: Checking domain accessibility hints started", "url", url)
 
 	domains := strings.Split(url, ".")
 
@@ -32,7 +32,7 @@ func GetDomainAccessibilityHints(url string) []string {
 		}
 	}
 
-	slog.Debug("dnsScan: Getting domain accessibility hints started")
+	slog.Debug("dnsScan: Checking domain accessibility hints completed", "url", url)
 
 	return hints
 }

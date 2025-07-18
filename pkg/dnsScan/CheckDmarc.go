@@ -2,11 +2,12 @@ package dnsScan
 
 import (
 	"log/slog"
-	"net"
 	"strings"
+
+	"github.com/miekg/dns"
 )
 
-func CheckDmarc(url string, resolver *net.Resolver) string {
+func CheckDmarc(url string, dnsClient *dns.Client, nameserver string) string {
 	var (
 		err         error
 		txtRecords  []string
@@ -15,9 +16,9 @@ func CheckDmarc(url string, resolver *net.Resolver) string {
 
 	slog.Debug("dnsScan: Checking dmarc started")
 
-	txtRecords, err = GetTXTRecords("_dmarc."+url, resolver)
+	txtRecords, err = GetTXTRecords("_dmarc."+url, dnsClient, nameserver)
 	if err != nil {
-		cnameRecord, err = GetCNAMERecord("_dmarc."+url, resolver)
+		cnameRecord, err = GetCNAMERecord("_dmarc."+url, dnsClient, nameserver)
 		if err != nil {
 			return "Hint: Neither TXT nor CNAME records are set up for DMARC."
 		}

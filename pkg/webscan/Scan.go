@@ -1,13 +1,8 @@
 package webscan
 
 import (
-	"errors"
 	"fmt"
-	"io"
 	"log/slog"
-	"net"
-	"net/http"
-	"strconv"
 
 	"github.com/thetillhoff/webscan/v3/pkg/dnsScan"
 	"github.com/thetillhoff/webscan/v3/pkg/htmlContentScan"
@@ -17,17 +12,12 @@ import (
 	"github.com/thetillhoff/webscan/v3/pkg/portScan"
 	"github.com/thetillhoff/webscan/v3/pkg/subDomainScan"
 	"github.com/thetillhoff/webscan/v3/pkg/tlsScan"
+	"github.com/thetillhoff/webscan/v3/pkg/types"
 )
 
 func (engine *Engine) Scan(input string) error {
 	var (
 		err error
-
-		httpResponse  *http.Response
-		httpsResponse *http.Response
-
-		httpResponseBody  []byte
-		httpsResponseBody []byte
 	)
 
 	// TODO If tty supports color, use custom logger, else use structured logger with zerolog or slog
@@ -60,243 +50,158 @@ func (engine *Engine) Scan(input string) error {
 
 	// Debug
 
-	// TODO merge into one .Debug call
-	slog.Debug("advancedDnsScan: " + strconv.FormatBool(engine.advancedDnsScan))
-	slog.Debug("ipScan: " + strconv.FormatBool(engine.ipScan))
-	slog.Debug("advancedPortScan: " + strconv.FormatBool(engine.advancedPortScan))
-	slog.Debug("tlsScan: " + strconv.FormatBool(engine.tlsScan))
-	slog.Debug("httpProtocolScan: " + strconv.FormatBool(engine.httpProtocolScan))
-	slog.Debug("httpHeaderScan: " + strconv.FormatBool(engine.httpHeaderScan))
-	slog.Debug("htmlContentScan: " + strconv.FormatBool(engine.htmlContentScan))
-	slog.Debug("mailConfigScan: " + strconv.FormatBool(engine.mailConfigScan))
-	slog.Debug("subDomainScan: " + strconv.FormatBool(engine.subDomainScan))
+	slog.Debug("webscan config",
+		"followRedirects", engine.followRedirects,
+		"advancedDnsScan", engine.advancedDnsScan,
+		"ipScan", engine.ipScan,
+		"advancedPortScan", engine.advancedPortScan,
+		"tlsScan", engine.tlsScan,
+		"httpProtocolScan", engine.httpProtocolScan,
+		"httpHeaderScan", engine.httpHeaderScan,
+		"htmlContentScan", engine.htmlContentScan,
+		"mailConfigScan", engine.mailConfigScan,
+		"subDomainScan", engine.subDomainScan)
 
 	// Input
 
-	slog.Debug("input: " + input)
-	engine.target, err = NewTarget(input)
+	slog.Debug("raw", "input", input)
+	engine.target, err = types.NewTarget(input)
 	if err != nil {
 		return err
 	}
-	slog.Debug("target", "engine.target", engine.target)
 
-	// Output header for --instant
-	if engine.instant {
-		fmt.Printf("# webscan results for %s\n", engine.target.rawTarget)
+	if _, err := fmt.Fprintf(engine.stdout, "# webscan results for %s\n\n", engine.target.RawTarget()); err != nil {
+		slog.Debug("webscan: Error writing to output", "error", err)
 	}
 
 	// DNS
 
-	if engine.target.isDomain {
-
-		slog.Info("input identified as domain")
-
-		// Since hostname is domain, dns is relevant
-
-		if engine.advancedDnsScan { // If advanced scan is selected
-			engine.dnsScanResult, err = dnsScan.AdvancedScan(
-				&engine.status,
-				engine.resolver,
-				engine.target.Hostname(),
-				engine.opinionated,
-				engine.followRedirects,
-			)
-			if err != nil {
-				return err
-			}
-		} else { // If simple scan is selected
-			engine.dnsScanResult, err = dnsScan.SimpleScan(
-				engine.resolver,
-				engine.target.Hostname(),
-				engine.followRedirects,
-			)
-			if err != nil {
-				return err
-			}
-		}
-	} else {
-
-		ip := net.ParseIP(input)
-		if ip == nil {
-			return errors.New("input is neither a domain nor a valid ip address")
-		}
-
-		if ipScan.IsIpv4(input) {
-			slog.Debug("input identified as ipv4", "ip", ip)
-			engine.dnsScanResult.ARecords = []string{input}
-		} else {
-			slog.Debug("input identified as ipv6", "ip", ip)
-			engine.dnsScanResult.AAAARecords = []string{input}
-		}
+	engine.dnsScanResult, err = dnsScan.Scan(engine.target, &engine.status, dnsScan.WithAdvanced(engine.advancedDnsScan), dnsScan.WithFollowRedirects(engine.followRedirects))
+	if err != nil {
+		return err
 	}
 
-	if engine.instant {
-		slog.Debug("instant dns result")
-		dnsScan.PrintResult(engine.dnsScanResult)
-	}
+	dnsScan.PrintResult(engine.dnsScanResult, engine.stdout)
+
+	// IP scan
 
 	if engine.ipScan {
+
 		engine.ipScanResult, err = ipScan.Scan(
+			engine.target,
 			&engine.status,
-			engine.dnsScanResult.ARecords,
-			engine.dnsScanResult.AAAARecords,
+			ipScan.WithARecords(engine.dnsScanResult.ARecords),
+			ipScan.WithAAAARecords(engine.dnsScanResult.AAAARecords),
 		)
 		if err != nil {
 			return err
 		}
-	}
 
-	if engine.instant {
-		slog.Debug("instant ip result")
 		ipScan.PrintResult(
 			engine.ipScanResult,
 			engine.dnsScanResult.ARecords,
 			engine.dnsScanResult.AAAARecords,
+			engine.stdout,
 		)
 	}
 
-	if engine.advancedPortScan { // If advanced scan is selected
-		engine.portScanResult, err = portScan.AdvancedScan(
-			&engine.status,
-			engine.dnsScanResult.ARecords,
-			engine.dnsScanResult.AAAARecords,
-		)
-		if err != nil {
-			return err
-		}
-	} else { // If simple scan is selected
-		engine.portScanResult, err = portScan.SimpleScan(
-			&engine.status,
-			engine.dnsScanResult.ARecords,
-			engine.dnsScanResult.AAAARecords,
-		)
-		if err != nil {
-			return err
-		}
+	// Port scan
+
+	engine.portScanResult, err = portScan.Scan(
+		engine.target,
+		&engine.status,
+		portScan.WithARecords(engine.dnsScanResult.ARecords),
+		portScan.WithAAAARecords(engine.dnsScanResult.AAAARecords),
+		portScan.WithAdvanced(engine.advancedPortScan),
+	)
+	if err != nil {
+		return err
 	}
 
-	if engine.instant {
-		slog.Debug("instant port result")
-		portScan.PrintResult(engine.portScanResult)
-	}
+	portScan.PrintResult(engine.portScanResult, engine.stdout)
 
-	if engine.portScanResult.IsAvailableViaHttps() {
+	// TLS scan
+
+	// TODO only run tls scan if protocol is tls, https or not specified.
+	// In cast of tls or https, run it either on 443 or another port if one is specified.
+
+	if len(engine.dnsScanResult.ARecords) > 0 || len(engine.dnsScanResult.AAAARecords) > 0 {
 
 		if engine.tlsScan || engine.subDomainScan {
+
 			engine.tlsScanResult, err = tlsScan.Scan(
+				engine.target,
 				&engine.status,
-				input,
-				engine.target.parsedUrl,
+				engine.dnsScanResult.ARecords,
+				engine.dnsScanResult.AAAARecords,
+				engine.portScanResult,
 			)
 			if err != nil {
 				return err
 			}
 		}
 
-		if engine.instant {
-			slog.Debug("instant tls result")
-			tlsScan.PrintResult(engine.tlsScanResult)
+		tlsScan.PrintResult(engine.tlsScanResult, engine.stdout)
+	}
+
+	// HTTP protocol scan
+
+	if engine.httpProtocolScan {
+		engine.httpProtocolScanResult, err = httpProtocolScan.Scan(
+			engine.target,
+			&engine.status,
+			httpProtocolScan.WithClient(engine.client),
+			httpProtocolScan.WithIsAvailableViaPort80(engine.portScanResult.IsPortOpen(80)),
+			httpProtocolScan.WithIsAvailableViaPort443(engine.portScanResult.IsPortOpen(443)),
+		)
+		if err != nil {
+			return err
 		}
 	}
 
-	if engine.portScanResult.IsAvailableViaHttp() || engine.portScanResult.IsAvailableViaHttps() { // Only scan http protocol if target is reachable ;)
+	httpProtocolScan.PrintResult(engine.httpProtocolScanResult, engine.stdout)
 
-		if engine.httpProtocolScan {
-			engine.httpProtocolScanResult, err = httpProtocolScan.Scan(
-				&engine.status,
-				input,
-				engine.portScanResult.IsAvailableViaHttp(),
-				engine.portScanResult.IsAvailableViaHttps(),
-			)
-			if err != nil {
-				return err
-			}
-		}
-
-		if engine.instant {
-			slog.Debug("instant httpProtocol result")
-			httpProtocolScan.PrintResult(engine.httpProtocolScanResult)
-		}
-
-	}
-
-	if engine.httpHeaderScan || engine.htmlContentScan {
-
-		// Make http request for later analysis of response
-		if engine.portScanResult.IsAvailableViaHttp() {
-			httpResponse, err = engine.client.MakeRequest("GET", "http://"+input, nil)
-			if err != nil {
-				return err
-			}
-
-			httpResponseBody, err = io.ReadAll(httpResponse.Body) // Read the body
-			if err != nil {
-				return err
-			}
-			defer httpResponse.Body.Close()
-		}
-
-		// Make https request for later analysis of response
-		if engine.portScanResult.IsAvailableViaHttps() {
-			httpsResponse, err = engine.client.MakeRequest("GET", "https://"+input, nil)
-			if err != nil {
-				return err
-			}
-
-			httpsResponseBody, err = io.ReadAll(httpsResponse.Body) // Read the body
-			if err != nil {
-				return err
-			}
-			defer httpsResponse.Body.Close()
-		}
-
-	}
+	// HTTP header scan
 
 	if engine.httpHeaderScan {
 
-		if engine.portScanResult.IsAvailableViaHttp() {
-			engine.httpHeaderScanResult = httpHeaderScan.Scan(&engine.status, httpResponse, "http")
-
-			if engine.instant {
-				slog.Debug("instant httpHeader result for http")
-				httpHeaderScan.PrintResult(engine.httpHeaderScanResult, "http")
+		if engine.portScanResult.IsPortOpen(80) && engine.httpProtocolScanResult.IsAvailableViaHttp() {
+			engine.httpHeaderScanResult, err = httpHeaderScan.Scan(&engine.status, engine.target, httpHeaderScan.WithClient(engine.client), httpHeaderScan.WithSchemaOverride(types.HTTP))
+			if err != nil {
+				return err
 			}
+
+			httpHeaderScan.PrintResult(engine.httpHeaderScanResult, "http", engine.stdout)
 		}
 
-		if engine.portScanResult.IsAvailableViaHttps() {
-			engine.httpsHeaderScanResult = httpHeaderScan.Scan(&engine.status, httpsResponse, "https")
-
-			if engine.instant {
-				slog.Debug("instant httpHeader result for https")
-				httpHeaderScan.PrintResult(engine.httpsHeaderScanResult, "https")
+		if engine.portScanResult.IsPortOpen(443) && engine.httpProtocolScanResult.IsAvailableViaHttps() {
+			engine.httpsHeaderScanResult, err = httpHeaderScan.Scan(&engine.status, engine.target, httpHeaderScan.WithClient(engine.client), httpHeaderScan.WithSchemaOverride(types.HTTPS))
+			if err != nil {
+				return err
 			}
+
+			httpHeaderScan.PrintResult(engine.httpsHeaderScanResult, "https", engine.stdout)
 		}
 	}
 
 	if engine.htmlContentScan {
 
-		if engine.portScanResult.IsAvailableViaHttp() {
-			engine.httpHtmlContentScanResult, err = htmlContentScan.Scan(&engine.status, input, httpResponse, httpResponseBody, engine.client, "http")
+		if engine.portScanResult.IsPortOpen(80) && engine.httpProtocolScanResult.IsAvailableViaHttp() {
+			engine.httpHtmlContentScanResult, err = htmlContentScan.Scan(&engine.status, engine.target, htmlContentScan.WithClient(engine.client), htmlContentScan.WithSchemaOverride(types.HTTP))
 			if err != nil {
 				return err
 			}
 
-			if engine.instant {
-				slog.Debug("instant htmlContent result for http")
-				htmlContentScan.PrintResult(engine.httpHtmlContentScanResult, "http")
-			}
+			htmlContentScan.PrintResult(engine.httpHtmlContentScanResult, "http", engine.stdout)
 		}
 
-		if engine.portScanResult.IsAvailableViaHttps() {
-			engine.httpsHtmlContentScanResult, err = htmlContentScan.Scan(&engine.status, input, httpsResponse, httpsResponseBody, engine.client, "https")
+		if engine.portScanResult.IsPortOpen(443) && engine.httpProtocolScanResult.IsAvailableViaHttps() {
+			engine.httpsHtmlContentScanResult, err = htmlContentScan.Scan(&engine.status, engine.target, htmlContentScan.WithClient(engine.client), htmlContentScan.WithSchemaOverride(types.HTTPS))
 			if err != nil {
 				return err
 			}
 
-			if engine.instant {
-				slog.Debug("instant htmlContent result for https")
-				htmlContentScan.PrintResult(engine.httpsHtmlContentScanResult, "https")
-			}
+			htmlContentScan.PrintResult(engine.httpsHtmlContentScanResult, "https", engine.stdout)
 		}
 
 	}
@@ -309,12 +214,13 @@ func (engine *Engine) Scan(input string) error {
 	// }
 
 	if engine.subDomainScan {
-		engine.subDomainScanResult = subDomainScan.Scan(&engine.status, input, engine.tlsScanResult.CertNames)
-	}
+		engine.subDomainScanResult = subDomainScan.Scan(
+			engine.target,
+			&engine.status,
+			subDomainScan.WithCertNames(engine.tlsScanResult.ListAllCertNames()),
+		)
 
-	if engine.instant {
-		slog.Debug("instant subDomain result")
-		subDomainScan.PrintResult(engine.subDomainScanResult)
+		subDomainScan.PrintResult(engine.subDomainScanResult, engine.stdout)
 	}
 
 	// TODO if followRedirects is true, CNAMEs should be followed (scan them, too)

@@ -3,12 +3,12 @@ package tlsScan
 import (
 	"crypto/tls"
 	"log/slog"
-	"strings"
 
 	"github.com/thetillhoff/webscan/v3/pkg/status"
+	"github.com/thetillhoff/webscan/v3/pkg/types"
 )
 
-func scanEnabledTlsCiphers(status *status.Status, url string) []tls.CipherSuite {
+func scanEnabledTlsCiphers(status *status.Status, target types.Target, ip string) []tls.CipherSuite {
 	var (
 		ciphers = []tls.CipherSuite{}
 
@@ -31,13 +31,11 @@ func scanEnabledTlsCiphers(status *status.Status, url string) []tls.CipherSuite 
 
 	slog.Debug("tlsScan: Get enabled tls ciphers started", "len(ciphers)", len(ciphers))
 
-	urlHost := strings.SplitN(url, "/", 2)[0] // Cleaning url (removing Path)
-
 	status.SpinningXOfInit(len(ciphers), "Scanning tls ciphers...")
 
 	for _, cipher := range ciphers { // For each cipher
-		wg.Add(1)                                                      // Wait for one more goroutine to finish
-		go checkCipher(status, urlHost, cipher, enabledTlsCiphersChan) // Start goroutine that checks if tlsVersion and cipher combination are enabled
+		wg.Add(1)                                                         // Wait for one more goroutine to finish
+		go checkCipher(status, target, ip, cipher, enabledTlsCiphersChan) // Start goroutine that checks if tlsVersion and cipher combination are enabled
 	}
 
 	wg.Wait()                    // Wait until all goroutines are finished

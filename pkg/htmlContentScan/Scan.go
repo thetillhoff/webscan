@@ -9,17 +9,38 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"path/filepath"
-	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/thetillhoff/webscan/v3/pkg/httpClient"
+	"github.com/thetillhoff/webscan/v3/pkg/cachedHttpGetClient"
 	"github.com/thetillhoff/webscan/v3/pkg/status"
+	"github.com/thetillhoff/webscan/v3/pkg/types"
 )
 
 // TODO return image / media / video / audio / svgs / ... as well
 
-func Scan(status *status.Status, inputUrl string, response *http.Response, responseBody []byte, client httpClient.Client, schemaName string) (Result, error) {
+type scanConfig struct {
+	client         cachedHttpGetClient.Client
+	overrideSchema types.Schema
+}
+
+// ConfigOption represents a configuration option for DNS scanning
+type ConfigOption func(*scanConfig)
+
+// WithClient sets the client
+func WithClient(client cachedHttpGetClient.Client) ConfigOption {
+	return func(sc *scanConfig) {
+		sc.client = client
+	}
+}
+
+// WithSchemaOverride sets the schema override
+func WithSchemaOverride(schema types.Schema) ConfigOption {
+	return func(sc *scanConfig) {
+		sc.overrideSchema = schema
+	}
+}
+
+func Scan(status *status.Status, target types.Target, options ...ConfigOption) (Result, error) {
 	var (
 		err    error
 		result = Result{
@@ -28,20 +49,34 @@ func Scan(status *status.Status, inputUrl string, response *http.Response, respo
 			httpContentRecommendations: []string{},
 		}
 
-		body     []byte
-		messages []string
-		message  string
-		document *goquery.Document
+		response     *http.Response
+		responseBody []byte
+
+		body      []byte
+		messages  []string
+		message   string
+		document  *goquery.Document
+		parsedUrl *url.URL
 
 		stylesheetSources []string
 		scriptSources     []string
-
-		parsedUrl *url.URL
 	)
 
 	slog.Debug("htmlContentScan: Scan started")
 
-	status.SpinningUpdate(fmt.Sprintf("Scanning %s content...", schemaName))
+	config := &scanConfig{}
+	for _, option := range options {
+		option(config)
+	}
+
+	target.OverrideSchema(config.overrideSchema)
+
+	status.SpinningUpdate(fmt.Sprintf("Scanning %s content...", target.Schema().String()))
+
+	response, responseBody, err = config.client.Get(target.UrlString())
+	if err != nil {
+		return result, err
+	}
 
 	message = CheckCompression(response) // Check whether compression was used
 	if message != "" {
@@ -106,19 +141,15 @@ func Scan(status *status.Status, inputUrl string, response *http.Response, respo
 			}
 
 			if parsedUrl.Host == "" { // Doesn't include hostname
-				if strings.Contains(inputUrl, "/") {
-					inputUrlParts := strings.SplitN(inputUrl, "/", 2)
-					parsedUrl.Host, parsedUrl.Path = inputUrlParts[0], inputUrlParts[1]+parsedUrl.Path
-				} else {
-					parsedUrl.Host = inputUrl // Add hostname
-				}
+				parsedUrl.Host = target.Hostname()                        // Add hostname
+				parsedUrl.Path = path.Join(target.Path(), parsedUrl.Path) // Add path prefix
 			}
 
-			if !filepath.IsAbs(parsedUrl.Path) { // If not leading '/' in path
+			if !path.IsAbs(parsedUrl.Path) { // If not leading '/' in path
 				parsedUrl.Path = "/" + parsedUrl.Path // Add leading '/'
 			}
 
-			body, err = client.GetBodyForRequest("GET", parsedUrl.String())
+			_, body, err = config.client.Get(parsedUrl.String())
 			if err != nil {
 				return result, err
 			}
@@ -150,19 +181,15 @@ func Scan(status *status.Status, inputUrl string, response *http.Response, respo
 			}
 
 			if parsedUrl.Host == "" { // Doesn't include hostname
-				if strings.Contains(inputUrl, "/") {
-					inputUrlParts := strings.SplitN(inputUrl, "/", 2)
-					parsedUrl.Host, parsedUrl.Path = inputUrlParts[0], inputUrlParts[1]+parsedUrl.Path
-				} else {
-					parsedUrl.Host = inputUrl // Add hostname
-				}
+				parsedUrl.Host = target.Hostname()                        // Add hostname
+				parsedUrl.Path = path.Join(target.Path(), parsedUrl.Path) // Add path prefix
 			}
 
-			if !filepath.IsAbs(parsedUrl.Path) { // If not leading '/' in path
+			if !path.IsAbs(parsedUrl.Path) { // If not leading '/' in path
 				parsedUrl.Path = "/" + parsedUrl.Path // Add leading '/'
 			}
 
-			body, err = client.GetBodyForRequest("GET", parsedUrl.String())
+			_, body, err = config.client.Get(parsedUrl.String())
 			if err != nil {
 				return result, err
 			}
@@ -172,7 +199,7 @@ func Scan(status *status.Status, inputUrl string, response *http.Response, respo
 
 	result.httpContentRecommendations = messages
 
-	status.SpinningComplete(fmt.Sprintf("Scan of %s content complete.", schemaName))
+	status.SpinningComplete(fmt.Sprintf("Scan of %s content complete.", target.Schema().String()))
 
 	slog.Debug("htmlContentScan: Scan completed")
 

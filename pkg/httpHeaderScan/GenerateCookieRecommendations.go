@@ -40,10 +40,11 @@ func GenerateCookieRecommendations(response *http.Response) (map[string][]string
 			cookieRecommendations = append(cookieRecommendations, "shouldn't be accessible via javascript. It's recommended to use localStorage or server-side storage and api-calls for javascript-related data instead.")
 		}
 
-		if cookie.SameSite == http.SameSiteDefaultMode {
+		switch cookie.SameSite {
+		case http.SameSiteDefaultMode:
 			// SameSite should be set (to lax or strict), because the default differ per browser
 			cookieRecommendations = append(cookieRecommendations, "should have an explicit value for SameSite set. It's recommended to be set explicitly, because the default differs per browser")
-		} else if cookie.SameSite == http.SameSiteNoneMode {
+		case http.SameSiteNoneMode:
 			cookieRecommendations = append(cookieRecommendations, "shouldn't have SameSite set to None. It's recommended to set it to another value (Lax or Strict).")
 		}
 

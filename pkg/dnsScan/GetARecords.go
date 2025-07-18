@@ -1,33 +1,34 @@
 package dnsScan
 
 import (
-	"context"
 	"log/slog"
-	"net"
+
+	"github.com/miekg/dns"
 )
 
-func GetARecords(url string, resolver *net.Resolver) ([]string, error) {
+func GetARecords(url string, dnsClient *dns.Client, nameserver string) ([]string, error) {
 	var (
-		err error
-
 		records = []string{}
 	)
 
-	slog.Debug("dnsScan: Getting A records started")
+	slog.Debug("dnsScan: Checking for A records started", "url", url)
 
-	aRecords, err := resolver.LookupIP(context.Background(), "ip4", url)
-	if err, ok := err.(*net.DNSError); ok && err.IsNotFound {
-		// No A record available
-		slog.Debug("dnsScan: No ip4 address", "url", url)
-	} else if err != nil {
+	m := new(dns.Msg)
+	m.SetQuestion(dns.Fqdn(url), dns.TypeA)
+
+	response, _, err := dnsClient.Exchange(m, nameserver)
+	if err != nil {
+		slog.Debug("dnsScan: No A records found", "url", url, "error", err)
 		return records, err
 	}
 
-	for _, ip := range aRecords {
-		records = append(records, ip.String())
+	for _, answer := range response.Answer {
+		if aRecord, ok := answer.(*dns.A); ok {
+			records = append(records, aRecord.A.String())
+		}
 	}
 
-	slog.Debug("dnsScan: Getting A records completed")
+	slog.Debug("dnsScan: Checking for A records completed", "url", url)
 
 	return records, nil
 }

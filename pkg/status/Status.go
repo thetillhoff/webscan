@@ -2,6 +2,7 @@ package status
 
 import (
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"strings"
@@ -13,10 +14,10 @@ import (
 )
 
 type Status struct {
-	quiet bool
 	isTTY bool
 
 	writeMutex *sync.Mutex
+	out        io.Writer
 
 	// Sets the speed of the spinner.
 	// Default is 100ms.
@@ -34,12 +35,11 @@ type Status struct {
 	spinningXOfMessage string
 }
 
-func NewStatus(quiet bool, noColor bool, writeMutex *sync.Mutex) Status { // TODO use opts object (pointer) for quiet and noColor
+func NewStatus(noColor bool, writeMutex *sync.Mutex, out io.Writer) Status { // TODO use opts object (pointer) for quiet and noColor
 	var (
 		status = Status{
-			quiet: quiet,
-
 			writeMutex: writeMutex,
+			out:        out,
 
 			// Sets the speed of the spinner.
 			// Default is 100ms.

@@ -10,8 +10,7 @@ import (
 )
 
 // Checks whether a tcp connection can be established to the specified <ip>:<port> combo.
-// Has a timeout of 2s
-func isOpenTcpPort(status *status.Status, ipPortTuple IpPortTuple, portChannel chan IpPortTuple) {
+func isOpenTcpPort(status *status.Status, ipPortTuple IpPortTuple, portChannel chan IpPortTuple, timeout time.Duration) {
 	var (
 		err error
 	)
@@ -21,7 +20,7 @@ func isOpenTcpPort(status *status.Status, ipPortTuple IpPortTuple, portChannel c
 
 	slog.Debug("portScan: Checking tcp port started", "ip", ipPortTuple.Ip, "port", ipPortTuple.Port)
 
-	_, err = net.DialTimeout("tcp", ipPortTuple.Ip+":"+strconv.FormatUint(uint64(ipPortTuple.Port), 10), 5*time.Second)
+	_, err = net.DialTimeout("tcp", ipPortTuple.Ip+":"+strconv.FormatUint(uint64(ipPortTuple.Port), 10), timeout)
 
 	if err == nil {
 

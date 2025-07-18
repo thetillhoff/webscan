@@ -1,28 +1,35 @@
 package dnsScan
 
 import (
-	"context"
 	"log/slog"
-	"net"
+
+	"github.com/miekg/dns"
 )
 
-func GetCNAMERecord(url string, resolver *net.Resolver) (string, error) {
+func GetCNAMERecord(url string, dnsClient *dns.Client, nameserver string) (string, error) {
 	var (
-		err error
-
-		record string
+		record = ""
 	)
 
-	slog.Debug("dnsScan: Getting CNAME records started")
+	slog.Debug("dnsScan: Checking for CNAME record started", "url", url)
 
-	record, err = resolver.LookupCNAME(context.Background(), url)
-	if err, ok := err.(*net.DNSError); ok && err.IsNotFound {
-		// No CNAME record available
-	} else if err != nil {
+	m := new(dns.Msg)
+	m.SetQuestion(dns.Fqdn(url), dns.TypeCNAME)
+
+	response, _, err := dnsClient.Exchange(m, nameserver)
+	if err != nil {
+		slog.Debug("dnsScan: No CNAME record found", "url", url, "error", err)
 		return record, err
 	}
 
-	slog.Debug("dnsScan: Getting CNAME records completed")
+	for _, answer := range response.Answer {
+		if cnameRecord, ok := answer.(*dns.CNAME); ok {
+			record = cnameRecord.Target
+			break
+		}
+	}
+
+	slog.Debug("dnsScan: Checking for CNAME record completed", "url", url)
 
 	return record, nil
 }

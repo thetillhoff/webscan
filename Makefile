@@ -14,6 +14,9 @@ test:
 build:
 	go build
 
+format:
+	go fmt ./...
+
 upgrade:
 	go get -u ./...
 	go mod tidy

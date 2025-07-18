@@ -2,14 +2,15 @@ package webscan
 
 import (
 	"context"
+	"io"
 	"log/slog"
 	"net"
 	"sync"
 	"time"
 
+	"github.com/thetillhoff/webscan/v3/pkg/cachedHttpGetClient"
 	"github.com/thetillhoff/webscan/v3/pkg/dnsScan"
 	"github.com/thetillhoff/webscan/v3/pkg/htmlContentScan"
-	"github.com/thetillhoff/webscan/v3/pkg/httpClient"
 	"github.com/thetillhoff/webscan/v3/pkg/httpHeaderScan"
 	"github.com/thetillhoff/webscan/v3/pkg/httpProtocolScan"
 	"github.com/thetillhoff/webscan/v3/pkg/ipScan"
@@ -17,6 +18,7 @@ import (
 	"github.com/thetillhoff/webscan/v3/pkg/status"
 	"github.com/thetillhoff/webscan/v3/pkg/subDomainScan"
 	"github.com/thetillhoff/webscan/v3/pkg/tlsScan"
+	"github.com/thetillhoff/webscan/v3/pkg/types"
 )
 
 // TODO add proper logger implementation, with info statements on -v, and debug statements on -vvv
@@ -26,15 +28,15 @@ import (
 type Engine struct {
 	status status.Status
 
-	target Target
+	target types.Target
 
 	resolver *net.Resolver // Nil resolver (==nil) is the same as a zero resolver which is the default system resolver
-	client   httpClient.Client
+	client   cachedHttpGetClient.Client
+
+	stdout io.Writer
 
 	// Global settings
 	followRedirects bool
-	instant         bool
-	opinionated     bool
 
 	// Enabled/Disabled scans
 	advancedDnsScan  bool
@@ -62,11 +64,10 @@ type Engine struct {
 }
 
 func NewEngine(
-	quiet bool,
+	stdout io.Writer,
 	noColor bool,
 	dnsServer string,
 	followRedirects bool,
-	instant bool,
 	advancedDnsScan bool,
 	ipScan bool,
 	advancedPortScan bool,
@@ -82,7 +83,7 @@ func NewEngine(
 	var (
 		engine   Engine
 		resolver *net.Resolver
-		client   httpClient.Client
+		client   cachedHttpGetClient.Client
 	)
 
 	if dnsServer != "" {
@@ -99,7 +100,7 @@ func NewEngine(
 		slog.Info("Using system dns server") // TODO use INF
 	}
 
-	client = httpClient.NewClient(
+	client = cachedHttpGetClient.NewClient(
 		5*time.Second,
 		10,
 		false,
@@ -107,11 +108,11 @@ func NewEngine(
 	)
 
 	engine = Engine{
-		status:           status.NewStatus(quiet, noColor, writeMutex),
+		stdout:           stdout,
+		status:           status.NewStatus(noColor, writeMutex, stdout),
 		resolver:         resolver,
 		client:           client,
 		followRedirects:  followRedirects,
-		instant:          instant,
 		advancedDnsScan:  advancedDnsScan,
 		ipScan:           ipScan,
 		advancedPortScan: advancedPortScan,

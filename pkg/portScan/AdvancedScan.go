@@ -2,6 +2,7 @@ package portScan
 
 import (
 	"log/slog"
+	"slices"
 
 	"github.com/thetillhoff/webscan/v3/pkg/status"
 )
@@ -40,34 +41,29 @@ func AdvancedScan(status *status.Status, aRecords []string, aaaaRecords []string
 			3306, // MySQL/MariaDB
 			3389, // RDP
 			5432, // Postgres
+			6443, // HTTPS alternative, Kubernetes Control Plane
 			8080, // HTTP alternative
-			8443, // HTTP alternative
+			8443, // HTTPS alternative
 		}
 
 		result = Result{
+			OpenPortsPerIp:          map[string][]uint16{},
 			openPorts:               []uint16{},
 			openPortInconsistencies: []string{},
-			isAvailableViaHttp:      false,
-			isAvailableViaHttps:     false,
+			isPort80Open:            false,
+			isPort443Open:           false,
 		}
-
-		openPortsPerIp map[string][]uint16
 	)
 
 	slog.Debug("portScan: Advanced scan started")
 
-	openPortsPerIp = scanPortRangeOfIps(status, append(aRecords, aaaaRecords...), scanPorts)
+	result.OpenPortsPerIp = scanPortRangeOfIps(status, append(aRecords, aaaaRecords...), scanPorts)
 
-	result.openPorts, result.openPortInconsistencies = CompareOpenPortsOfIps(openPortsPerIp)
+	result.openPorts, result.openPortInconsistencies = CompareOpenPortsOfIps(result.OpenPortsPerIp)
 
-	// Check if HTTP / HTTPS are available
-	for _, openPort := range result.openPorts {
-		if openPort == 80 {
-			result.isAvailableViaHttp = true
-		} else if openPort == 443 {
-			result.isAvailableViaHttps = true
-		}
-	}
+	// Check if port 80 / 443 are open
+	result.isPort80Open = slices.Contains(result.openPorts, 80)
+	result.isPort443Open = slices.Contains(result.openPorts, 443)
 
 	slog.Debug("portScan: Advanced scan completed")
 

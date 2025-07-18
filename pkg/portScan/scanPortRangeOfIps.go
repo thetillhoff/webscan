@@ -3,6 +3,7 @@ package portScan
 import (
 	"log/slog"
 	"sync"
+	"time"
 
 	"github.com/thetillhoff/webscan/v3/pkg/status"
 )
@@ -30,6 +31,7 @@ func scanPortRangeOfIps(status *status.Status, ips []string, ports []uint16) map
 					Port: port,
 				},
 				ipPortTupleChannel,
+				5*time.Second,
 			) // Start goroutine that checks if port is open
 		}
 	}

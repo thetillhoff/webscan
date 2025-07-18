@@ -1,31 +1,34 @@
 package dnsScan
 
-// TODO
+import (
+	"log/slog"
 
-// import (
-// 	"context"
-// 	"net"
-// )
+	"github.com/miekg/dns"
+)
 
-// func (engine Engine) GetSRVRecords(url string) (Engine, error) {
-// 	var (
-// 		err error
+func GetSRVRecords(url string, dnsClient *dns.Client, nameserver string) ([]string, error) {
+	var (
+		records = []string{}
+	)
 
-// 		records    []string
-// 		srvRecords []*net.NS
-// 	)
+	slog.Debug("dnsScan: Checking for SRV records started", "url", url)
 
-// 	srvRecords, err = engine.resolver.LookupSRV(context.Background(), url)
-// 	if err, ok := err.(*net.DNSError); ok && err.IsNotFound {
-// 		// No SRV record available
-// 	} else if err != nil {
-// 		return engine, err
-// 	}
+	m := new(dns.Msg)
+	m.SetQuestion(dns.Fqdn(url), dns.TypeSRV)
 
-// 	for _, record := range srvRecords {
-// 		records = append(records, record.Host)
-// 	}
+	response, _, err := dnsClient.Exchange(m, nameserver)
+	if err != nil {
+		slog.Debug("dnsScan: No SRV records found", "url", url, "error", err)
+		return records, err
+	}
 
-// 	engine.srvRecords = records
-// 	return engine, nil
-// }
+	for _, answer := range response.Answer {
+		if srvRecord, ok := answer.(*dns.SRV); ok {
+			records = append(records, srvRecord.Target)
+		}
+	}
+
+	slog.Debug("dnsScan: Checking for SRV records completed", "url", url)
+
+	return records, nil
+}

@@ -4,80 +4,88 @@ import (
 	"crypto/tls"
 	"errors"
 	"log/slog"
-	"net/http"
 	"os"
-	"time"
+
+	"github.com/thetillhoff/webscan/v3/pkg/types"
 )
 
 // checks whether the certificate is valid
-func evaluateTlsCertificate(url string, host string) (map[string]struct{}, error) {
+func evaluateTlsCertificate(target types.Target, ip string) ([]certInfo, error, error) {
 	var (
-		err error
+		targetEndpoint = ip + ":" + target.Port()
+		err            error
 
-		uniqueCertNames = map[string]struct{}{}
+		certInfos = []certInfo{}
+		tlsErr    error
 	)
 
-	slog.Debug("tlsScan: Evaluating TLS certificate started")
+	slog.Debug("tlsScan: Evaluating TLS certificate started", "targetEndpoint", targetEndpoint, "ServerName", target.Hostname())
 
-	client := &http.Client{
-		Timeout: 5 * time.Second, // TODO 5s might be a bit long?
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		}, // Don't follow redirects
+	_, tlsErr = tls.Dial("tcp", targetEndpoint, &tls.Config{
+		MinVersion: tls.VersionTLS10,
+		MaxVersion: tls.VersionTLS13,
+		ServerName: target.Hostname(),
+	})
+
+	if os.IsTimeout(tlsErr) {
+		return certInfos, errors.New("http call exceeded 5s timeout"), nil
 	}
 
-	_, err = client.Get("https://" + url)
-
-	if err != nil {
-		if os.IsTimeout(err) { // If err is timeout, tell user about it
-			return uniqueCertNames, errors.New("http call exceeded 5s timeout")
-		} else {
-			return uniqueCertNames, errors.New("Invalid TLS certificate used for HTTPS: " + errors.Unwrap(errors.Unwrap(err)).Error())
-		}
-	}
-
-	//
-
-	conn, err := tls.Dial("tcp", host+":443", &tls.Config{
+	conn, err := tls.Dial("tcp", targetEndpoint, &tls.Config{
+		MinVersion:         tls.VersionTLS10,
+		MaxVersion:         tls.VersionTLS13,
+		ServerName:         target.Hostname(),
 		InsecureSkipVerify: true,
 	})
 	if err != nil {
-		slog.Error("could not load remote certificate", "error", err)
+		slog.Debug("tlsScan: TLS dial failed", "error", err)
+		return certInfos, nil, err
 	}
-	defer conn.Close()
-	certs := conn.ConnectionState().PeerCertificates
-	for _, cert := range certs {
-		// fmt.Printf("Issuer Name: %s\n", cert.Issuer)
-		// fmt.Printf("Expiry: %s \n", cert.NotAfter.Format("2006-11-02"))
-
-		uniqueCertNames[cert.Subject.String()] = struct{}{}
-		// fmt.Println("subject:", cert.Subject)
-
-		for _, dnsName := range cert.DNSNames {
-			uniqueCertNames[dnsName] = struct{}{}
+	defer func() {
+		if closeErr := conn.Close(); closeErr != nil {
+			slog.Debug("tlsScan: Error closing connection", "error", closeErr)
 		}
-		// fmt.Println("dnsnames:", cert.DNSNames)
+	}()
 
-		for _, emailAddress := range cert.EmailAddresses {
-			uniqueCertNames[emailAddress] = struct{}{}
+	peerCerts := conn.ConnectionState().PeerCertificates
+	for idx, cert := range peerCerts {
+
+		certInfo := certInfo{
+			names:   []string{},
+			issuers: []string{},
 		}
-		// fmt.Println("mail addresses:", cert.EmailAddresses)
 
+		// TODO: Add expiry date to result
+		// Sample: fmt.Printf("Expiry: %s \n", cert.NotAfter.Format("2006-11-02"))
+
+		slog.Debug("tlsScan", "idx", idx, "common name", cert.Subject.CommonName)
+		certInfo.names = append(certInfo.names, cert.Subject.CommonName)
+
+		slog.Debug("tlsScan", "idx", idx, "dns names", cert.DNSNames)
+		certInfo.names = append(certInfo.names, cert.DNSNames...)
+
+		slog.Debug("tlsScan", "idx", idx, "email addresses", cert.EmailAddresses)
+		certInfo.names = append(certInfo.names, cert.EmailAddresses...)
+
+		slog.Debug("tlsScan", "idx", idx, "ip addresses", cert.IPAddresses)
 		for _, ipAddress := range cert.IPAddresses {
-			uniqueCertNames[ipAddress.String()] = struct{}{}
+			certInfo.names = append(certInfo.names, ipAddress.String())
 		}
-		// fmt.Println("ip addresses:", cert.IPAddresses)
 
+		slog.Debug("tlsScan", "idx", idx, "uris", cert.URIs)
 		for _, uri := range cert.URIs {
-			uniqueCertNames[uri.Host] = struct{}{}
+			certInfo.names = append(certInfo.names, uri.Host)
 		}
-		// fmt.Println("uris:", cert.URIs)
 
+		certInfo.issuers = append(certInfo.issuers, cert.Issuer.String())
+		slog.Debug("tlsScan", "idx", idx, "issuer", cert.Issuer.String())
+
+		certInfos = append(certInfos, certInfo)
+
+		slog.Debug("tlsScan: certInfo", "idx", idx, "cert names", certInfo.names, "cert issuers", certInfo.issuers)
 	}
-
-	slog.Debug("tlsScan: Result", "cert names", uniqueCertNames)
 
 	slog.Debug("tlsScan: Evaluating TLS certificate completed")
 
-	return uniqueCertNames, nil
+	return certInfos, tlsErr, nil
 }
