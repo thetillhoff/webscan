@@ -10,7 +10,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20
 	github.com/miekg/dns v1.1.67
 	github.com/openrdap/rdap v0.9.1
-	github.com/quic-go/quic-go v0.53.0
+	github.com/quic-go/quic-go v0.54.0
 	github.com/urfave/cli/v3 v3.3.8
 	golang.org/x/net v0.42.0
 )
