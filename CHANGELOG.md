@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## WIP
+
+### Bug Fixes
+
+- Fixed bug where install.sh would fail to verify the checksum of the downloaded file
+
 ## v4.0.0
 
 ### Breaking Changes
