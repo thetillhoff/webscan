@@ -58,39 +58,6 @@ func main() {
 		HideHelpCommand:        true,
 		EnableShellCompletion:  true,
 		UseShortOptionHandling: true, // Allow not only `-v -v -v`, but also `-vvv`
-		Commands: []*cli.Command{
-			{
-				Name:            "completion",
-				Usage:           "Generate the autocompletion script for the specified shell",
-				HideHelpCommand: true, // Disable `help` subcommand
-				Commands: []*cli.Command{
-					{
-						Name:  "bash",
-						Usage: "Generate the autocompletion script for bash",
-						Action: func(ctx context.Context, cmd *cli.Command) error {
-							autocomplete_bash()
-							return nil
-						},
-					},
-					{
-						Name:  "powershell",
-						Usage: "Generate the autocompletion script for powershell",
-						Action: func(ctx context.Context, cmd *cli.Command) error {
-							autocomplete_powershell()
-							return nil
-						},
-					},
-					{
-						Name:  "zsh",
-						Usage: "Generate the autocompletion script for zsh",
-						Action: func(ctx context.Context, cmd *cli.Command) error {
-							autocomplete_zsh()
-							return nil
-						},
-					},
-				},
-			},
-		},
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "ns",
