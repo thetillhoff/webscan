@@ -85,11 +85,6 @@ GLOBAL OPTIONS:{{range .VisibleFlags}}
 				Usage: "disable status updates and only prints results",
 			},
 			&cli.BoolFlag{
-				Name:  "follow",
-				Value: false,
-				Usage: "follow CNAME and HTTP redirects",
-			},
-			&cli.BoolFlag{
 				Name:  "dns",
 				Value: false,
 				Usage: "enable detailed DNS scan",

@@ -6,6 +6,7 @@
 
 - Fixed bug where install.sh would fail to verify the checksum of the downloaded file
 - Fixed bug where help would not show usage samples
+- Fixed bug where `--follow` flag would be shown twice in help
 - Fixed bug where `completion` subcommand would be shown twice in help
 
 ## v4.0.0
