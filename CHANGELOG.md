@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## WIP
+## v4.0.1
 
 ### Improvements
 
