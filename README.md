@@ -2,7 +2,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/thetillhoff/webscan)](https://goreportcard.com/report/thetillhoff/webscan)
 
-Webscan tries to retrieve as much information from URLs and IPs as is possible from an external perspective.
+Webscan tries to gather as much information from domains, IPs, and URLs as possible from an external perspective.
 It covers
 
 - DNS configuration
@@ -11,15 +11,26 @@ It covers
 - IP address ownerships
 - Blacklisting status
 - Open ports
-- SSL validity
-- SSL configuration safety
-- http/s configuration with redirects
+- TLS validity
+- TLS configuration safety
+- HTTP/HTTPS configuration with redirects
 - host-headers
 - cookies
 - html, js, css sizes
-- ...
+- subdomains
+- and much more!
 
 of a specified url or ip and gives improvement recommendations based on best-practices.
+
+## Installation
+
+If you're feeling fancy:
+
+```sh
+curl -s https://raw.githubusercontent.com/thetillhoff/webscan/main/install.sh | sh
+```
+
+or manually from <https://github.com/thetillhoff/webscan/v3/releases/latest>.
 
 ## Usage
 
@@ -31,16 +42,6 @@ webscan http://example.com:8080 # Scan website at specific port
 
 webscan --help # Learn more about running specific scans
 ```
-
-## Installation
-
-If you're feeling fancy:
-
-```sh
-curl -s https://raw.githubusercontent.com/thetillhoff/webscan/main/install.sh | sh
-```
-
-or manually from <https://github.com/thetillhoff/webscan/v3/releases/latest>.
 
 ## Features
 
@@ -62,6 +63,7 @@ Display dns information about the provided URL, and give improvement recommendat
 - [x] Scan DNS of domain even if input is domain with path (like "github.com/webscan")
 - [x] Specify a custom dns server with the `--dns <dns server location>` option.
 - [x] Use system DNS configuration on Unix systems (resolv.conf) by default with fallback to public DNS
+- [x] Use DNS library `miekg/dns`, as it's more versatile than the default one. It can for example NOT follow CNAMEs when looking up other records.
 
 ### DNS mail security
 
@@ -131,6 +133,7 @@ Display dns information about the provided URL, and give improvement recommendat
 - [ ] TLS 1.3 should be supported
 
 - cipher recommendations like
+
   - [x] Recommending against 3DES, as it's vulnerable to birthday attacks (<https://sweet32.info/>).
   - [x] Recommending against RC4, as it's exploitable biases can lead to plaintext recovery without side channels (<https://www.rc4nomore.com/>).
   - [x] Recommending against CBC, as it seems fundamentally flawed since the Lucky13 vulnerability was discovered (<https://en.wikipedia.org/wiki/Lucky_Thirteen_attack>).
@@ -176,6 +179,7 @@ Print recommendations on the html code.
   - [x] `<html lang="en-US">` `html` node has `lang` attribute set (it's value isn't validated)
   <!-- - [ ] `<meta charset="utf-8"/>` charset is set -->
 - [~] HTML parsing - requires go-colly for finding references to other files
+
   - [~] check html
     - [x] size < 200kb
     - [x] validation
@@ -202,15 +206,14 @@ Print recommendations on the html code.
       - [ ] But due to mixed content security concerns, an HTTP `<iframe>` doesn't work in an HTTPS page.
     - [ ] amount of custom fonts & their size
     - [ ] viewport configured correctly
-      - [ ] `<meta name="viewport" content="width=device-width"/>` set viewport
-            - Die Seite enthält keine viewport-Angabe, die es Browsern ermöglicht, die Größe und Skalierung der Seite an den jeweiligen Bildschirm anzupassen. <https://web.dev/responsive-web-design-basics/#viewport>
-            - Darstellungsbereich nicht auf „device-width“ festgelegt: Die Seite weist eine feste Breite für den viewport auf und kann sich dadurch nicht an verschiedene Bildschirmgrößen anpassen.
+      - [ ] `<meta name="viewport" content="width=device-width"/>` set viewport - Die Seite enthält keine viewport-Angabe, die es Browsern ermöglicht, die Größe und Skalierung der Seite an den jeweiligen Bildschirm anzupassen. <https://web.dev/responsive-web-design-basics/#viewport> - Darstellungsbereich nicht auf „device-width“ festgelegt: Die Seite weist eine feste Breite für den viewport auf und kann sich dadurch nicht an verschiedene Bildschirmgrößen anpassen.
     - [ ] Inhalt breiter als Bildschirm: Horizontales Scrollen ist notwendig, um Text und Bilder auf der Seite sehen zu können Dies ist dann der Fall, wenn Seiten absolute Werte in CSS-Deklarationen verwenden oder Bilder nutzen, die für eine bestimmte Browserbreite optimiert sind, zum Beispiel 980 Pixel. Problem beheben: Achten Sie darauf, dass für die Seite relative Breiten- und Positionswerte für CSS-Elemente verwendet werden und Bilder ebenfalls skaliert werden können. Hier erfahren Sie, wie Sie die Größe von Inhalten an den Darstellungsbereich anpassen. <https://web.dev/responsive-web-design-basics/#size-content>
     - [ ] Text ist zu klein zum Lesen: Ein bedeutender Teil des Textes wird im Verhältnis zur Breite der Seite zu klein dargestellt. Dadurch wird der Text auf einem Mobilgerät schwer lesbar. Werfen Sie einen Blick auf den Test-Screenshot Ihres Geräts, um den problematischen Text zu finden. Problem beheben: Legen Sie einen Darstellungsbereich für Ihre Webseiten fest und wählen Sie die Schriftgrößen so aus, dass der Text innerhalb des Darstellungsbereichs entsprechend skaliert wird und auf dem Gerät sichtbar ist. Hier erfahren Sie mehr über Best Practices für die Schriftgröße. <https://web.dev/font-size/>
     - [ ] Anklickbare Elemente liegen zu dicht beieinander: Touch-Elemente wie Schaltflächen und Navigationslinks sind so dicht nebeneinander, dass mobile Nutzer beim Tippen auf ein gewünschtes Element versehentlich auch das benachbarte Element berühren. Problem beheben: Werfen Sie einen Blick auf den Testscreenshot, um alle betroffenen Schaltflächen, Links und Berührungszielbereiche zu finden. Achten Sie darauf, dass Ihre Berührungszielbereiche nicht näher beieinander liegen als die durchschnittliche Breite einer Fingerspitze, oder dass sich nicht mehr als ein Zielbereich berühren lässt. Weitere Informationen zur optimalen Größe von Tippzielen finden Sie hier. <https://web.dev/accessible-tap-targets/>
   - [ ] media embedding recommendations
 
 - [ ] headless rendering with <https://github.com/chromedp/chromedp>
+
   - [ ] performance index (download speed ( first time, second time), render speed)
   - [ ] check for console errors
 
@@ -222,7 +225,7 @@ Print recommendations on the html code.
 - [ ] check if sitemap exists
 - [ ] check if incompatible plugins like flash are used
 
-## Other todos or feature ideas
+## Open todos or feature ideas
 
 ### Bugfixes
 
@@ -233,40 +236,48 @@ Print recommendations on the html code.
 - [ ] List of subdomains should be filtered to show only subdomains, not all domains listed in the certificates.
 - [ ] HTTP header scan results contain `Recommended action for Strict-Transport-Security: max-age value should be increased in stages from 15552000 to 63072000 (two years)`, which doens't make sense for http.
       Expected: don't print this for http.
-
-### Upcoming release
-
-### Later
-
-- [ ] target contains results, so it's not necessary to pass them as arguments to each scan.
-      Risks: Circular dependencies.
-- [ ] Instead of fixed texts for recommendations and the likes, use types/enums/constants/functions for them.
-      Make them comparable to each other, so f.e. http and https recommendations are comparable.
-- [x] Change DNS library to miekg/dns, as it's more versatile and can for example NOT follow CNAMEs when looking up other records.
-- [ ] add reverse ip lookup to subdomain scan with `resolver.LookupAddr`.
-- [ ] add reverse dns lookup for ip addresses.
-<!-- - [ ] List of subdomains should be sorted alphabetically. Not considered right now, as length or amount of subdomains might be more relevant. -->
-
-- [ ] Search for `TODO` in code
-- [ ] Clean this README
-- [ ] Check README of `pkg/status` for todos
-- [ ] Check README of `pkg/logger` for todos
-- [ ] Check github issues <https://github.com/thetillhoff/webscan/v3/issues>
-- [ ] Ensure github actions build always has the correct version as output of `webscan version`
-  - add buildargs to example usage sections in all three repos for the actions
-- [ ] portscan on ipv4 and ipv6 might result in consistency-warning if your local machine only supports one of them! But sometimes it works anyway :shrug: add a note to the output after diving deeper
-- [ ] HTTP header scan results and HTTPS header scan results could be merged into one if they are equal. Also, if they redirect, they should not be displayed (don't follow redirects by default).
-- [ ] HTTP content scan results and HTTPS content scan results could be merged into one if they are equal. Also, if they redirect, they should not be displayed (don't follow redirects by default).
-- [ ] subdomainscan should check body of all responses in cache of httpClient for referenced subdomains
-- [ ] use ruleset approach for http/https and forwarding evaluation
-- [ ] add repo url to help text, maybe even Issues link
-- [ ] add support to read $1 arg from stdin
-- [ ] add support to structure output as json with --json
 - [ ] find solution for crt.sh error - don't show it or whatever
 - [ ] `--subdomains triggers subdomainscan but not tls check, even though that's required for checking SANs of cert
-- [ ] subdomainScan should list in alphabetical order, and include `*.` as dedicated host, but maybe italic or dimmed
+- [ ] HTTP content size is 5kB even though it just redirects to https? Is there a follow-redirect set?
+
+### Feature ideas
+
+- find better way to pass results of previous scans to the next scan.
+  Ideas:
+  - target contains results, so it's not necessary to pass them as arguments to each scan.
+    Advantage: Simple, easy to maintain.
+    Risk: Circular dependencies.
+  - results as shared package, so they can be read by all scans.
+    Advantage: Strong typing, easy to maintain.
+    Risk: all packages depend on this, even if it's not used.
+  - use simple variables, which are then passed to the next scan.
+    Advantage: Simple, works everywhere.
+    Risk: complex, hard to maintain.
+  - use result variables in webscan package only, and use them to pass the "simple" result variables around.
+    Advantage: Strong typing, easy to maintain.
+    Risk: Is this possible?
+- Instead of fixed texts for recommendations and the likes, use types/enums/constants/functions for them.
+  Make them comparable to each other, so f.e. http and https recommendations are comparable.
+- add reverse ip lookup to subdomain scan with `resolver.LookupAddr`.
+- add reverse dns lookup for ip addresses.
+<!-- - [ ] List of subdomains should be sorted alphabetically. Not considered right now, as length or amount of subdomains might be more relevant for display. -->
+- Search for `TODO` in code
+- Check README of `pkg/status` for todos
+- Check README of `pkg/logger` for todos
+- Check github issues <https://github.com/thetillhoff/webscan/v3/issues>
+- Ensure github actions build always has the correct version as output of `webscan version`
+  - add buildargs to example usage sections in all three repos for the actions
+- portscan on ipv4 and ipv6 might result in consistency-warning if your local machine only supports one of them! But sometimes it works anyway :shrug: add a note to the output after diving deeper
+- HTTP header scan results and HTTPS header scan results could be merged into one if they are equal. Also, if they redirect, they should not be displayed (don't follow redirects by default).
+- HTTP content scan results and HTTPS content scan results could be merged into one if they are equal. Also, if they redirect, they should not be displayed (don't follow redirects by default).
+- subdomainscan should check body of all responses in cache of httpClient for referenced subdomains
+- use ruleset approach for http/https and forwarding evaluation
+- add repo url to help text, maybe even Issues link
+- add support to read $1 arg from stdin
+- add support to structure output as json with `--json-output`
+- subdomainScan should list in alphabetical order, and include `*.` as dedicated host, but maybe italic or dimmed
 - Check readme of thetillhoff.de for insights (accessibility, other features, plus caddyfile, ...)
-- TTL for dns and html caching
+- Check TTL for dns records and html caching
 - urls with or without ending slash / filename & extension
   input-path and redirect locations should either end with filename.ext or `/`. `netlight.com` is "wrong" while `netlight.com/` or `netlight.com/index.html` are correct.
   The reason is that the part after the last slash might be tried to parse as filename by some applications.
@@ -307,20 +318,18 @@ Print recommendations on the html code.
       - should include logs and error messages
 - Print IP RDAP info in pretty mode, depending on longest ip address
 - HTTP scan should check for latency, hops, download speed
-
-- HTTP content size is 5kB even though it just redirects to https? Is there a follow-redirect set?
-
 - HTML content scan should depend on content type of response; for example it should verify if it's valid json for application/json
 - list all domains that are referenced (like fonts.google.com, ...)
-
-TODO add buildargs to example usage sections in all three repos for the actions
-
-git describe --tags # for latest tag
-
+- Outside of webscan: Add buildargs to example usage sections in all three repos for the gh-actions
+  In other words: Ensure github actions build always has the correct version as output of `webscan version`
+  Or: Add buildargs to example usage sections in all three repos for the actions
 - check if both ipv4 and ipv6 mx records exist (follow cnames on mx records automatically)
-
 - add functional tests with expected results on example website (github-pages?)
-
 - add check of version in tcp greeting / header message. openssh tells the client about it's version there.
-
 - check FTP headers
+- dns checks and dials time out on windows
+- add integration test to release pipeline, which runs webscan with a few sample runs on multiple platforms
+- add estimated location to ips and ASN info
+- check if quic uses udp on port 443, and incorporate it into scans
+- add post-quantum cipher verification to tls scan
+- create a new docs structure, as this one is getting too long
