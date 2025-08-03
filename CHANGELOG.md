@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## WIP
+
+### Improvements
+
+- Adjusted install.sh to use temporary directory for downloads
+
 ## v4.0.1
 
 ### Improvements

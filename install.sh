@@ -56,12 +56,17 @@ else
   exit 2
 fi
 
+# Create temporary directory for downloads
+TEMP_DIR="$(mktemp -d)"
+
+# Always remove temporary directory on exit
+trap 'rm -rf "$TEMP_DIR"' EXIT
+
 LATEST_VERSION="$($DOWNLOAD_BODY_CMD https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest | jq -r '.tag_name')"
 printf "Downloading ${CLI_NAME} ${LATEST_VERSION} for ${OS} ${ARCH}\n"
-$DOWNLOAD_FILE_CMD ${CLI_NAME} "https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${LATEST_VERSION}/${CLI_NAME}_${OS}_${ARCH}"
-$DOWNLOAD_FILE_CMD ${CLI_NAME}.sha256 "https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${LATEST_VERSION}/${CLI_NAME}_${OS}_${ARCH}.sha256"
-echo "$(cat ${CLI_NAME}.sha256)  ${CLI_NAME}" | sha256sum --check -
+$DOWNLOAD_FILE_CMD "${TEMP_DIR}/${CLI_NAME}" "https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${LATEST_VERSION}/${CLI_NAME}_${OS}_${ARCH}"
+$DOWNLOAD_FILE_CMD "${TEMP_DIR}/${CLI_NAME}.sha256" "https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${LATEST_VERSION}/${CLI_NAME}_${OS}_${ARCH}.sha256"
+echo "$(cat "${TEMP_DIR}/${CLI_NAME}.sha256")  ${CLI_NAME}" | (cd "$TEMP_DIR" && sha256sum --check -)
 printf "Checksum validation complete, installing to /usr/local/bin/ ...\n"
-sudo install ${CLI_NAME} /usr/local/bin/${CLI_NAME} # automatically sets rwxr-xr-x permissions
-rm ${CLI_NAME} ${CLI_NAME}.sha256
+sudo install "${TEMP_DIR}/${CLI_NAME}" /usr/local/bin/${CLI_NAME} # automatically sets rwxr-xr-x permissions
 printf "Installation complete!\n"
