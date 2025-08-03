@@ -53,7 +53,7 @@ GLOBAL OPTIONS:{{range .VisibleFlags}}
 			&cli.StringFlag{
 				Name:  "ns",
 				Value: "",
-				Usage: "set custom dns server (default uses system dns)",
+				Usage: "set custom dns server (uses system dns by default)",
 			},
 			&cli.StringFlag{
 				Name:  "dkim-selector",
@@ -63,13 +63,13 @@ GLOBAL OPTIONS:{{range .VisibleFlags}}
 			&cli.BoolFlag{
 				Name:  "follow",
 				Value: false,
-				Usage: "follow redirects and CNAME checks",
+				Usage: "follow CNAME records and HTTP redirects",
 			},
 			&cli.BoolFlag{
 				Name:    "verbose",
 				Aliases: []string{"v"},
 				Value:   false,
-				Usage:   "increase verbosity to Debug level",
+				Usage:   "increase verbosity to Debug level (`-v` for info, `-vvv` for debug)",
 				Config: cli.BoolConfig{
 					Count: &verbosity,
 				},
@@ -87,52 +87,52 @@ GLOBAL OPTIONS:{{range .VisibleFlags}}
 			&cli.BoolFlag{
 				Name:  "dns",
 				Value: false,
-				Usage: "enable detailed DNS scan",
+				Usage: "focus on detailed DNS scan",
 			},
 			&cli.BoolFlag{
 				Name:  "ip",
 				Value: false,
-				Usage: "enable IP analysis",
+				Usage: "focus on IP analysis",
 			},
 			&cli.BoolFlag{
 				Name:  "port",
 				Value: false,
-				Usage: "enable detailed port scanning",
+				Usage: "focus on detailed port scanning",
 			},
 			&cli.BoolFlag{
 				Name:  "tls",
 				Value: false,
-				Usage: "enable TLS scan",
+				Usage: "focus on TLS scan",
 			},
 			&cli.BoolFlag{
 				Name:  "protocol",
 				Value: false,
-				Usage: "enable HTTP protocol scan",
+				Usage: "focus on HTTP protocol scan",
 			},
 			&cli.BoolFlag{
 				Name:  "header",
 				Value: false,
-				Usage: "enable HTTP header scan",
+				Usage: "focus on HTTP header scan",
 			},
 			&cli.BoolFlag{
 				Name:  "content",
 				Value: false,
-				Usage: "enable HTTP content scan",
+				Usage: "focus on HTTP content scan",
 			},
 			&cli.BoolFlag{
 				Name:  "web",
 				Value: false,
-				Usage: "enable all HTTP scans",
+				Usage: "focus on all HTTP scans",
 			},
 			&cli.BoolFlag{
 				Name:  "mail",
 				Value: false,
-				Usage: "enable mail config scan",
+				Usage: "focus on mail config scan",
 			},
 			&cli.BoolFlag{
 				Name:  "subdomains",
 				Value: false,
-				Usage: "enable subdomains search",
+				Usage: "focus on subdomains search",
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {

@@ -2,6 +2,10 @@
 
 ## WIP
 
+### Improvements
+
+- Adjusted some help messages
+
 ### Bug Fixes
 
 - Fixed bug where install.sh would fail to verify the checksum of the downloaded file
