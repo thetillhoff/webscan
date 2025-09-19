@@ -12,7 +12,7 @@ case "${OS}" in
   darwin|linux|windows) ;;
   *) cat <<EOF
 Unsupported OS type ${OS} detected. Supported are darwin, linux, windows.
-Feel free to open an issue or PR for your OS at https://github.com/thetillhoff/webscan."
+Feel free to open an issue or PR for your OS at https://github.com/thetillhoff/${REPO_NAME}."
 EOF
   exit 0 ;;
 esac
@@ -26,7 +26,7 @@ case "${ARCH}" in
   amd64|arm64) ;;
   *) cat <<EOF
 Unsupported ARCH type ${ARCH} detected. Supported are amd64, arm64.
-Feel free to open an issue or PR for your ARCH at https://github.com/thetillhoff/webscan.
+Feel free to open an issue or PR for your ARCH at https://github.com/thetillhoff/${REPO_NAME}.
 EOF
   exit 0 ;;
 esac
