@@ -5,6 +5,8 @@
 ### Improvements
 
 - Adjusted install.sh to use temporary directory for downloads
+- Renovate now uses branch type automerges to reduce notifications to watchers.
+- Added github action that automatically triggers a patch release when renovate automerges minor or patch versions of dependencies.
 
 ## v4.0.1
 
