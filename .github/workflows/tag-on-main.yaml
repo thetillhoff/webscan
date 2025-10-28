@@ -53,7 +53,7 @@ jobs:
           grep '^## v' CHANGELOG.md # Verify that there is at least one version entry
           FIRST_VERSION_LINE=$(grep -n '^## v' CHANGELOG.md | head -1 | cut -d: -f1)
 
-          sed -i "${FIRST_VERSION_LINE}i## ${NEW_VERSION}\n\nUpdated dependencies\n" CHANGELOG.md
+          sed -i "${FIRST_VERSION_LINE}i## ${NEW_VERSION}\n\nUpdated dependencies.\n" CHANGELOG.md
       
       - name: Commit and push CHANGELOG
         run: |
