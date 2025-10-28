@@ -30,6 +30,13 @@ If you're feeling fancy:
 curl -s https://raw.githubusercontent.com/thetillhoff/webscan/main/install.sh | sh
 ```
 
+If you have `brew` installed:
+
+```sh
+brew install thetillhoff/homebrew-tap/webscan
+# This tap is updated once per day. So it can take up to 24h for new versions to propagate to it.
+```
+
 or manually from <https://github.com/thetillhoff/webscan/v3/releases/latest>.
 
 ## Usage
