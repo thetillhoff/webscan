@@ -9,21 +9,27 @@ jobs:
 
   verify-commit-author:
     runs-on: ubuntu-latest
+    outputs:
+      SHOULD_RELEASE: ${{ steps.check.outputs.SHOULD_RELEASE }}
     steps:
       - uses: actions/checkout@v5
 
-      - run: |
+      - id: check
+        run: |
           COMMIT_AUTHOR=$(git -c core.pager=cat log -1 --pretty=format:"%ae")
           echo "Commit author: $COMMIT_AUTHOR"
           
           if ! echo "$COMMIT_AUTHOR" | grep -i 'renovate[bot]@users.noreply.github.com' > /dev/null; then
-            echo "Error: Commit author doesn't seem to be renovate bot. Won't continue to create a patch version."
-            exit 1
+            echo "Commit author is not renovate bot. Skipping patch version creation."
+            echo "SHOULD_RELEASE=false" >> $GITHUB_OUTPUT
+          else
+            echo "SHOULD_RELEASE=true" >> $GITHUB_OUTPUT
           fi
 
   determine-version:
     needs: verify-commit-author
     runs-on: ubuntu-latest
+    if: needs.verify-commit-author.outputs.SHOULD_RELEASE == 'true'
     outputs:
       CURRENT_VERSION: ${{ steps.versions.outputs.CURRENT_VERSION }}
       NEW_VERSION: ${{ steps.versions.outputs.NEW_VERSION }}
