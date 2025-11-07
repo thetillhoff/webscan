@@ -246,6 +246,13 @@ Print recommendations on the html code.
 - [ ] find solution for crt.sh error - don't show it or whatever
 - [ ] `--subdomains triggers subdomainscan but not tls check, even though that's required for checking SANs of cert
 - [ ] HTTP content size is 5kB even though it just redirects to https? Is there a follow-redirect set?
+- TLS scan seems broken - example "wolkencode.de"
+- also `--subdomains` triggers advanced dns scan and tls results are printed, even though that's not required.
+
+- <https://http1mustdie.com/> describes that HTTP/1.1 is insecure and not recommended. Not even as a backup. It might allow site redirection to 3rd parties and therefore taking full control of a website.
+
+- somehow webscan always runs an advanced dns scan, even if it's not needed.
+  Example is when using `--protocol`
 
 ### Feature ideas
 
