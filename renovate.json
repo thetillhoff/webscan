@@ -1,15 +1,8 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "schedule": [
-    "every weekend"
-  ],
-  "extends": [
-    "config:base",
-    ":disableDependencyDashboard"
-  ],
-  "postUpdateOptions": [
-    "gomodTidy"
-  ],
+  "schedule": ["every weekend"],
+  "extends": ["config:best-practices", ":disableDependencyDashboard"],
+  "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths"],
   "packageRules": [
     {
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
@@ -20,6 +13,20 @@
     {
       "matchUpdateTypes": ["major"],
       "automerge": false
+    },
+    {
+      "matchManagers": ["gomod"],
+      "matchDepNames": ["go"],
+      "matchDepTypes": ["golang"],
+      "rangeStrategy": "bump",
+      "automerge": false
+    },
+    {
+      "matchManagers": ["gomod"],
+      "matchDepNames": ["go"],
+      "matchDepTypes": ["toolchain"],
+      "rangeStrategy": "bump",
+      "automerge": true
     }
   ]
 }
