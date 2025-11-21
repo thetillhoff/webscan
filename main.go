@@ -23,9 +23,11 @@ var verbosity int
 
 func main() {
 
+	// Version flag: only long form (--version) to avoid conflict with -v (verbose)
 	cli.VersionFlag = &cli.BoolFlag{
 		Name:  "version",
 		Usage: "prints just the version of webscan",
+		// No Aliases field = only accepts --version, not -v (which is used for verbose)
 	}
 	cli.VersionPrinter = func(cmd *cli.Command) {
 		fmt.Println(cmd.Root().Version)

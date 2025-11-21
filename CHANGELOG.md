@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## v4.0.3
+
+### Improvements
+
+- Add a basic test that the binary to be released executes correctly and prints the correct version.
+
 ## v4.0.2
 
 ### Improvements
