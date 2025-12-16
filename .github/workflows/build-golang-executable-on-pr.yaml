@@ -34,9 +34,7 @@ jobs:
         shell: bash
         run: |
           # Check version using --version flag
-          OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-          ARCH=$(uname -m)
-          VERSION_OUTPUT=$(./webscan_${OS}_${ARCH} --version 2>&1 || echo "dev")
+          VERSION_OUTPUT=$(./webscan_linux_amd64 --version 2>&1 || echo "dev")
           VERSION_OUTPUT=$(echo "$VERSION_OUTPUT" | tr -d '\n\r' | xargs)  # Trim whitespace and newlines
 
           echo "Version output: '$VERSION_OUTPUT'"
