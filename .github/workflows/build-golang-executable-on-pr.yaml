@@ -33,6 +33,9 @@ jobs:
       - name: Verify version
         shell: bash
         run: |
+          # Make executable executable
+          chmod +x ./webscan_linux_amd64
+
           # Check version using --version flag
           VERSION_OUTPUT=$(./webscan_linux_amd64 --version 2>&1 || echo "dev")
           VERSION_OUTPUT=$(echo "$VERSION_OUTPUT" | tr -d '\n\r' | xargs)  # Trim whitespace and newlines
