@@ -31,7 +31,8 @@ jobs:
           - amd64
           - arm64
     steps:
-      - uses: thetillhoff/action-golang-build@0c8209de8feddafe561af7a7a5e9b26eadc8425b # v0.3.0
+      - uses: actions/checkout@v5
+      - uses: thetillhoff/action-golang-build@v1.0.0
         with:
           OS: "${{ matrix.os }}"
           ARCH: "${{ matrix.arch }}"
@@ -66,6 +67,25 @@ jobs:
           fi
 
           echo "✓ Version verification passed: $VERSION_OUTPUT"
+
+  cleanup-on-failure:
+    needs:
+      - release-prerequisites
+      - golang-build
+      - verify-version
+    if: always() && (needs.release-prerequisites.result == 'failure' || needs.golang-build.result == 'failure' || needs.verify-version.result == 'failure')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - name: Delete tag on failure
+        shell: bash
+        run: |
+          git config --global user.name 'GithubActions'
+          git config --global user.email 'githubactions@users.noreply.github.com'
+          git push --delete origin "${{ github.ref_name }}"
+          echo "Deleted tag: ${{ github.ref_name }}"
 
   release-artifacts:
     needs:

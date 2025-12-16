@@ -15,7 +15,8 @@ jobs:
         arch:
           - amd64
     steps:
-      - uses: thetillhoff/action-golang-build@0c8209de8feddafe561af7a7a5e9b26eadc8425b # v0.3.0
+      - uses: actions/checkout@v5
+      - uses: thetillhoff/action-golang-build@v1.0.0
         with:
           OS: "${{ matrix.os }}"
           ARCH: "${{ matrix.arch }}"
