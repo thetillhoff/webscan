@@ -43,7 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download linux/amd64 artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: artifact_webscan_linux_amd64
           path: .
@@ -96,22 +96,34 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: thetillhoff/action-release-artifacts@3f6c6d7d194966344351e8efac5d14f12a283100 # v0.3.0
+      - name: Download artifacts
+        uses: actions/download-artifact@v5
         with:
-          RELEASE_BODY: "${{needs.release-prerequisites.outputs.RELEASE_BODY}}"
-      - uses: thetillhoff/action-goreportcard-refresh@65a4101f740741a11fe0d1e254f7fc84b491879a # v1.0.2
+          merge-multiple: true
 
-  trigger-homebrew-update:
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: "${{ needs.release-prerequisites.outputs.RELEASE_BODY }}"
+          prerelease: false
+          fail_on_unmatched_files: true
+          files: |
+            ./*
+
+  trigger-external-updates:
     needs: release-artifacts
     runs-on: ubuntu-latest
     steps:
-      - name: Authenticate with GitHub CLI
+      - run: |
+          curl "https://goreportcard.com/checks" \
+            -X POST \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -d "repo=${{ github.repository }}"
+
+      - name: Trigger homebrew tap update workflow
         env:
           GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_ACCESS_TOKEN }}
         run: |
           echo "$GITHUB_TOKEN" | gh auth login --with-token
-
-      - name: Trigger homebrew tap update workflow
-        run: |
-          gh workflow run update-temingo.yml \
+          gh workflow run update-webscan.yml \
             --repo thetillhoff/homebrew-tap
