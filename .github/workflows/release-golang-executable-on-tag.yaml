@@ -31,7 +31,7 @@ jobs:
           - amd64
           - arm64
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
       - uses: thetillhoff/action-golang-build@v1.0.0
         with:
           OS: "${{ matrix.os }}"
@@ -78,7 +78,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
       - name: Delete tag on failure
         shell: bash
         run: |
