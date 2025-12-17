@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## v4.1.0
+
+### New Features
+
+- Added docker image
+- Automatic dependency updates when available.
+  They'll trigger a new patch-release.
+
 ## v4.0.4
 
 Updated dependencies.

@@ -14,6 +14,8 @@ jobs:
           - darwin
         arch:
           - amd64
+          - arm64
+
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
       - uses: thetillhoff/action-golang-build@v1.0.0
@@ -26,7 +28,7 @@ jobs:
     needs: golang-build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           merge-multiple: true
 
