@@ -4,17 +4,25 @@ on:
   push:
     tags:
       - "v[0-9]+.[0-9]+.[0-9]+"
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+
+env:
+  TAG: ${{ inputs.tag != '' && inputs.tag || github.ref_name }}
 
 jobs:
   release-prerequisites:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     outputs:
       RELEASE_BODY: ${{ steps.release-prerequisites.outputs.RELEASE_BODY }}
     steps:
       - id: release-prerequisites
         uses: thetillhoff/action-release-prerequisites@2798dc58246a51ae1e38f8ecc114d4048e37b0fb # v0.2.0
+        with:
+          RELEASE_TAG: ${{ env.TAG }}
 
   golang-build:
     needs: release-prerequisites
@@ -60,7 +68,7 @@ jobs:
           echo "Version output: '$VERSION_OUTPUT'"
 
           # Verify version matches the tag (this also catches "dev" since it won't match)
-          EXPECTED_VERSION="${{ github.ref_name }}"
+          EXPECTED_VERSION="${{ env.TAG }}"
           if [[ "$VERSION_OUTPUT" != "$EXPECTED_VERSION" ]]; then
             echo "ERROR: Version mismatch! Expected: '$EXPECTED_VERSION', Got: '$VERSION_OUTPUT'"
             exit 1
@@ -84,8 +92,8 @@ jobs:
         run: |
           git config --global user.name 'GithubActions'
           git config --global user.email 'githubactions@users.noreply.github.com'
-          git push --delete origin "${{ github.ref_name }}"
-          echo "Deleted tag: ${{ github.ref_name }}"
+          git push --delete origin "${{ env.TAG }}"
+          echo "Deleted tag: ${{ env.TAG }}"
 
   release-artifacts:
     needs:
@@ -109,6 +117,59 @@ jobs:
           fail_on_unmatched_files: true
           files: |
             ./*
+
+  build-docker-image:
+    needs:
+      - golang-build
+      - verify-version
+      - release-prerequisites
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          pattern: artifact_temingo_linux_*
+          path: ./artifacts
+          merge-multiple: true
+
+      - name: Make binaries executable
+        shell: bash
+        run: |
+          chmod +x ./artifacts/temingo_linux_*
+
+      - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3
+
+      - uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   trigger-external-updates:
     needs: release-artifacts
