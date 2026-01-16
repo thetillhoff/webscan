@@ -58,7 +58,7 @@ jobs:
       - update-changelog
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write # Needed to push the tag
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
       - run: |
@@ -67,6 +67,8 @@ jobs:
 
   trigger-release:
     needs: git-tag
+    permissions:
+      contents: write # Needed to create the release
     uses: thetillhoff/webscan/.github/workflows/release-golang-executable-on-tag.yaml@main
     with:
       tag: ${{ needs.determine-version.outputs.NEW_VERSION }}
