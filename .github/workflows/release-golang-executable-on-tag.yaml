@@ -132,14 +132,14 @@ jobs:
 
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
-          pattern: artifact_temingo_linux_*
+          pattern: artifact_webscan_linux_*
           path: ./artifacts
           merge-multiple: true
 
       - name: Make binaries executable
         shell: bash
         run: |
-          chmod +x ./artifacts/temingo_linux_*
+          chmod +x ./artifacts/webscan_linux_*
 
       - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
