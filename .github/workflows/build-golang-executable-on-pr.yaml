@@ -1,6 +1,9 @@
 name: Build golang executable on PR
 
 on:
+  push:
+    branches:
+      - renovate/**
   pull_request:
 
 jobs:

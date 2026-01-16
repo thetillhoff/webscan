@@ -9,7 +9,7 @@
       "matchCurrentVersion": "!/^0/",
       "automerge": true,
       "automergeType": "branch",
-      "ignoreTests": true,
+      "ignoreTests": false,
       "dependencyDashboardApproval": false
     },
     {
@@ -24,7 +24,7 @@
       "rangeStrategy": "bump",
       "automerge": true,
       "automergeType": "branch",
-      "ignoreTests": true,
+      "ignoreTests": false,
       "dependencyDashboardApproval": false
     }
   ]
