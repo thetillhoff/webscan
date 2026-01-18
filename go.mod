@@ -9,7 +9,7 @@ require (
 	github.com/miekg/dns v1.1.70
 	github.com/openrdap/rdap v0.9.1
 	github.com/quic-go/quic-go v0.59.0
-	github.com/urfave/cli/v3 v3.6.1
+	github.com/urfave/cli/v3 v3.6.2
 	golang.org/x/net v0.49.0
 )
 
