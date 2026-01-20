@@ -24,6 +24,16 @@ make upgrade
 - This application is available for Linux, Mac and Windows.
 - A version variable is injected at build/release time, so the version automatically equals the git tag it was built with.
 
+## Workflows and release process
+
+**1. Verification Workflow** (`build-golang-executable-on-push.yaml`): Runs on all PRs and `renovate/**` branches. Builds for all platforms/architectures, injects commit hash as version, and verifies version injection works. On success, renovate may automerge.
+
+**2. Tag-on-Main Workflow** (`tag-on-main.yaml`): Runs on pushes to `main` by `renovate[bot]`. Calculates next patch version, updates CHANGELOG.md (inserts new entry before current version), verifies build (linux/amd64), then creates and pushes git tag.
+
+**3. Release Workflow** (`release-golang-executable-on-tag.yaml`): Runs on tag push (`v[0-9]+.[0-9]+.[0-9]+`). Builds binaries for all platforms/architectures, verifies version, creates GitHub release, builds/pushes Docker images to ghcr.io, and triggers external updates (goreportcard, homebrew tap). On failure, automatically deletes the tag.
+
+All versions are stored as git tags. Pushing a tag triggers the release pipeline.
+
 ## Decisions / best practices
 
 - Don't have global variables in a package -> they would be obstructed for the consumer and are not threadsafe

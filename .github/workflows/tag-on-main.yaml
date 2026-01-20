@@ -6,7 +6,6 @@ on:
       - main
 
 jobs:
-
   determine-version:
     runs-on: ubuntu-latest
     if: ${{ github.actor == 'renovate[bot]' }}
@@ -37,12 +36,14 @@ jobs:
       - name: Update CHANGELOG
         run: |
           NEW_VERSION="${{ needs.determine-version.outputs.NEW_VERSION }}"
+          CURRENT_VERSION="${{ needs.determine-version.outputs.CURRENT_VERSION }}"
 
-          # Find the line number of the first version entry
-          grep '^## v' CHANGELOG.md # Verify that there is at least one version entry
-          FIRST_VERSION_LINE=$(grep -n '^## v' CHANGELOG.md | head -1 | cut -d: -f1)
+          # Verify the current version exists in CHANGELOG
+          grep -q "^## ${CURRENT_VERSION}" CHANGELOG.md
+          FIRST_VERSION_LINE_NUMBER=$(grep -n "^## ${{ needs.determine-version.outputs.CURRENT_VERSION }}" CHANGELOG.md | head -1 | cut -d: -f1)
 
-          sed -i "${FIRST_VERSION_LINE}i## ${NEW_VERSION}\n\nUpdated dependencies.\n" CHANGELOG.md
+          # Use gsed instead on macOS (installed via brew) to test sed commands
+          sed -i "${FIRST_VERSION_LINE_NUMBER}i\## ${NEW_VERSION}\n\nUpdated dependencies.\n" CHANGELOG.md
 
       - name: Commit and push CHANGELOG
         run: |
@@ -52,24 +53,53 @@ jobs:
           git commit -m "Add CHANGELOG entry for ${NEW_VERSION}"
           git push
 
+  verify-build:
+    needs: determine-version
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os:
+          - linux
+        arch:
+          - amd64
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+      - uses: thetillhoff/action-golang-build@d6bf6d38e3ea7850f7e0e4dfcef72ae4d68f8a49 # v1.0.0
+        with:
+          OS: "${{ matrix.os }}"
+          ARCH: "${{ matrix.arch }}"
+          BUILDARGS: -ldflags="-X main.version=${{ needs.determine-version.outputs.NEW_VERSION }}"
+
+      - name: Download artifact
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          merge-multiple: true
+
+      - name: Verify version
+        shell: bash
+        run: |
+          chmod +x ./webscan_linux_amd64
+          VERSION_OUTPUT=$(./webscan_linux_amd64 --version 2>&1 || echo "dev")
+          VERSION_OUTPUT=$(echo "$VERSION_OUTPUT" | tr -d '\n\r' | xargs)
+          EXPECTED_VERSION="${{ needs.determine-version.outputs.NEW_VERSION }}"
+          if [[ "$VERSION_OUTPUT" != "$EXPECTED_VERSION" ]]; then
+            echo "ERROR: Version mismatch! Expected: '$EXPECTED_VERSION', Got: '$VERSION_OUTPUT'"
+            exit 1
+          fi
+          echo "✓ Version verification passed: $VERSION_OUTPUT"
+
   git-tag:
     needs:
       - determine-version
       - update-changelog
+      - verify-build
     runs-on: ubuntu-latest
     permissions:
       contents: write # Needed to push the tag
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
-      - run: |
+      - name: Pull latest changes and create tag
+        run: |
+          git pull origin main
           git tag "${{ needs.determine-version.outputs.NEW_VERSION }}"
           git push origin "${{ needs.determine-version.outputs.NEW_VERSION }}"
-
-  trigger-release:
-    needs: git-tag
-    permissions:
-      contents: write # Needed to create the release
-      packages: write # Needed to push the docker image for the release
-    uses: thetillhoff/webscan/.github/workflows/release-golang-executable-on-tag.yaml@main
-    with:
-      tag: ${{ needs.determine-version.outputs.NEW_VERSION }}

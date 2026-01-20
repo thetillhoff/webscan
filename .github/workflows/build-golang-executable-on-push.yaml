@@ -1,4 +1,4 @@
-name: Build golang executable on PR
+name: Build golang executable on push
 
 on:
   push:
@@ -25,7 +25,7 @@ jobs:
         with:
           OS: "${{ matrix.os }}"
           ARCH: "${{ matrix.arch }}"
-          BUILDARGS: -ldflags="-X main.version=${{ github.ref_name }}"
+          BUILDARGS: -ldflags="-X main.version=${{ github.sha }}"
 
   verify-version:
     needs: golang-build
@@ -47,8 +47,8 @@ jobs:
 
           echo "Version output: '$VERSION_OUTPUT'"
 
-          # Verify version matches the tag (this also catches "dev" since it won't match)
-          EXPECTED_VERSION="${{ github.ref_name }}"
+          # Verify version matches the commit hash (for PRs and renovate branches)
+          EXPECTED_VERSION="${{ github.sha }}"
           if [[ "$VERSION_OUTPUT" != "$EXPECTED_VERSION" ]]; then
             echo "ERROR: Version mismatch! Expected: '$EXPECTED_VERSION', Got: '$VERSION_OUTPUT'"
             exit 1
