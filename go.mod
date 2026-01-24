@@ -6,7 +6,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.11.0
 	github.com/jwalton/gchalk v1.3.0
 	github.com/mattn/go-isatty v0.0.20
-	github.com/miekg/dns v1.1.70
+	github.com/miekg/dns v1.1.72
 	github.com/openrdap/rdap v0.9.1
 	github.com/quic-go/quic-go v0.59.0
 	github.com/urfave/cli/v3 v3.6.2
