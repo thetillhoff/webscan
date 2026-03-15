@@ -3,7 +3,7 @@ module github.com/thetillhoff/webscan/v3
 go 1.26.1
 
 require (
-	github.com/PuerkitoBio/goquery v1.11.0
+	github.com/PuerkitoBio/goquery v1.12.0
 	github.com/jwalton/gchalk v1.3.0
 	github.com/mattn/go-isatty v0.0.20
 	github.com/miekg/dns v1.1.72
