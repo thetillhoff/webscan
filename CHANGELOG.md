@@ -1,5 +1,31 @@
 # CHANGELOG
 
+## v5.0.0
+
+### Breaking Changes
+
+- **Multi-Binary Layout**: CLI entry point moved from `main.go` to `cmd/webscan/main.go`
+- **DNS Resolver**: Fails explicitly when no system resolver is found instead of silently falling back to a public resolver
+
+### New Features
+
+- **Web Server Mode**: New `webscan-web` binary provides a browser-based scanning interface with Redis-backed job queue (`cmd/webscan-web/`, `pkg/webserver/`)
+- **Docker Compose**: Full stack deployment with Redis and web server
+- **Unified Timeout Flag**: New `--timeout` flag (default 5s) controls all network requests (DNS, port scan, HTTP, RDAP, blacklist checks); previously hardcoded per scan type
+
+### Improvements
+
+- **Parallel HTTP Protocol Checks**: HTTP/1, HTTP/2, HTTP/3 version checks and redirect detection all run concurrently per port and IP
+- **TLS Output Deduplication**: Shared certificate info printed once; only per-IP differences shown
+- **IP Blacklist Codes**: Comprehensive Spamhaus return code handling with human-readable descriptions; error codes (rate limiting, public resolver) logged as warnings instead of confusing the user
+- **Status Non-TTY Fix**: Status messages print to output when not running in a terminal (previously silently dropped)
+- **Playwright Tests**: E2E and API test scaffolding in `tests/`
+
+### Dependencies
+
+- Added `github.com/redis/go-redis/v9` for job queue
+- Updated dependencies
+
 ## v4.4.0
 
 ### Bug Fixes
@@ -43,6 +69,7 @@
 - Made `GetHttpProtocolRecommendationsForResult` unexported (only used within `httpProtocolScan`)
 - Added Windows portability: DNS config no longer attempts to read `/etc/resolv.conf` on Windows
 - Standardised all `slog` messages to `"<package>: <Description>"` format with structured key-value pairs
+
 
 ## v4.1.0
 

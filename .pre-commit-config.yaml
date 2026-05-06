@@ -17,6 +17,7 @@ repos:
     hooks:
       - id: go-fmt
       - id: go-vet # >1s
+        types: [go]
       # - id: go-critic # >1s
       # - id: go-cyclo
       #   args: [-over=15]
