@@ -1,0 +1,11 @@
+{
+  "name": "webscan-e2e",
+  "private": true,
+  "scripts": {
+    "test:e2e": "playwright test --config playwright.config.ts",
+    "test:api": "playwright test --config playwright.config.ts api"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.2"
+  }
+}

@@ -1,0 +1,14 @@
+default: true
+
+# Allow long lines (scan output examples, URLs)
+MD013: false
+
+# Allow duplicate headings in different sections
+MD024:
+  siblings_only: true
+
+# Allow trailing punctuation in headings (e.g. "DNS / Mail Security")
+MD026: false
+
+# Allow inline HTML (used in checklist comments)
+MD033: false

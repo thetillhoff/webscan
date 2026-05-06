@@ -1,0 +1,10 @@
+{
+  "name": "webscan",
+  "private": true,
+  "scripts": {
+    "lint:md": "markdownlint-cli2 '**/*.md' '#node_modules' '#tests'"
+  },
+  "devDependencies": {
+    "markdownlint-cli2": "^0.17.0"
+  }
+}
