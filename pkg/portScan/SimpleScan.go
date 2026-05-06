@@ -3,12 +3,13 @@ package portScan
 import (
 	"log/slog"
 	"slices"
+	"time"
 
 	"github.com/thetillhoff/webscan/v3/pkg/status"
 	"github.com/thetillhoff/webscan/v3/pkg/types"
 )
 
-func SimpleScan(target types.Target, status *status.Status, aRecords []string, aaaaRecords []string) (Result, error) {
+func SimpleScan(target types.Target, status *status.Status, aRecords []string, aaaaRecords []string, timeout time.Duration) (Result, error) {
 	var (
 		result = Result{
 			OpenPortsPerIp:          map[string][]uint16{},
@@ -34,7 +35,7 @@ func SimpleScan(target types.Target, status *status.Status, aRecords []string, a
 		scanPorts = []uint16{80, 443}
 	}
 
-	result.OpenPortsPerIp = scanPortRangeOfIps(status, append(aRecords, aaaaRecords...), scanPorts)
+	result.OpenPortsPerIp = scanPortRangeOfIps(status, append(aRecords, aaaaRecords...), scanPorts, timeout)
 
 	result.openPorts, result.openPortInconsistencies = CompareOpenPortsOfIps(result.OpenPortsPerIp)
 

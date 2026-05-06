@@ -11,7 +11,7 @@ import (
 // var wgIpScan sync.WaitGroup
 var wgPortScan sync.WaitGroup
 
-func scanPortRangeOfIps(status *status.Status, ips []string, ports []uint16) map[string][]uint16 {
+func scanPortRangeOfIps(status *status.Status, ips []string, ports []uint16, timeout time.Duration) map[string][]uint16 {
 	var (
 		openPortsPerIp     = map[string][]uint16{}
 		ipPortTupleChannel = make(chan IpPortTuple, len(ips)*len(ports))
@@ -31,8 +31,8 @@ func scanPortRangeOfIps(status *status.Status, ips []string, ports []uint16) map
 					Port: port,
 				},
 				ipPortTupleChannel,
-				5*time.Second,
-			) // Start goroutine that checks if port is open
+				timeout,
+			)
 		}
 	}
 

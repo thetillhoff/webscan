@@ -6,20 +6,22 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/quic-go/quic-go/http3"
 	"github.com/thetillhoff/webscan/v3/pkg/types"
 )
 
-func checkHTTP3(target types.Target) (string, error) {
+func checkHTTP3(target types.Target, timeout time.Duration) (string, error) {
 	var (
 		err    error
 		client = &http.Client{
+			Timeout: timeout,
 			Transport: &http3.Transport{
 				TLSClientConfig: &tls.Config{
-					InsecureSkipVerify: true, // SSL verification is a different scan
+					InsecureSkipVerify: true,
 				},
-			}, // Required for http3
+			},
 		}
 		request  *http.Request
 		response *http.Response
@@ -27,26 +29,21 @@ func checkHTTP3(target types.Target) (string, error) {
 
 	slog.Debug("httpProtocolScan: Checking http/3 started", "url", target.UrlString())
 
-	if target.ParsedUrl().Scheme == "http" { // HTTP/3 is not supported for HTTP, so return fast
+	if target.ParsedUrl().Scheme == "http" {
 		err = errors.New("http/3 is not supported for HTTP")
 		slog.Debug("httpProtocolScan: Checking http/3 failed", "url", target.UrlString(), "error", err)
 		return "", err
 	}
 
-	// Create an HTTP request
 	request, err = http.NewRequest("GET", target.UrlString(), nil)
 	if err != nil {
 		slog.Debug("httpProtocolScan: Checking http/3 failed", "url", target.UrlString(), "error", err)
 		return "", err
 	}
 
-	// Add the Host header
-	request.Header.Add("Host", target.Host()) // This is needed server-side to identify which vhost-config to use
-
-	// Add the HTTP/3 header
+	request.Header.Add("Host", target.Host())
 	request.Header.Add("Alt-Svc", "h3=\":443\"")
 
-	// Perform the HTTP request
 	response, err = client.Do(request)
 
 	if err == nil {

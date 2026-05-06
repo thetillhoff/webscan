@@ -6,20 +6,22 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/thetillhoff/webscan/v3/pkg/types"
 )
 
-func checkHTTP2(target types.Target) (string, error) {
+func checkHTTP2(target types.Target, timeout time.Duration) (string, error) {
 	var (
 		err    error
 		client = &http.Client{
+			Timeout: timeout,
 			Transport: &http.Transport{
-				ForceAttemptHTTP2: true, // Force HTTP/2
+				ForceAttemptHTTP2: true,
 				TLSClientConfig: &tls.Config{
-					InsecureSkipVerify: true, // SSL verification is a different scan
+					InsecureSkipVerify: true,
 				},
-			}, // Required for http2
+			},
 		}
 		request  *http.Request
 		response *http.Response
@@ -33,7 +35,7 @@ func checkHTTP2(target types.Target) (string, error) {
 		return "", err
 	}
 
-	request.Header.Add("Host", target.Host()) // This is needed server-side to identify which vhost-config to use
+	request.Header.Add("Host", target.Host())
 
 	response, err = client.Do(request)
 	if err == nil {

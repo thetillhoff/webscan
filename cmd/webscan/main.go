@@ -11,6 +11,7 @@ import (
 	"log/slog"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/thetillhoff/webscan/v3/pkg/logger"
 	"github.com/thetillhoff/webscan/v3/pkg/webscan"
@@ -55,6 +56,11 @@ GLOBAL OPTIONS:{{range .VisibleFlags}}
 				Name:  "ns",
 				Value: "",
 				Usage: "set custom dns server (uses system dns by default)",
+			},
+			&cli.DurationFlag{
+				Name:  "timeout",
+				Value: 5 * time.Second,
+				Usage: "timeout for individual network requests (DNS, port, HTTP, RDAP)",
 			},
 			&cli.StringFlag{
 				Name:  "dkim-selector",
@@ -172,18 +178,19 @@ GLOBAL OPTIONS:{{range .VisibleFlags}}
 
 			// Args
 
-			var stdout io.Writer
+			stdout := io.Writer(os.Stdout)
+			statusOut := io.Writer(os.Stderr)
 			if cmd.Bool("quiet") {
-				stdout = io.Discard
-			} else {
-				stdout = os.Stdout
+				statusOut = io.Discard
 			}
 
 			engine, err = webscan.NewEngine(
 				stdout,
+				statusOut,
 				cmd.Bool("no-color"),
 				cmd.String("ns"),
 				cmd.Bool("follow"),
+				cmd.Duration("timeout"),
 				cmd.Bool("dns"),
 				cmd.Bool("ip"),
 				cmd.Bool("port"),

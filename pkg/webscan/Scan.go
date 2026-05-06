@@ -48,7 +48,14 @@ func (engine *Engine) Scan(input string) error {
 
 	// DNS
 
-	engine.dnsScanResult, err = dnsScan.Scan(engine.target, &engine.status, dnsScan.WithAdvanced(engine.advancedDnsScan), dnsScan.WithFollowRedirects(engine.followRedirects))
+	engine.dnsScanResult, err = dnsScan.Scan(
+		engine.target,
+		&engine.status,
+		dnsScan.WithCustomNameServer(engine.dnsServer),
+		dnsScan.WithAdvanced(engine.advancedDnsScan),
+		dnsScan.WithFollowRedirects(engine.followRedirects),
+		dnsScan.WithTimeout(engine.timeout),
+	)
 	if err != nil {
 		return err
 	}
@@ -64,6 +71,7 @@ func (engine *Engine) Scan(input string) error {
 			&engine.status,
 			ipScan.WithARecords(engine.dnsScanResult.ARecords),
 			ipScan.WithAAAARecords(engine.dnsScanResult.AAAARecords),
+			ipScan.WithTimeout(engine.timeout),
 		)
 		if err != nil {
 			return err
@@ -85,6 +93,7 @@ func (engine *Engine) Scan(input string) error {
 		portScan.WithARecords(engine.dnsScanResult.ARecords),
 		portScan.WithAAAARecords(engine.dnsScanResult.AAAARecords),
 		portScan.WithAdvanced(engine.advancedPortScan),
+		portScan.WithTimeout(engine.timeout),
 	)
 	if err != nil {
 		return err
@@ -125,6 +134,7 @@ func (engine *Engine) Scan(input string) error {
 			httpProtocolScan.WithClient(engine.client),
 			httpProtocolScan.WithIsAvailableViaPort80(engine.portScanResult.IsPortOpen(80)),
 			httpProtocolScan.WithIsAvailableViaPort443(engine.portScanResult.IsPortOpen(443)),
+			httpProtocolScan.WithTimeout(engine.timeout),
 		)
 		if err != nil {
 			return err
@@ -190,6 +200,7 @@ func (engine *Engine) Scan(input string) error {
 			engine.target,
 			&engine.status,
 			subDomainScan.WithCertNames(engine.tlsScanResult.ListAllCertNames()),
+			subDomainScan.WithTimeout(engine.timeout),
 		)
 
 		subDomainScan.PrintResult(engine.subDomainScanResult, engine.stdout)

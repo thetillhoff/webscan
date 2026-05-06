@@ -2,23 +2,22 @@ package dnsScan
 
 import (
 	"log/slog"
+	"time"
 
 	"github.com/miekg/dns"
 	"github.com/thetillhoff/webscan/v3/pkg/status"
 	"github.com/thetillhoff/webscan/v3/pkg/types"
 )
 
-func AdvancedScan(status *status.Status, target types.Target, dnsClient *dns.Client, nameserver string, followRedirects bool) (Result, error) {
+func AdvancedScan(status *status.Status, target types.Target, dnsClient *dns.Client, nameserver string, followRedirects bool, timeout time.Duration) (Result, error) {
 	var (
 		err error
 
 		result = Result{}
 	)
 
-	status.SpinningUpdate("Advanced scan of DNS running...")
-
 	// `err` is ignored here, as it's okay that it can't be retrieved. It's not a critical error, but an error nonetheless
-	result.DomainOwners, _ = GetDomainOwnerViaRDAP(target.Hostname())
+	result.DomainOwners, _ = GetDomainOwnerViaRDAP(target.Hostname(), timeout)
 
 	result.DomainIsBlacklistedAt, err = IsDomainBlacklisted(target.Hostname(), dnsClient, nameserver)
 	if err != nil {
@@ -31,7 +30,7 @@ func AdvancedScan(status *status.Status, target types.Target, dnsClient *dns.Cli
 	}
 
 	if len(result.NSRecords) > 0 { // Only check nameserver owners if NS records exist
-		result.NameserverOwners, err = GetNameserverOwnerViaRDAP(dnsClient, nameserver, result.NSRecords)
+		result.NameserverOwners, err = GetNameserverOwnerViaRDAP(dnsClient, nameserver, result.NSRecords, timeout)
 		if err != nil {
 			return result, err
 		}
@@ -62,8 +61,6 @@ func AdvancedScan(status *status.Status, target types.Target, dnsClient *dns.Cli
 	// Domain Accessibility
 	result.IpVersionCompatibility = CheckIPVersionCompatibility(result.ARecords, result.AAAARecords)
 	result.DomainAccessibilityHints = GetDomainAccessibilityHints(target.Hostname())
-
-	status.SpinningComplete("Advanced scan of DNS complete.")
 
 	return result, nil
 }

@@ -2,6 +2,8 @@ package httpProtocolScan
 
 import (
 	"log/slog"
+	"sync"
+	"time"
 
 	"github.com/thetillhoff/webscan/v3/pkg/cachedHttpGetClient"
 	"github.com/thetillhoff/webscan/v3/pkg/status"
@@ -12,6 +14,7 @@ type scanConfig struct {
 	client                cachedHttpGetClient.Client
 	isAvailableViaPort80  bool
 	isAvailableViaPort443 bool
+	timeout               time.Duration
 }
 
 type ConfigOption = types.Option[scanConfig]
@@ -37,59 +40,89 @@ func WithIsAvailableViaPort443(isAvailableViaPort443 bool) ConfigOption {
 	}
 }
 
+// WithTimeout sets the per-request timeout for HTTP version checks
+func WithTimeout(timeout time.Duration) ConfigOption {
+	return func(sc *scanConfig) {
+		sc.timeout = timeout
+	}
+}
+
 func Scan(target types.Target, status *status.Status, options ...ConfigOption) (Result, error) {
 	var (
-		err error
-
 		result = Result{}
 	)
 
-	config := &scanConfig{}
+	config := &scanConfig{
+		timeout: 5 * time.Second,
+	}
 	types.ApplyOptions(config, options)
 
 	slog.Debug("httpProtocolScan: Scan started")
 
 	status.SpinningUpdate("Scanning http protocols...")
 
-	// Scan HTTP for redirects
-	target.OverrideSchema(types.HTTP)
-	result.httpStatusCode, result.httpRedirectLocation, err = CheckHTTPRedirects(target, config.client)
-	result.isAvailableViaHttp = err == nil
+	// Check redirects for HTTP and HTTPS in parallel
+	var wg sync.WaitGroup
+	wg.Add(2)
 
-	// Scan HTTPS for redirects
-	target.OverrideSchema(types.HTTPS)
-	result.httpsStatusCode, result.httpsRedirectLocation, err = CheckHTTPRedirects(target, config.client)
-	result.isAvailableViaHttps = err == nil
+	go func() {
+		defer wg.Done()
+		target80 := target
+		target80.OverrideSchema(types.HTTP)
+		statusCode, redirectLocation, err := CheckHTTPRedirects(target80, config.client)
+		result.httpStatusCode = statusCode
+		result.httpRedirectLocation = redirectLocation
+		result.isAvailableViaHttp = err == nil
+	}()
 
-	// TODO check redirect from http zone apex to https www. prefix
-	// TODO check redirect from https zone apex to https www. prefix
-	// TODO check redirect from http www. prefix to https www. prefix
-	// TODO check redirects to omit the port (it's unneeded if protocol is set and it's the default 80 or 443)
+	go func() {
+		defer wg.Done()
+		target443 := target
+		target443.OverrideSchema(types.HTTPS)
+		statusCode, redirectLocation, err := CheckHTTPRedirects(target443, config.client)
+		result.httpsStatusCode = statusCode
+		result.httpsRedirectLocation = redirectLocation
+		result.isAvailableViaHttps = err == nil
+	}()
 
-	// TODO follow redirects if desired -> Probably not here, but in Scan().
-	// TODO Only check http versions when there is no redirect happening
+	wg.Wait()
 
-	// TODO check that redirectlocations either end with a `/` or with a filename (e.g. `index.html`).
+	// Check HTTP versions for port 80 and port 443 in parallel
+	var wg2 sync.WaitGroup
+	var httpVersions, httpsVersions []string
+	var httpErr, httpsErr error
 
 	if config.isAvailableViaPort80 && result.isAvailableViaHttp {
-		target.OverrideSchema(types.HTTP)
-
-		// Scan http versions
-		result.httpVersions, err = CheckHTTPVersions(target)
-		if err != nil {
-			return result, err
-		}
+		wg2.Add(1)
+		go func() {
+			defer wg2.Done()
+			target80 := target
+			target80.OverrideSchema(types.HTTP)
+			httpVersions, httpErr = CheckHTTPVersions(target80, config.timeout)
+		}()
 	}
 
 	if config.isAvailableViaPort443 && result.isAvailableViaHttps {
-		target.OverrideSchema(types.HTTPS)
-
-		// Scan https versions
-		result.httpsVersions, err = CheckHTTPVersions(target)
-		if err != nil {
-			return result, err
-		}
+		wg2.Add(1)
+		go func() {
+			defer wg2.Done()
+			target443 := target
+			target443.OverrideSchema(types.HTTPS)
+			httpsVersions, httpsErr = CheckHTTPVersions(target443, config.timeout)
+		}()
 	}
+
+	wg2.Wait()
+
+	if httpErr != nil {
+		return result, httpErr
+	}
+	if httpsErr != nil {
+		return result, httpsErr
+	}
+
+	result.httpVersions = httpVersions
+	result.httpsVersions = httpsVersions
 
 	result.recommendations = httpProtocolRecommendations(target, result, config.isAvailableViaPort80, config.isAvailableViaPort443)
 

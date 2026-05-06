@@ -16,5 +16,8 @@ func (status *Status) Update(message string) {
 		}
 		status.writeMutex.Unlock()
 
+		return
 	}
+
+	status.Println(message)
 }

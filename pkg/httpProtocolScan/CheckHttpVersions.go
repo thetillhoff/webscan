@@ -2,46 +2,49 @@ package httpProtocolScan
 
 import (
 	"log/slog"
+	"sync"
+	"time"
 
 	"github.com/thetillhoff/webscan/v3/pkg/types"
 )
 
-// Takes url
-// and whether http and/or https should be checked
-// and checks which HTTP versions the server can speak for each
-// Return available versions on http, then https and finally a potential error
-func CheckHTTPVersions(target types.Target) ([]string, error) {
-	var (
-		err                   error
-		availableHttpVersions = []string{}
-
-		httpVersion1 string
-		httpVersion2 string
-		httpVersion3 string
-	)
-
-	// HTTP versions:
-	// 0.9 -> obsolete
-	// 1.0 -> obsolete
-	// 1.1
-	// 2
-	// 3 QUIC
-
+func CheckHTTPVersions(target types.Target, timeout time.Duration) ([]string, error) {
 	slog.Debug("httpProtocolScan: Checking available http versions started", "url", target.UrlString())
 
-	httpVersion1, err = checkHTTP1(target)
-	if err == nil {
-		availableHttpVersions = append(availableHttpVersions, httpVersion1)
+	type versionResult struct {
+		version string
+		err     error
 	}
 
-	httpVersion2, err = checkHTTP2(target)
-	if err == nil {
-		availableHttpVersions = append(availableHttpVersions, httpVersion2)
-	}
+	var (
+		wg      sync.WaitGroup
+		results [3]versionResult
+	)
 
-	httpVersion3, err = checkHTTP3(target)
-	if err == nil {
-		availableHttpVersions = append(availableHttpVersions, httpVersion3)
+	wg.Add(3)
+
+	go func() {
+		defer wg.Done()
+		results[0].version, results[0].err = checkHTTP1(target, timeout)
+	}()
+
+	go func() {
+		defer wg.Done()
+		results[1].version, results[1].err = checkHTTP2(target, timeout)
+	}()
+
+	go func() {
+		defer wg.Done()
+		results[2].version, results[2].err = checkHTTP3(target, timeout)
+	}()
+
+	wg.Wait()
+
+	availableHttpVersions := []string{}
+	for _, r := range results {
+		if r.err == nil {
+			availableHttpVersions = append(availableHttpVersions, r.version)
+		}
 	}
 
 	slog.Debug("httpProtocolScan: Checking available http versions completed", "url", target.UrlString())

@@ -10,6 +10,8 @@ func (status *Status) SpinningComplete(message string) {
 		// More info at https://tldp.org/HOWTO/Bash-Prompt-HOWTO/x361.html
 		status.spinnerMessage = "" // Reset
 		status.spinnerIndex = 0    // Reset
-
+		return
 	}
+
+	status.Println(message)
 }

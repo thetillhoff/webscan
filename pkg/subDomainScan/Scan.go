@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net"
 	"strings"
+	"time"
 
 	"github.com/thetillhoff/webscan/v3/pkg/status"
 	"github.com/thetillhoff/webscan/v3/pkg/types"
@@ -11,6 +12,7 @@ import (
 
 type scanConfig struct {
 	certNames []string
+	timeout   time.Duration
 }
 
 // ConfigOption represents a configuration option for subdomain scanning
@@ -23,6 +25,13 @@ func WithCertNames(certNames []string) ConfigOption {
 	}
 }
 
+// WithTimeout sets the HTTP request timeout
+func WithTimeout(timeout time.Duration) ConfigOption {
+	return func(sc *scanConfig) {
+		sc.timeout = timeout
+	}
+}
+
 func Scan(target types.Target, status *status.Status, options ...ConfigOption) Result {
 	var (
 		err    error
@@ -32,8 +41,9 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) R
 		}
 	)
 
-	// Apply configuration options
-	config := &scanConfig{}
+	config := &scanConfig{
+		timeout: 5 * time.Second,
+	}
 	for _, option := range options {
 		option(config)
 	}
@@ -68,7 +78,7 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) R
 		result.subdomainsFromTlsScan[subdomain] = struct{}{} // Add unique entries
 	}
 
-	result.subdomainsFromCrtSh, err = CheckCertLogs(target)
+	result.subdomainsFromCrtSh, err = CheckCertLogs(target, config.timeout)
 	if err != nil {
 		slog.Warn("subDomainScan: Could not retrieve subdomains from crt.sh", "error", err)
 	}

@@ -2,6 +2,7 @@ package ipScan
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"math/rand"
 	"net"
@@ -12,13 +13,32 @@ import (
 	"github.com/thetillhoff/webscan/v3/pkg/types"
 )
 
-func IsIPBlacklisted(ip string) ([]string, error) {
+var spamhausListingCodes = map[string]string{
+	"127.0.0.2":  "SBL - direct spam source",
+	"127.0.0.3":  "SBL/CSS - compromised/spamming host",
+	"127.0.0.4":  "XBL/CBL - exploited host (bot/proxy/trojan)",
+	"127.0.0.5":  "XBL - reserved",
+	"127.0.0.6":  "XBL - reserved",
+	"127.0.0.7":  "XBL - reserved",
+	"127.0.0.8":  "SBL - reserved",
+	"127.0.0.9":  "SBL/DROP - hijacked netblock (do not route)",
+	"127.0.0.10": "PBL - ISP maintained (end-user IP range)",
+	"127.0.0.11": "PBL - Spamhaus maintained (end-user IP range)",
+}
+
+var spamhausErrorCodes = map[string]string{
+	"127.255.255.252": "typing error in DNSBL zone name",
+	"127.255.255.254": "query sent via public/open resolver (not allowed on free tier)",
+	"127.255.255.255": "excessive number of queries (rate limited)",
+}
+
+func IsIPBlacklisted(ip string, timeout time.Duration) ([]string, error) {
 	var (
 		err error
 
 		resolver *net.Resolver
 
-		searchPrefix = "" // includes trailing '.'
+		searchPrefix = ""
 		network      string
 
 		blacklistWithNameservers = map[string][]string{
@@ -38,12 +58,12 @@ func IsIPBlacklisted(ip string) ([]string, error) {
 
 	slog.Debug("ipScan: Checking for ip blacklisting started")
 
-	if types.IsIPv4(ip) { // If ip is ipv4
+	if types.IsIPv4(ip) {
 		network = "ip4"
 		for _, snippet := range strings.Split(ip, ".") {
 			searchPrefix = snippet + "." + searchPrefix
 		}
-	} else { // If ip is ipv6
+	} else {
 		network = "ip6"
 
 		addr, _ := netip.ParseAddr(ip)
@@ -61,7 +81,7 @@ func IsIPBlacklisted(ip string) ([]string, error) {
 			PreferGo:     false,
 			StrictErrors: true,
 			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-				d := net.Dialer{Timeout: time.Millisecond * time.Duration(10000)}
+				d := net.Dialer{Timeout: timeout}
 				return d.DialContext(ctx, network, net.JoinHostPort(blacklistNameserver, "53"))
 			},
 		}
@@ -69,21 +89,24 @@ func IsIPBlacklisted(ip string) ([]string, error) {
 		slog.Debug("ipScan: Checking for ip blacklisting", "blacklist", searchPrefix+blacklist)
 
 		response, err = resolver.LookupIP(context.Background(), network, searchPrefix+blacklist)
-		if err, ok := err.(*net.DNSError); ok && err.IsNotFound {
-			// No A record available -> Not blacklisted, so continue
-		} else if err != nil { // Unknown error occurred
+		if dnsErr, ok := err.(*net.DNSError); ok && dnsErr.IsNotFound {
+			continue
+		} else if err != nil {
 			return blacklistsWithMatches, err
-		} else { // Record was found
+		}
 
-			_, ipv4Net, err := net.ParseCIDR("127.255.255.0/24") // Parse CIDR of error range of spamhaus
-			if err != nil {
-				return blacklistsWithMatches, err
+		for _, responseIP := range response {
+			code := responseIP.String()
+
+			if errMsg, isError := spamhausErrorCodes[code]; isError {
+				slog.Warn("Blacklist check returned error code", "ip", ip, "blacklist", blacklist, "code", code, "meaning", errMsg)
+				continue
 			}
 
-			if len(response) == 1 && ipv4Net.Contains(response[0]) { // If response is in error range
-				slog.Warn("ipScan: Could not check IP blacklisting due to error code", "ip", ip, "response", response)
-			} else { // If response isn't in error range
-				blacklistsWithMatches = append(blacklistsWithMatches, blacklist) // Add blacklist match
+			if listing, isListing := spamhausListingCodes[code]; isListing {
+				blacklistsWithMatches = append(blacklistsWithMatches, fmt.Sprintf("%s (%s)", blacklist, listing))
+			} else {
+				blacklistsWithMatches = append(blacklistsWithMatches, fmt.Sprintf("%s (unknown code %s)", blacklist, code))
 			}
 		}
 	}

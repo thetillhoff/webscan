@@ -26,7 +26,7 @@ type Cert struct {
 }
 
 // Queries crt.sh for any related certificates in the transparent certificate logs (https://certificate.transparency.dev/)
-func CheckCertLogs(target types.Target) (map[string]struct{}, error) {
+func CheckCertLogs(target types.Target, timeout time.Duration) (map[string]struct{}, error) {
 	var (
 		err         error
 		domainNames = map[string]struct{}{}
@@ -36,7 +36,7 @@ func CheckCertLogs(target types.Target) (map[string]struct{}, error) {
 		certs = []Cert{}
 
 		httpClient = http.Client{
-			Timeout: 5 * time.Second,
+			Timeout: timeout,
 		}
 	)
 

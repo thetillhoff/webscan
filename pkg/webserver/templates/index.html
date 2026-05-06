@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Webscan - Web Security Scanner">
+    <title>webscan</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <main>
+        <div class="scan-container">
+            <form id="scanForm" class="scan-form">
+                <div class="input-group">
+                    <input type="text" id="targetInput" placeholder="Enter domain, IP, or URL (e.g., google.com)" required>
+                    <button type="submit" id="scanButton">Scan</button>
+                </div>
+                <div class="advanced-options">
+                    <label>
+                        <input type="checkbox" id="followRedirects"> Follow CNAMEs and HTTP redirects
+                    </label>
+                </div>
+            </form>
+
+            <div id="spinner" class="spinner" style="display:none;">
+                <div class="spinner-icon"></div>
+                <span id="spinnerText">Scanning...</span>
+            </div>
+
+            <div id="logsSection" class="logs-section" style="display:none;">
+                <button type="button" id="toggleLogs" class="toggle-logs-btn">Show logs</button>
+                <pre id="logsOutput" class="logs-output" style="display:none;"></pre>
+            </div>
+
+            <div id="resultsSection" class="results-section" style="display:none;">
+                <pre id="scanResults" class="scan-results"></pre>
+            </div>
+
+            <div id="errorSection" class="error-section" style="display:none;">
+                <p id="errorMessage"></p>
+            </div>
+        </div>
+    </main>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

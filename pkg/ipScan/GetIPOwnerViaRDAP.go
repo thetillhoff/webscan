@@ -2,15 +2,19 @@ package ipScan
 
 import (
 	"log/slog"
+	"net/http"
 	"strings"
+	"time"
 
 	"github.com/openrdap/rdap"
 )
 
-func GetIPOwnerViaRDAP(ip string) (string, error) {
+func GetIPOwnerViaRDAP(ip string, timeout time.Duration) (string, error) {
 	var (
-		err           error
-		client        = &rdap.Client{}
+		err    error
+		client = &rdap.Client{
+			HTTP: &http.Client{Timeout: timeout},
+		}
 		rdapIPNetwork *rdap.IPNetwork
 
 		response           string

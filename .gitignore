@@ -1,2 +1,8 @@
-/webscan
-/webscan.exe
+# Test artifacts
+*.test
+*.log
+
+# Node
+node_modules/
+playwright-report/
+test-results/

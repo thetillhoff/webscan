@@ -15,7 +15,10 @@ func (status *Status) SpinningUpdate(message string) {
 			status.spinning = true
 			status.startTicking() // Start timer
 		}
+		return
 	}
+
+	status.Println(message)
 }
 
 // Display or update displayed message

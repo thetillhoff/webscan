@@ -6,12 +6,13 @@ import (
 	"net"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/miekg/dns"
 	"github.com/thetillhoff/webscan/v3/pkg/ipScan"
 )
 
-func GetNameserverOwnerViaRDAP(dnsClient *dns.Client, nameserver string, nsRecords []string) ([]string, error) {
+func GetNameserverOwnerViaRDAP(dnsClient *dns.Client, nameserver string, nsRecords []string, timeout time.Duration) ([]string, error) {
 	var (
 		owners = []string{}
 		// Track which domains we've already tried to avoid duplicate RDAP lookups
@@ -29,7 +30,7 @@ func GetNameserverOwnerViaRDAP(dnsClient *dns.Client, nameserver string, nsRecor
 		// Check if the nameserver is an IP address or a hostname
 		if net.ParseIP(nsRecord) != nil {
 			// It's an IP address - use IP owner lookup
-			owner, err := ipScan.GetIPOwnerViaRDAP(nsRecord)
+			owner, err := ipScan.GetIPOwnerViaRDAP(nsRecord, timeout)
 			if err != nil {
 				slog.Debug("dnsScan: Could not get IP nameserver owner via RDAP", "nsRecord", nsRecord, "error", err)
 				continue
@@ -39,7 +40,7 @@ func GetNameserverOwnerViaRDAP(dnsClient *dns.Client, nameserver string, nsRecor
 			}
 		} else {
 			// It's a hostname - try progressively shorter domain parts with deduplication
-			domainOwners, err := getDomainOwnerViaRDAPRecursive(nsRecord, triedDomains, domainResults)
+			domainOwners, err := getDomainOwnerViaRDAPRecursive(nsRecord, triedDomains, domainResults, timeout)
 			if err != nil {
 				slog.Debug("dnsScan: Could not get domain nameserver owner via RDAP", "nsRecord", nsRecord, "error", err)
 				continue
@@ -58,7 +59,7 @@ func GetNameserverOwnerViaRDAP(dnsClient *dns.Client, nameserver string, nsRecor
 
 // getDomainOwnerViaRDAPRecursive tries to get domain owner by recursively trying shorter domain parts
 // It avoids duplicate lookups by tracking tried domains and reusing successful results
-func getDomainOwnerViaRDAPRecursive(hostname string, triedDomains map[string]bool, domainResults map[string][]string) ([]string, error) {
+func getDomainOwnerViaRDAPRecursive(hostname string, triedDomains map[string]bool, domainResults map[string][]string, timeout time.Duration) ([]string, error) {
 	// Remove trailing dot if present
 	hostname = strings.TrimSuffix(hostname, ".")
 
@@ -92,7 +93,7 @@ func getDomainOwnerViaRDAPRecursive(hostname string, triedDomains map[string]boo
 		slog.Debug("dnsScan: Trying domain for RDAP lookup", "hostname", hostname, "domain", domain)
 
 		// Perform the RDAP lookup
-		owners, err := GetDomainOwnerViaRDAP(domain)
+		owners, err := GetDomainOwnerViaRDAP(domain, timeout)
 		if err == nil && len(owners) > 0 {
 			// Cache the successful result
 			domainResults[domain] = owners

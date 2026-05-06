@@ -33,10 +33,12 @@ type Engine struct {
 	resolver *net.Resolver // Nil resolver (==nil) is the same as a zero resolver which is the default system resolver
 	client   cachedHttpGetClient.Client
 
-	stdout io.Writer
+	stdout    io.Writer
+	dnsServer string
 
 	// Global settings
 	followRedirects bool
+	timeout         time.Duration
 
 	// Enabled/Disabled scans
 	advancedDnsScan  bool
@@ -65,9 +67,11 @@ type Engine struct {
 
 func NewEngine(
 	stdout io.Writer,
+	statusOut io.Writer,
 	noColor bool,
 	dnsServer string,
 	followRedirects bool,
+	timeout time.Duration,
 	advancedDnsScan bool,
 	ipScan bool,
 	advancedPortScan bool,
@@ -86,12 +90,16 @@ func NewEngine(
 		client   cachedHttpGetClient.Client
 	)
 
+	if timeout == 0 {
+		timeout = 5 * time.Second
+	}
+
 	if dnsServer != "" {
 		resolver = &net.Resolver{
 			PreferGo:     false,
 			StrictErrors: true,
 			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-				d := net.Dialer{Timeout: 10 * time.Second} // 10s timeout by default // TODO make this variable
+				d := net.Dialer{Timeout: timeout}
 				return d.DialContext(ctx, network, net.JoinHostPort(dnsServer, "53"))
 			},
 		}
@@ -101,7 +109,7 @@ func NewEngine(
 	}
 
 	client = cachedHttpGetClient.NewClient(
-		5*time.Second,
+		timeout,
 		10,
 		false,
 		"Go-http-client/1.1",
@@ -109,10 +117,12 @@ func NewEngine(
 
 	engine = Engine{
 		stdout:           stdout,
-		status:           status.NewStatus(noColor, writeMutex, stdout),
+		dnsServer:        dnsServer,
+		status:           status.NewStatus(noColor, writeMutex, statusOut),
 		resolver:         resolver,
 		client:           client,
 		followRedirects:  followRedirects,
+		timeout:          timeout,
 		advancedDnsScan:  advancedDnsScan,
 		ipScan:           ipScan,
 		advancedPortScan: advancedPortScan,

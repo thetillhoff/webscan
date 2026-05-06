@@ -64,12 +64,12 @@ func NewStatus(noColor bool, writeMutex *sync.Mutex, out io.Writer) Status { // 
 		}
 	}
 
-	if isatty.IsTerminal(os.Stdout.Fd()) {
-		status.isTTY = true
-	} else if isatty.IsCygwinTerminal(os.Stdout.Fd()) {
-		status.isTTY = true
-	} else {
-		status.isTTY = false
+	status.isTTY = false
+
+	if f, ok := out.(*os.File); ok {
+		if isatty.IsTerminal(f.Fd()) || isatty.IsCygwinTerminal(f.Fd()) {
+			status.isTTY = true
+		}
 	}
 
 	if value, ok := os.LookupEnv("TERM"); ok && value == "dumb" { // Check for env var "$TERM"

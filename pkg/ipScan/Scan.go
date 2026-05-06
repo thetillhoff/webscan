@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/thetillhoff/webscan/v3/pkg/status"
 	"github.com/thetillhoff/webscan/v3/pkg/types"
@@ -12,6 +13,7 @@ import (
 type scanConfig struct {
 	aRecords    []string
 	aaaaRecords []string
+	timeout     time.Duration
 }
 
 type ConfigOption = types.Option[scanConfig]
@@ -30,6 +32,13 @@ func WithAAAARecords(aaaaRecords []string) ConfigOption {
 	}
 }
 
+// WithTimeout sets the timeout for DNS and RDAP requests
+func WithTimeout(timeout time.Duration) ConfigOption {
+	return func(sc *scanConfig) {
+		sc.timeout = timeout
+	}
+}
+
 func Scan(target types.Target, status *status.Status, options ...ConfigOption) (Result, error) {
 	var (
 		result = Result{
@@ -40,7 +49,9 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) (
 		maxIpAddressLength = 0
 	)
 
-	config := &scanConfig{}
+	config := &scanConfig{
+		timeout: 5 * time.Second,
+	}
 	types.ApplyOptions(config, options)
 
 	totalIPs := len(config.aRecords) + len(config.aaaaRecords)
@@ -71,14 +82,14 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) (
 	}
 
 	for _, aRecord := range config.aRecords {
-		response, err := GetIPOwnerViaRDAP(aRecord)
+		response, err := GetIPOwnerViaRDAP(aRecord, config.timeout)
 		if err != nil {
 			slog.Debug("ipScan: Error getting IP owner via RDAP for IPv4", "ipv4", aRecord, "error", err.Error())
 			return result, err
 		}
 		result.IpOwners = append(result.IpOwners, fmt.Sprintf("According to RDAP information, IP %-*s is registered at %s", maxIpAddressLength, aRecord, response))
 
-		blacklistMatches, err := IsIPBlacklisted(aRecord)
+		blacklistMatches, err := IsIPBlacklisted(aRecord, config.timeout)
 		if err != nil {
 			slog.Debug("ipScan: Error on blacklist check of IPv4", "ipv4", aRecord, "error", err.Error())
 			return result, err
@@ -92,14 +103,14 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) (
 	}
 
 	for _, aaaaRecord := range config.aaaaRecords {
-		response, err := GetIPOwnerViaRDAP(aaaaRecord)
+		response, err := GetIPOwnerViaRDAP(aaaaRecord, config.timeout)
 		if err != nil {
 			slog.Debug("ipScan: Error getting IP owner via RDAP for IPv6", "ipv6", aaaaRecord, "error", err.Error())
 			return result, err
 		}
 		result.IpOwners = append(result.IpOwners, fmt.Sprintf("According to RDAP information, IP %-*s is registered at %s", maxIpAddressLength, aaaaRecord, response))
 
-		blacklistMatches, err := IsIPBlacklisted(aaaaRecord)
+		blacklistMatches, err := IsIPBlacklisted(aaaaRecord, config.timeout)
 		if err != nil {
 			slog.Debug("ipScan: Error on blacklist check of IPv6", "ipv6", aaaaRecord, "error", err.Error())
 			return result, err

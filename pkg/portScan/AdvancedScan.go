@@ -3,11 +3,12 @@ package portScan
 import (
 	"log/slog"
 	"slices"
+	"time"
 
 	"github.com/thetillhoff/webscan/v3/pkg/status"
 )
 
-func AdvancedScan(status *status.Status, aRecords []string, aaaaRecords []string) (Result, error) {
+func AdvancedScan(status *status.Status, aRecords []string, aaaaRecords []string, timeout time.Duration) (Result, error) {
 	var (
 		scanPorts = []uint16{
 			15,   // Netstat
@@ -57,7 +58,7 @@ func AdvancedScan(status *status.Status, aRecords []string, aaaaRecords []string
 
 	slog.Debug("portScan: Advanced scan started")
 
-	result.OpenPortsPerIp = scanPortRangeOfIps(status, append(aRecords, aaaaRecords...), scanPorts)
+	result.OpenPortsPerIp = scanPortRangeOfIps(status, append(aRecords, aaaaRecords...), scanPorts, timeout)
 
 	result.openPorts, result.openPortInconsistencies = CompareOpenPortsOfIps(result.OpenPortsPerIp)
 

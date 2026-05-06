@@ -2,9 +2,13 @@ package dnsScan
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
 	"net"
 	"runtime"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/miekg/dns"
 	"github.com/thetillhoff/webscan/v3/pkg/status"
@@ -17,6 +21,7 @@ type scanConfig struct {
 	resolvConfig    *dns.ClientConfig
 	advanced        bool
 	followRedirects bool
+	timeout         time.Duration
 }
 
 type ConfigOption = types.Option[scanConfig]
@@ -42,25 +47,33 @@ func WithFollowRedirects(followRedirects bool) ConfigOption {
 	}
 }
 
-// resolveNameserver determines which nameserver to use based on configuration and system settings
-func resolveNameserver(customNameserver string) (string, *dns.ClientConfig) {
+// WithTimeout sets the timeout for DNS queries
+func WithTimeout(timeout time.Duration) ConfigOption {
+	return func(sc *scanConfig) {
+		sc.timeout = timeout
+	}
+}
+
+// resolveNameserver determines which nameserver to use based on configuration and system settings.
+// It uses either an explicit custom nameserver or the system resolver configuration.
+func resolveNameserver(customNameserver string) (string, *dns.ClientConfig, error) {
 	defaultNameserver := "1.1.1.1:53"
 
 	if customNameserver != "" {
-		slog.Debug("dnsScan: Using custom nameserver", "nameserver", customNameserver)
-		return customNameserver, nil
+		normalized := normalizeNameserver(customNameserver)
+		slog.Debug("dnsScan: Using custom nameserver", "nameserver", normalized)
+		return normalized, nil, nil
 	}
 
 	if runtime.GOOS == "windows" {
 		slog.Debug("dnsScan: resolv.conf not available on Windows, using fallback", "fallback", defaultNameserver)
-		return defaultNameserver, nil
+		return defaultNameserver, nil, nil
 	}
 
 	// Load system nameservers from resolv.conf
 	resolvConfig, err := dns.ClientConfigFromFile("/etc/resolv.conf")
 	if err != nil {
-		slog.Debug("dnsScan: Failed to load resolv.conf, using fallback", "error", err, "fallback", defaultNameserver)
-		return defaultNameserver, nil
+		return "", nil, fmt.Errorf("failed to load system DNS config: %w (set --dns to specify a resolver)", err)
 	}
 
 	if len(resolvConfig.Servers) > 0 {
@@ -78,11 +91,31 @@ func resolveNameserver(customNameserver string) (string, *dns.ClientConfig) {
 		}
 
 		slog.Debug("dnsScan: Using system nameservers from resolv.conf", "primary", primaryNameserver, "fallbacks", resolvConfig.Servers[1:])
-		return primaryNameserver, resolvConfig
+		return primaryNameserver, resolvConfig, nil
 	}
 
-	slog.Debug("dnsScan: No nameservers found in resolv.conf, using fallback", "fallback", defaultNameserver)
-	return defaultNameserver, nil
+	return "", nil, errors.New("no DNS servers found in system config (set --dns to specify a resolver)")
+}
+
+func normalizeNameserver(input string) string {
+	raw := strings.TrimSpace(input)
+	if raw == "" {
+		return ""
+	}
+
+	host, port, err := net.SplitHostPort(raw)
+	if err == nil {
+		if port == "" {
+			port = "53"
+		}
+		return net.JoinHostPort(host, port)
+	}
+
+	// If this is a plain IP/hostname without port, use default DNS port.
+	if strings.HasPrefix(raw, "[") && strings.HasSuffix(raw, "]") {
+		raw = strings.TrimPrefix(strings.TrimSuffix(raw, "]"), "[")
+	}
+	return net.JoinHostPort(raw, strconv.Itoa(53))
 }
 
 // Scans DNS records for the target.
@@ -96,20 +129,27 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) (
 		result Result
 	)
 
-	config := &scanConfig{}
+	config := &scanConfig{
+		timeout: 5 * time.Second,
+	}
 	types.ApplyOptions(config, options)
 
 	slog.Debug("dnsScan: Scan started")
+	status.SpinningUpdate("Scanning DNS records...")
 
-	// Initialize DNS client
 	config.dnsClient = new(dns.Client)
-	config.dnsClient.Net = "tcp" // Use TCP to handle large DNS responses
+	config.dnsClient.Net = "udp"
 	config.dnsClient.Dialer = &net.Dialer{
-		// Timeout:   200 * time.Millisecond, // TODO add timeout
+		Timeout: config.timeout,
 	}
 
 	// Resolve which nameserver to use
-	config.nameserver, config.resolvConfig = resolveNameserver(config.nameserver)
+	config.nameserver, config.resolvConfig, err = resolveNameserver(config.nameserver)
+	if err != nil {
+		slog.Error("dnsScan: could not determine nameserver", "error", err)
+		status.SpinningComplete("Scan of DNS records failed.")
+		return result, err
+	}
 
 	switch {
 	case target.TargetType() == types.Domain && target.Schema() == types.NONE:
@@ -121,6 +161,7 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) (
 			config.dnsClient,
 			config.nameserver,
 			config.followRedirects,
+			config.timeout,
 		)
 	case target.TargetType() == types.Domain && target.Schema() != types.NONE:
 		slog.Info("dnsScan: Input identified as domain with schema", "schema", target.Schema().String())
@@ -139,15 +180,18 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) (
 		result.AAAARecords = []string{target.Hostname()}
 	default:
 		slog.Error("dnsScan: Scan failed", "targetType", target.TargetType())
+		status.SpinningComplete("Scan of DNS records failed.")
 		return result, errors.ErrUnsupported // Unreachable code, since the type and the corresponding error handling happens earlier
 	}
 
 	if err != nil {
 		slog.Error("dnsScan: Scan failed", "error", err)
+		status.SpinningComplete("Scan of DNS records failed.")
 		return result, err
 	}
 
 	slog.Debug("dnsScan: Scan completed")
+	status.SpinningComplete("Scan of DNS records complete.")
 
 	return result, nil
 }

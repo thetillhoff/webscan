@@ -2,15 +2,19 @@ package dnsScan
 
 import (
 	"log/slog"
+	"net/http"
 	"strings"
+	"time"
 
 	"github.com/openrdap/rdap"
 )
 
-func GetDomainOwnerViaRDAP(url string) ([]string, error) {
+func GetDomainOwnerViaRDAP(url string, timeout time.Duration) ([]string, error) {
 	var (
-		err        error
-		client     = &rdap.Client{}
+		err    error
+		client = &rdap.Client{
+			HTTP: &http.Client{Timeout: timeout},
+		}
 		rdapDomain *rdap.Domain
 
 		emailDomainsUnique = map[string]struct{}{}
