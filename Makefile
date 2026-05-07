@@ -1,15 +1,19 @@
 .PHONY: list install run run-web test test-e2e test-api build build-web format lint upgrade compose-start compose-stop compose-restart
-list:
+help:
 	@grep -E '^[[:alpha:]].*:' Makefile | cat # Get all targets in this file, without color-coding the matching letters
 
 install:
 	go get ./...
 
+# Filter out known targets so extra args are passed through to the binary
+RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+$(eval $(RUN_ARGS):;@:)
+
 run:
-	go run ./cmd/webscan/...
+	go run ./cmd/webscan/... $(RUN_ARGS)
 
 run-web:
-	go run ./cmd/webscan-web/...
+	go run ./cmd/webscan-web/... $(RUN_ARGS)
 
 test:
 	go test -v ./...
