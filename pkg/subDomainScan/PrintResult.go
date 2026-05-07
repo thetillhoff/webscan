@@ -34,12 +34,17 @@ func PrintResult(result Result, out io.Writer) {
 		messages = append(messages, fmt.Sprintf("- %*s (from crt.sh)", maxLength, subDomainName))
 	}
 
-	if len(messages) > 0 {
+	if len(messages) > 0 || result.crtShStatus != crtShOK {
 		if _, err := fmt.Fprintf(out, "\n\n## Subdomain scan results\n\n"); err != nil {
 			slog.Debug("subDomainScan: Error writing to output", "error", err)
 		}
 		for _, message := range messages {
 			if _, err := fmt.Fprintf(out, "%s\n", message); err != nil {
+				slog.Debug("subDomainScan: Error writing to output", "error", err)
+			}
+		}
+		if result.crtShStatus != crtShOK {
+			if _, err := fmt.Fprintf(out, "\nNote: certificate transparency log check skipped (%s)\n", result.crtShStatus); err != nil {
 				slog.Debug("subDomainScan: Error writing to output", "error", err)
 			}
 		}

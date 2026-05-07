@@ -2,7 +2,7 @@ package subDomainScan
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -25,67 +25,84 @@ type Cert struct {
 	SerialNumber   string `json:"serial_number"`
 }
 
+type crtShStatus int
+
+const (
+	crtShOK          crtShStatus = iota
+	crtShTimeout     crtShStatus = iota
+	crtShRateLimited crtShStatus = iota
+	crtShServerError crtShStatus = iota
+	crtShUnreachable crtShStatus = iota
+)
+
+func (s crtShStatus) String() string {
+	switch s {
+	case crtShTimeout:
+		return "crt.sh timed out"
+	case crtShRateLimited:
+		return "crt.sh rate limited"
+	case crtShServerError:
+		return "crt.sh server error"
+	case crtShUnreachable:
+		return "crt.sh unreachable"
+	default:
+		return ""
+	}
+}
+
 // Queries crt.sh for any related certificates in the transparent certificate logs (https://certificate.transparency.dev/)
-func CheckCertLogs(target types.Target, timeout time.Duration) (map[string]struct{}, error) {
-	var (
-		err         error
-		domainNames = map[string]struct{}{}
+func CheckCertLogs(target types.Target, timeout time.Duration) (map[string]struct{}, crtShStatus) {
+	domainNames := map[string]struct{}{}
 
-		resp  *http.Response
-		body  []byte
-		certs = []Cert{}
-
-		httpClient = http.Client{
-			Timeout: timeout,
-		}
-	)
+	httpClient := http.Client{Timeout: timeout}
 
 	slog.Debug("subDomainScan: Checking cert logs started")
 
-	resp, err = httpClient.Get("https://crt.sh?output=json&q=" + target.Hostname()) // Make the request
+	resp, err := httpClient.Get("https://crt.sh/?output=json&q=" + target.Hostname())
 	if err != nil {
 		if os.IsTimeout(err) {
-			// A timeout error occurred
-			return domainNames, errors.New("timeout while fetching subdomain data from crt.sh")
+			slog.Info("subDomainScan: crt.sh request timed out", "error", err)
+			return domainNames, crtShTimeout
 		}
-		return domainNames, errors.New("error retrieving the response from crt.sh: " + err.Error())
+		slog.Info("subDomainScan: crt.sh unreachable", "error", err)
+		return domainNames, crtShUnreachable
 	}
 
-	defer func() {
-		if closeErr := resp.Body.Close(); closeErr != nil {
-			slog.Debug("subDomainScan: Error closing response body", "error", closeErr)
-		}
-	}()
+	defer func() { _ = resp.Body.Close() }()
 
-	if resp.StatusCode == http.StatusOK {
-
-		slog.Debug("subDomainScan: Cert logs response received", "status", resp.StatusCode)
-
-		body, err = io.ReadAll(resp.Body) // Read the response
-		if err != nil {
-			return domainNames, errors.New("error reading the response from crt.sh: " + err.Error())
-		}
-		if closeErr := resp.Body.Close(); closeErr != nil {
-			slog.Debug("subDomainScan: Error closing response body", "error", closeErr)
-		}
-
-		err = json.Unmarshal(body, &certs) // Parse the json
-		if err != nil {
-			return domainNames, errors.New("error parsing the response from crt.sh: " + err.Error() + "\n" + string(body))
-		}
-
-		for _, cert := range certs {
-			if strings.HasSuffix(cert.CommonName, target.ParsedUrl().Host) { // Clear out third-parties
-				if _, ok := domainNames[cert.CommonName]; !ok { // Clear out duplicates
-					domainNames[cert.CommonName] = struct{}{}
-				}
-			}
-		}
-	} else {
-		slog.Error("subDomainScan: Cert logs response not 200", "status", resp.StatusCode)
+	switch {
+	case resp.StatusCode == http.StatusOK:
+		// success, parse below
+	case resp.StatusCode == http.StatusTooManyRequests:
+		slog.Info("subDomainScan: crt.sh rate limited", "status", resp.StatusCode)
+		return domainNames, crtShRateLimited
+	case resp.StatusCode >= 500:
+		slog.Info("subDomainScan: crt.sh server error", "status", resp.StatusCode)
+		return domainNames, crtShServerError
+	default:
+		slog.Info("subDomainScan: crt.sh unexpected status", "status", resp.StatusCode)
+		return domainNames, crtShServerError
 	}
 
-	slog.Debug("subDomainScan: Checking cert logs completed")
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		slog.Debug("subDomainScan: error reading crt.sh response", "error", err)
+		return domainNames, crtShServerError
+	}
 
-	return domainNames, nil
+	var certs []Cert
+	if err := json.Unmarshal(body, &certs); err != nil {
+		slog.Debug("subDomainScan: error parsing crt.sh response", "error", err, "body", fmt.Sprintf("%.200s", string(body)))
+		return domainNames, crtShServerError
+	}
+
+	for _, cert := range certs {
+		if strings.HasSuffix(cert.CommonName, target.ParsedUrl().Host) {
+			domainNames[cert.CommonName] = struct{}{}
+		}
+	}
+
+	slog.Debug("subDomainScan: Checking cert logs completed", "count", len(domainNames))
+
+	return domainNames, crtShOK
 }

@@ -8,10 +8,7 @@
 
 ## Bugs
 
-- Subdomain scan prints raw error codes instead of helpful messages (e.g. "too many requests")
 - Subdomain list shows all domains in certificates, not just actual subdomains of the target
-- crt.sh errors shown to user — should be silenced or made user-friendly
-- HTTP content size reports 5kB even for redirects (possible follow-redirect issue)
 - DNS checks and dials time out on Windows
 
 ## DNS / Mail Security

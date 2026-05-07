@@ -20,6 +20,7 @@
 - **Parallel HTTP Protocol Checks**: HTTP/1, HTTP/2, HTTP/3 version checks and redirect detection all run concurrently per port and IP
 - **TLS Output Deduplication**: Shared certificate info printed once; only per-IP differences shown
 - **IP Blacklist Codes**: Comprehensive Spamhaus return code handling with human-readable descriptions; error codes (rate limiting, public resolver) logged as warnings instead of confusing the user
+- **crt.sh Error Handling**: Certificate transparency log failures (timeout, rate limit, server error, unreachable) shown as a brief note instead of raw errors
 - **Status Non-TTY Fix**: Status messages print to output when not running in a terminal (previously silently dropped)
 - **Playwright Tests**: E2E and API test scaffolding in `tests/`
 

@@ -34,7 +34,6 @@ func WithTimeout(timeout time.Duration) ConfigOption {
 
 func Scan(target types.Target, status *status.Status, options ...ConfigOption) Result {
 	var (
-		err    error
 		result = Result{
 			subdomainsFromTlsScan: map[string]struct{}{},
 			subdomainsFromCrtSh:   map[string]struct{}{},
@@ -78,10 +77,9 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) R
 		result.subdomainsFromTlsScan[subdomain] = struct{}{} // Add unique entries
 	}
 
-	result.subdomainsFromCrtSh, err = CheckCertLogs(target, config.timeout)
-	if err != nil {
-		slog.Warn("subDomainScan: Could not retrieve subdomains from crt.sh", "error", err)
-	}
+	var crtStatus crtShStatus
+	result.subdomainsFromCrtSh, crtStatus = CheckCertLogs(target, config.timeout)
+	result.crtShStatus = crtStatus
 
 	status.SpinningComplete("Scan of subdomains complete.")
 
