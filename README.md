@@ -202,12 +202,16 @@ make build-web
 
 ### Makefile Targets
 
+- `run <target>`: Run CLI with arguments (e.g. `make run thetillhoff.de`)
+- `run-web <args>`: Run web server with arguments
 - `build`: Standard CLI binary
 - `build-web`: Web server with interface
-- `run`: CLI development mode
-- `run-web`: Web development mode
+- `test`: Run unit tests
+- `lint`: Run Go vet, build, and markdownlint
 - `format`: Code formatting
 - `upgrade`: Dependency updates
+- `compose-start`: Start Docker Compose stack
+- `compose-stop`: Stop Docker Compose stack
 
 ## Contributing
 
