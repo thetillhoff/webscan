@@ -14,6 +14,7 @@ import (
 	"github.com/thetillhoff/webscan/v3/pkg/httpHeaderScan"
 	"github.com/thetillhoff/webscan/v3/pkg/httpProtocolScan"
 	"github.com/thetillhoff/webscan/v3/pkg/ipScan"
+	"github.com/thetillhoff/webscan/v3/pkg/knownFilesScan"
 	"github.com/thetillhoff/webscan/v3/pkg/portScan"
 	"github.com/thetillhoff/webscan/v3/pkg/status"
 	"github.com/thetillhoff/webscan/v3/pkg/subDomainScan"
@@ -48,6 +49,7 @@ type Engine struct {
 	httpProtocolScan bool
 	httpHeaderScan   bool
 	htmlContentScan  bool
+	knownFilesScan   bool
 	mailConfigScan   bool
 	subDomainScan    bool
 
@@ -61,6 +63,8 @@ type Engine struct {
 	httpsHeaderScanResult      httpHeaderScan.Result
 	httpHtmlContentScanResult  htmlContentScan.Result
 	httpsHtmlContentScanResult htmlContentScan.Result
+	httpKnownFilesScanResult   knownFilesScan.Result
+	httpsKnownFilesScanResult  knownFilesScan.Result
 	subDomainScanResult        subDomainScan.Result
 	// mailConfigScanResults []string // TODO find better type
 }

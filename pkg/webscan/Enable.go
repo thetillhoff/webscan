@@ -9,6 +9,7 @@ func (engine *Engine) EnableAllScansIfNoneAreExplicitlySet() {
 		!engine.httpProtocolScan &&
 		!engine.httpHeaderScan &&
 		!engine.htmlContentScan &&
+		!engine.knownFilesScan &&
 		!engine.mailConfigScan &&
 		!engine.subDomainScan { // If no Scans are enabled, enable all by default
 
@@ -24,6 +25,7 @@ func (engine *Engine) EnableAllScans() {
 	engine.httpProtocolScan = true
 	engine.httpHeaderScan = true
 	engine.htmlContentScan = true
+	engine.knownFilesScan = true
 	engine.mailConfigScan = true
 	engine.subDomainScan = true
 }
@@ -32,6 +34,7 @@ func (engine *Engine) EnableWebScans() {
 	engine.httpProtocolScan = true
 	engine.httpHeaderScan = true
 	engine.htmlContentScan = true
+	engine.knownFilesScan = true
 }
 
 func (engine *Engine) EnableDetailedDnsScan() {
@@ -64,6 +67,10 @@ func (engine *Engine) EnableHTMLContentScan() {
 
 func (engine *Engine) EnableMailConfigScan() {
 	engine.mailConfigScan = true
+}
+
+func (engine *Engine) EnableKnownFilesScan() {
+	engine.knownFilesScan = true
 }
 
 func (engine *Engine) EnableSubdomainScan() {

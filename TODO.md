@@ -48,15 +48,12 @@
 - Image scanning (size < 500kB, webp format recommendation)
 - HTML accessibility checks (relative URLs, mixed content, viewport, font sizes, tap targets)
 - Media embedding recommendations
-- Check for /.well-known/security.txt
 - Headless rendering with chromedp (performance index, console errors)
 - Content type-aware validation (e.g. JSON for application/json responses)
 - List all referenced external domains (fonts.google.com, etc.)
 
 ## SEO
 
-- robots.txt check
-- sitemap check
 - Detect incompatible plugins (Flash)
 
 ## Subdomain Scan

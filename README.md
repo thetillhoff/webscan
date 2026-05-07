@@ -183,6 +183,11 @@ Display comprehensive DNS information and improvement recommendations:
 - Accessibility hints
 - Standards compliance checks
 
+### Well-Known Files
+
+- Checks for standard files: robots.txt, sitemap.xml, security.txt, llms.txt, AI plugin manifest
+- Detects exposed sensitive files: .htaccess, .env, .git/config, wp-config.php, server-status
+
 ## Development
 
 ### Build Commands

@@ -127,6 +127,11 @@ GLOBAL OPTIONS:{{range .VisibleFlags}}
 				Usage: "focus on HTTP content scan",
 			},
 			&cli.BoolFlag{
+				Name:  "files",
+				Value: false,
+				Usage: "focus on well-known files scan (robots.txt, security.txt, sensitive files)",
+			},
+			&cli.BoolFlag{
 				Name:  "web",
 				Value: false,
 				Usage: "focus on all HTTP scans",
@@ -206,6 +211,24 @@ GLOBAL OPTIONS:{{range .VisibleFlags}}
 				slog.Error("could not create webscan engine with provided parameters", "error", err)
 				os.Exit(1)
 			}
+
+			webscan.NewScanOptions(
+				cmd.Bool("dns"),
+				cmd.Bool("ip"),
+				cmd.Bool("port"),
+				cmd.Bool("tls"),
+				cmd.Bool("protocol"),
+				cmd.Bool("header"),
+				cmd.Bool("content"),
+				cmd.Bool("files"),
+				cmd.Bool("mail"),
+				cmd.Bool("subdomains"),
+			).Apply(&engine)
+
+			if cmd.Bool("web") { // Enable webscans only
+				engine.EnableWebScans()
+			}
+
 
 			engine.EnableAllScansIfNoneAreExplicitlySet()
 

@@ -11,6 +11,7 @@
 
 - **Web Server Mode**: New `webscan-web` binary provides a browser-based scanning interface with Redis-backed job queue (`cmd/webscan-web/`, `pkg/webserver/`)
 - **Docker Compose**: Full stack deployment with Redis and web server
+- **Well-Known Files Scan**: New `--files` flag checks for standard files (robots.txt, sitemap.xml, security.txt, llms.txt, AI plugin manifest) and warns on exposed sensitive files (.htaccess, .env, .git/config, wp-config.php, server-status)
 - **Unified Timeout Flag**: New `--timeout` flag (default 5s) controls all network requests (DNS, port scan, HTTP, RDAP, blacklist checks); previously hardcoded per scan type
 
 ### Improvements

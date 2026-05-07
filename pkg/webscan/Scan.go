@@ -9,6 +9,7 @@ import (
 	"github.com/thetillhoff/webscan/v3/pkg/httpHeaderScan"
 	"github.com/thetillhoff/webscan/v3/pkg/httpProtocolScan"
 	"github.com/thetillhoff/webscan/v3/pkg/ipScan"
+	"github.com/thetillhoff/webscan/v3/pkg/knownFilesScan"
 	"github.com/thetillhoff/webscan/v3/pkg/portScan"
 	"github.com/thetillhoff/webscan/v3/pkg/subDomainScan"
 	"github.com/thetillhoff/webscan/v3/pkg/tlsScan"
@@ -31,6 +32,7 @@ func (engine *Engine) Scan(input string) error {
 		"httpProtocolScan", engine.httpProtocolScan,
 		"httpHeaderScan", engine.httpHeaderScan,
 		"htmlContentScan", engine.htmlContentScan,
+		"knownFilesScan", engine.knownFilesScan,
 		"mailConfigScan", engine.mailConfigScan,
 		"subDomainScan", engine.subDomainScan)
 
@@ -127,9 +129,9 @@ func (engine *Engine) Scan(input string) error {
 		}
 	}
 
-	// HTTP protocol scan
+	// HTTP protocol scan (required by header, content, and known files scans)
 
-	if engine.httpProtocolScan {
+	if engine.httpProtocolScan || engine.httpHeaderScan || engine.htmlContentScan || engine.knownFilesScan {
 		engine.httpProtocolScanResult, err = httpProtocolScan.Scan(
 			engine.target,
 			&engine.status,
@@ -142,7 +144,9 @@ func (engine *Engine) Scan(input string) error {
 		}
 	}
 
-	httpProtocolScan.PrintResult(engine.httpProtocolScanResult, engine.stdout)
+	if engine.httpProtocolScan {
+		httpProtocolScan.PrintResult(engine.httpProtocolScanResult, engine.stdout)
+	}
 
 	// HTTP header scan
 
@@ -187,6 +191,33 @@ func (engine *Engine) Scan(input string) error {
 			htmlContentScan.PrintResult(engine.httpsHtmlContentScanResult, "https", engine.stdout)
 		}
 
+	}
+
+	// Known files scan
+
+	if engine.knownFilesScan {
+
+		if engine.portScanResult.IsPortOpen(80) && engine.httpProtocolScanResult.IsAvailableViaHttp() {
+			engine.httpKnownFilesScanResult = knownFilesScan.Scan(
+				engine.target,
+				&engine.status,
+				types.HTTP,
+				knownFilesScan.WithTimeout(engine.timeout),
+			)
+
+			knownFilesScan.PrintResult(engine.httpKnownFilesScanResult, engine.stdout)
+		}
+
+		if engine.portScanResult.IsPortOpen(443) && engine.httpProtocolScanResult.IsAvailableViaHttps() {
+			engine.httpsKnownFilesScanResult = knownFilesScan.Scan(
+				engine.target,
+				&engine.status,
+				types.HTTPS,
+				knownFilesScan.WithTimeout(engine.timeout),
+			)
+
+			knownFilesScan.PrintResult(engine.httpsKnownFilesScanResult, engine.stdout)
+		}
 	}
 
 	// if engine.MailConfigScan {
@@ -274,6 +305,17 @@ func (engine *Engine) Scan(input string) error {
 				if contentErr == nil {
 					htmlContentScan.PrintResult(contentResult, schema.String(), engine.stdout)
 				}
+			}
+
+			// Known files scan on redirect target
+			if engine.knownFilesScan {
+				filesResult := knownFilesScan.Scan(
+					redirectTarget,
+					&engine.status,
+					schema,
+					knownFilesScan.WithTimeout(engine.timeout),
+				)
+				knownFilesScan.PrintResult(filesResult, engine.stdout)
 			}
 
 			// Queue further redirects from this target
