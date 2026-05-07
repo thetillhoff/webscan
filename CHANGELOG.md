@@ -21,6 +21,11 @@
 - **Status Non-TTY Fix**: Status messages print to output when not running in a terminal (previously silently dropped)
 - **Playwright Tests**: E2E and API test scaffolding in `tests/`
 
+### Bug Fixes
+
+- **HSTS for HTTP**: No longer recommends HSTS headers for plain HTTP responses (only HTTPS)
+- **TLS Cipher Deduplication**: Cipher rules that are identical across IPs are no longer printed per-IP
+
 ### Dependencies
 
 - Added `github.com/redis/go-redis/v9` for job queue

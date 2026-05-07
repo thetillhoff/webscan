@@ -57,7 +57,7 @@ func Scan(status *status.Status, target types.Target, options ...ConfigOption) (
 		return result, err
 	}
 
-	result.httpHeaderRecommendations = append(result.httpHeaderRecommendations, GenerateHeaderRecommendations(response)...)
+	result.httpHeaderRecommendations = append(result.httpHeaderRecommendations, GenerateHeaderRecommendations(response, config.schemaOverride)...)
 
 	result.httpCookieRecommendations, result.httpOtherCookieRecommendations = GenerateCookieRecommendations(response) // TODO append instead
 

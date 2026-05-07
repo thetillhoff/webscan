@@ -4,9 +4,11 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+
+	"github.com/thetillhoff/webscan/v3/pkg/types"
 )
 
-func GenerateHeaderRecommendations(response *http.Response) []string {
+func GenerateHeaderRecommendations(response *http.Response, schema types.Schema) []string {
 	var (
 		err                   error
 		headerRecommendations = []string{}
@@ -25,16 +27,18 @@ func GenerateHeaderRecommendations(response *http.Response) []string {
 		headerRecommendations = append(headerRecommendations, headerName+" header: "+headerValue)
 	}
 
-	// HSTS
-	headerName = "Strict-Transport-Security"
-	headerValue = response.Header.Get(headerName)
-	headerValue = strings.ToLower(headerValue)
-	if headerValue == "" {
-		headerRecommendations = append(headerRecommendations, headerName+" header should be implemented: https://infosec.mozilla.org/guidelines/web_security#http-strict-transport-security")
-	} else {
-		err = validateSTS(headerValue)
-		if err != nil {
-			headerRecommendations = append(headerRecommendations, headerName+" header: "+err.Error())
+	// HSTS (only relevant for HTTPS responses)
+	if schema == types.HTTPS {
+		headerName = "Strict-Transport-Security"
+		headerValue = response.Header.Get(headerName)
+		headerValue = strings.ToLower(headerValue)
+		if headerValue == "" {
+			headerRecommendations = append(headerRecommendations, headerName+" header should be implemented: https://infosec.mozilla.org/guidelines/web_security#http-strict-transport-security")
+		} else {
+			err = validateSTS(headerValue)
+			if err != nil {
+				headerRecommendations = append(headerRecommendations, headerName+" header: "+err.Error())
+			}
 		}
 	}
 
