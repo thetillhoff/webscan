@@ -102,7 +102,6 @@
 
 ## Architecture / Code Quality
 
-- Remove "opinionated" flag — either it's a valid recommendation or not
 - Find better way to pass results between scans (shared context vs arguments)
 - Use types/enums/constants for recommendations (make http/https comparable)
 - Add unit tests (stdout result, stderr result, pipe/file output)
@@ -114,5 +113,4 @@
 - Proper CORS configuration
 - CSRF protection
 - Security headers (HSTS, XSS prevention, etc.)
-- Kubernetes Helm chart
 - Configuration file / env var support
