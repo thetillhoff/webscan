@@ -152,8 +152,8 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) (
 	}
 
 	switch {
-	case target.TargetType() == types.Domain && target.Schema() == types.NONE:
-		slog.Info("dnsScan: Input identified as domain without schema")
+	case target.TargetType() == types.Domain && target.Schema() == types.NONE && config.advanced:
+		slog.Info("dnsScan: Input identified as domain without schema (advanced)")
 
 		result, err = AdvancedScan(
 			status,
@@ -163,8 +163,8 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) (
 			config.followRedirects,
 			config.timeout,
 		)
-	case target.TargetType() == types.Domain && target.Schema() != types.NONE:
-		slog.Info("dnsScan: Input identified as domain with schema", "schema", target.Schema().String())
+	case target.TargetType() == types.Domain:
+		slog.Info("dnsScan: Input identified as domain", "schema", target.Schema().String())
 
 		result, err = SimpleScan(
 			target,

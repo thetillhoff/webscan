@@ -11,11 +11,8 @@
 - Subdomain scan prints raw error codes instead of helpful messages (e.g. "too many requests")
 - Subdomain list shows all domains in certificates, not just actual subdomains of the target
 - crt.sh errors shown to user — should be silenced or made user-friendly
-- --subdomains triggers subdomain scan but not TLS scan (which is needed for SANs)
-- --subdomains also triggers advanced DNS scan and prints TLS results unnecessarily
 - HTTP content size reports 5kB even for redirects (possible follow-redirect issue)
 - TLS scan seems broken for some domains (e.g. "wolkencode.de")
-- --protocol still triggers advanced DNS scan even when not needed
 - DNS checks and dials time out on Windows
 
 ## DNS / Mail Security

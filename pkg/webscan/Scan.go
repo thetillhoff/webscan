@@ -122,7 +122,9 @@ func (engine *Engine) Scan(input string) error {
 			}
 		}
 
-		tlsScan.PrintResult(engine.tlsScanResult, engine.stdout)
+		if engine.tlsScan {
+			tlsScan.PrintResult(engine.tlsScanResult, engine.stdout)
+		}
 	}
 
 	// HTTP protocol scan

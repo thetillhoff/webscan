@@ -25,6 +25,8 @@
 
 - **HSTS for HTTP**: No longer recommends HSTS headers for plain HTTP responses (only HTTPS)
 - **TLS Cipher Deduplication**: Cipher rules that are identical across IPs are no longer printed per-IP
+- **Subdomain Scan Flags**: `--subdomains` no longer triggers advanced DNS or prints TLS results; TLS scan runs internally for SANs only
+- **Protocol Scan Flags**: `--protocol` no longer triggers advanced DNS scan
 
 ### Dependencies
 
