@@ -340,16 +340,22 @@ func (r *Result) ListSharedCipherRules() map[string][]string {
 	return cipherRuleEvaluationResults
 }
 
-// Returns list of non-shared cipher rules for an ip
+// Returns list of non-shared cipher rules for an ip (only ciphers not in the shared set)
 func (r *Result) ListNonSharedCipherRulesForIp(ip string) map[string][]string {
 	cipherRuleEvaluationResultsForIp := r.ListCipherRulesForIp(ip)
 	sharedRules := r.ListSharedCipherRules()
 	nonSharedCipherRuleEvaluationResults := map[string][]string{}
 
 	for rule, ciphers := range cipherRuleEvaluationResultsForIp {
-		// Check if rule exists in shared rules and has different ciphers
-		if sharedCiphers, exists := sharedRules[rule]; !exists || !slices.Equal(ciphers, sharedCiphers) {
-			nonSharedCipherRuleEvaluationResults[rule] = ciphers
+		sharedCiphers := sharedRules[rule]
+		var diff []string
+		for _, cipher := range ciphers {
+			if !slices.Contains(sharedCiphers, cipher) {
+				diff = append(diff, cipher)
+			}
+		}
+		if len(diff) > 0 {
+			nonSharedCipherRuleEvaluationResults[rule] = diff
 		}
 	}
 	return nonSharedCipherRuleEvaluationResults
