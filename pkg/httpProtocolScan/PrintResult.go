@@ -20,6 +20,14 @@ func PrintResult(result Result, out io.Writer) {
 		}
 	}
 
+	if result.httpRedirectLocation != "" {
+		messages = append(messages, fmt.Sprintf("\nHTTP redirects to: %s (status %d)", result.httpRedirectLocation, result.httpStatusCode))
+	}
+
+	if result.httpsRedirectLocation != "" {
+		messages = append(messages, fmt.Sprintf("\nHTTPS redirects to: %s (status %d)", result.httpsRedirectLocation, result.httpsStatusCode))
+	}
+
 	if len(result.httpVersions) > 0 {
 		messages = append(messages, "\nThe following protocols are available for HTTP:")
 		for _, version := range result.httpVersions {

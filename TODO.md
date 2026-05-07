@@ -12,7 +12,6 @@
 - Subdomain list shows all domains in certificates, not just actual subdomains of the target
 - crt.sh errors shown to user — should be silenced or made user-friendly
 - HTTP content size reports 5kB even for redirects (possible follow-redirect issue)
-- TLS scan seems broken for some domains (e.g. "wolkencode.de")
 - DNS checks and dials time out on Windows
 
 ## DNS / Mail Security
@@ -38,7 +37,6 @@
 
 ## HTTP Protocol
 
-- Optionally follow HTTP redirects (30x status codes) — wire into scan flow
 - Check that redirect locations end with / or a filename
 - Note that HTTP/1.1 is considered insecure (site redirection attacks)
 

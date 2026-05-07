@@ -15,6 +15,8 @@
 
 ### Improvements
 
+- **HTTP Redirect Detection**: Protocol scan now correctly detects HTTP redirects (301/302/303/307/308) and displays the redirect target and status code
+- **Follow Redirect Chain**: `--follow` now runs web scans (protocol, headers, content) on each redirect target in sequence, without repeating DNS/IP/port/TLS scans
 - **Parallel HTTP Protocol Checks**: HTTP/1, HTTP/2, HTTP/3 version checks and redirect detection all run concurrently per port and IP
 - **TLS Output Deduplication**: Shared certificate info printed once; only per-IP differences shown
 - **IP Blacklist Codes**: Comprehensive Spamhaus return code handling with human-readable descriptions; error codes (rate limiting, public resolver) logged as warnings instead of confusing the user

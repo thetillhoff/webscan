@@ -21,3 +21,19 @@ func (result Result) IsAvailableViaHttp() bool {
 func (result Result) IsAvailableViaHttps() bool {
 	return result.isAvailableViaHttps
 }
+
+func (result Result) HttpRedirectLocation() string {
+	return result.httpRedirectLocation
+}
+
+func (result Result) HttpsRedirectLocation() string {
+	return result.httpsRedirectLocation
+}
+
+func (result Result) HttpStatusCode() int {
+	return result.httpStatusCode
+}
+
+func (result Result) HttpsStatusCode() int {
+	return result.httpsStatusCode
+}

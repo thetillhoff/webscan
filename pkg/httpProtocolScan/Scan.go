@@ -5,26 +5,17 @@ import (
 	"sync"
 	"time"
 
-	"github.com/thetillhoff/webscan/v3/pkg/cachedHttpGetClient"
 	"github.com/thetillhoff/webscan/v3/pkg/status"
 	"github.com/thetillhoff/webscan/v3/pkg/types"
 )
 
 type scanConfig struct {
-	client                cachedHttpGetClient.Client
 	isAvailableViaPort80  bool
 	isAvailableViaPort443 bool
 	timeout               time.Duration
 }
 
 type ConfigOption = types.Option[scanConfig]
-
-// WithClient sets the client
-func WithClient(client cachedHttpGetClient.Client) ConfigOption {
-	return func(sc *scanConfig) {
-		sc.client = client
-	}
-}
 
 // WithIsAvailableViaPort80 sets the isAvailableViaPort80
 func WithIsAvailableViaPort80(isAvailableViaPort80 bool) ConfigOption {
@@ -69,7 +60,7 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) (
 		defer wg.Done()
 		target80 := target
 		target80.OverrideSchema(types.HTTP)
-		statusCode, redirectLocation, err := CheckHTTPRedirects(target80, config.client)
+		statusCode, redirectLocation, err := CheckHTTPRedirects(target80, config.timeout)
 		result.httpStatusCode = statusCode
 		result.httpRedirectLocation = redirectLocation
 		result.isAvailableViaHttp = err == nil
@@ -79,7 +70,7 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) (
 		defer wg.Done()
 		target443 := target
 		target443.OverrideSchema(types.HTTPS)
-		statusCode, redirectLocation, err := CheckHTTPRedirects(target443, config.client)
+		statusCode, redirectLocation, err := CheckHTTPRedirects(target443, config.timeout)
 		result.httpsStatusCode = statusCode
 		result.httpsRedirectLocation = redirectLocation
 		result.isAvailableViaHttps = err == nil

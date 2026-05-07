@@ -133,7 +133,6 @@ func (engine *Engine) Scan(input string) error {
 		engine.httpProtocolScanResult, err = httpProtocolScan.Scan(
 			engine.target,
 			&engine.status,
-			httpProtocolScan.WithClient(engine.client),
 			httpProtocolScan.WithIsAvailableViaPort80(engine.portScanResult.IsPortOpen(80)),
 			httpProtocolScan.WithIsAvailableViaPort443(engine.portScanResult.IsPortOpen(443)),
 			httpProtocolScan.WithTimeout(engine.timeout),
@@ -208,8 +207,84 @@ func (engine *Engine) Scan(input string) error {
 		subDomainScan.PrintResult(engine.subDomainScanResult, engine.stdout)
 	}
 
-	// TODO if followRedirects is true, CNAMEs should be followed (scan them, too)
-	// TODO if followRedirects is true, http and https redirects should be followed (scan them, too)
+	// Follow HTTP redirects: run web scans (protocol, header, content) on redirect targets
+	if engine.followRedirects {
+		visited := map[string]bool{
+			engine.target.UrlString(): true,
+		}
+
+		var redirectTargets []string
+		if loc := engine.httpProtocolScanResult.HttpRedirectLocation(); loc != "" {
+			redirectTargets = append(redirectTargets, loc)
+		}
+		if loc := engine.httpProtocolScanResult.HttpsRedirectLocation(); loc != "" {
+			redirectTargets = append(redirectTargets, loc)
+		}
+
+		for len(redirectTargets) > 0 {
+			loc := redirectTargets[0]
+			redirectTargets = redirectTargets[1:]
+
+			if visited[loc] {
+				continue
+			}
+			visited[loc] = true
+
+			redirectTarget, parseErr := types.NewTarget(loc)
+			if parseErr != nil {
+				slog.Debug("webscan: could not parse redirect target", "location", loc, "error", parseErr)
+				continue
+			}
+
+			if _, err := fmt.Fprintf(engine.stdout, "\n# Following redirect to %s\n\n", loc); err != nil {
+				slog.Debug("webscan: Error writing to output", "error", err)
+			}
+
+			// Protocol scan on redirect target
+			schema := redirectTarget.Schema()
+			if schema == types.NONE {
+				schema = types.HTTPS
+			}
+
+			redirectProtocolResult, protocolErr := httpProtocolScan.Scan(
+				redirectTarget,
+				&engine.status,
+				httpProtocolScan.WithIsAvailableViaPort80(schema == types.HTTP),
+				httpProtocolScan.WithIsAvailableViaPort443(schema == types.HTTPS),
+				httpProtocolScan.WithTimeout(engine.timeout),
+			)
+			if protocolErr != nil {
+				slog.Debug("webscan: redirect protocol scan failed", "target", loc, "error", protocolErr)
+				continue
+			}
+
+			httpProtocolScan.PrintResult(redirectProtocolResult, engine.stdout)
+
+			// Header scan on redirect target
+			if engine.httpHeaderScan {
+				headerResult, headerErr := httpHeaderScan.Scan(&engine.status, redirectTarget, httpHeaderScan.WithClient(engine.client), httpHeaderScan.WithSchemaOverride(schema))
+				if headerErr == nil {
+					httpHeaderScan.PrintResult(headerResult, schema.String(), engine.stdout)
+				}
+			}
+
+			// Content scan on redirect target
+			if engine.htmlContentScan {
+				contentResult, contentErr := htmlContentScan.Scan(&engine.status, redirectTarget, htmlContentScan.WithClient(engine.client), htmlContentScan.WithSchemaOverride(schema))
+				if contentErr == nil {
+					htmlContentScan.PrintResult(contentResult, schema.String(), engine.stdout)
+				}
+			}
+
+			// Queue further redirects from this target
+			if newLoc := redirectProtocolResult.HttpRedirectLocation(); newLoc != "" && !visited[newLoc] {
+				redirectTargets = append(redirectTargets, newLoc)
+			}
+			if newLoc := redirectProtocolResult.HttpsRedirectLocation(); newLoc != "" && !visited[newLoc] {
+				redirectTargets = append(redirectTargets, newLoc)
+			}
+		}
+	}
 
 	return nil
 }
