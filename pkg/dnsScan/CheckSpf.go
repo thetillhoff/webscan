@@ -6,12 +6,14 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+
+	"github.com/thetillhoff/webscan/v3/pkg/types"
 )
 
 // TODO
 // Add `--evaluate-mail-server <mail-server>` that will be checked against the verified spf record
 
-func CheckSpf(txtRecords []string) string {
+func CheckSPF(txtRecords []string) string {
 	var (
 		spfRecord = ""
 		word      string
@@ -20,7 +22,7 @@ func CheckSpf(txtRecords []string) string {
 		existingRedirect = false
 	)
 
-	slog.Debug("dnsScan: Checking spf started")
+	slog.Debug("dnsScan: Checking SPF started")
 
 	for _, txtRecord := range txtRecords {
 		if txtRecord == "v=spf1" || strings.HasPrefix(txtRecord, "v=spf1 ") {
@@ -121,8 +123,8 @@ func CheckSpf(txtRecords []string) string {
 				// qnum             = 0 - 255
 				// ip4-cidr-length  = "/" ("0" / %x31-39 0*1DIGIT) ; value range 0-32
 				_, _, err := net.ParseCIDR(word)
-				if err != nil || !IsIpv4(word) { // Check if ip is really ipv4, not ipv6
-					slog.Error("Invalid IPv4 address / cidr-range", "spf-record", word)
+				if err != nil || !types.IsIPv4(word) { // Check if ip is really ipv4, not ipv6
+					slog.Error("dnsScan: Invalid IPv4 address / cidr-range in SPF record", "spf-record", word)
 					return "" // TODO should this continue to run or exit?
 				}
 				// It is not permitted to omit parts of the IP address instead of using CIDR notations. That is, use 192.0.2.0/24 instead of 192.0.2.
@@ -132,8 +134,8 @@ func CheckSpf(txtRecords []string) string {
 				// qnum             = 0 - 255
 				// If ip4-cidr-length is omitted, it is taken to be "/32".
 				parsedIp := net.ParseIP(word)
-				if parsedIp == nil || !IsIpv4(word) { // Check if ip is really ipv4, not ipv6
-					slog.Error("Invalid IPv4 address", "spf-record", word)
+				if parsedIp == nil || !types.IsIPv4(word) { // Check if ip is really ipv4, not ipv6
+					slog.Error("dnsScan: Invalid IPv4 address in SPF record", "spf-record", word)
 					return "" // TODO should this continue to run or exit?
 				}
 			}
@@ -151,8 +153,8 @@ func CheckSpf(txtRecords []string) string {
 				// ip6-network      = <as per Section 2.2 of [RFC4291]>
 				// ip6-cidr-length  = "/" ("0" / %x31-39 0*2DIGIT) ; value range 0-128
 				_, _, err := net.ParseCIDR(word)
-				if err != nil || IsIpv4(word) {
-					slog.Error("Invalid IPv6 address / cidr-range", "spf-record", word)
+				if err != nil || types.IsIPv4(word) {
+					slog.Error("dnsScan: Invalid IPv6 address / cidr-range in SPF record", "spf-record", word)
 					return "" // TODO should this continue to run or exit?
 				}
 				// It is not permitted to omit parts of the IP address instead of using CIDR notations. That is, use 192.0.2.0/24 instead of 192.0.2.
@@ -161,8 +163,8 @@ func CheckSpf(txtRecords []string) string {
 				// ip6-network      = <as per Section 2.2 of [RFC4291]>
 				// If ip6-cidr-length is omitted, it is taken to be "/128".
 				parsedIp := net.ParseIP(word)
-				if parsedIp == nil || IsIpv4(word) { // Check if ip is really ipv6, not ipv4
-					slog.Error("Invalid IPv6 address", "spf-record", word)
+				if parsedIp == nil || types.IsIPv4(word) { // Check if ip is really ipv6, not ipv4
+					slog.Error("dnsScan: Invalid IPv6 address in SPF record", "spf-record", word)
 					return "" // TODO should this continue to run or exit?
 				}
 			}
@@ -247,7 +249,7 @@ func CheckSpf(txtRecords []string) string {
 	// If none of the mechanisms match and there is no "redirect" modifier, then the check_host() returns a result of "neutral", just as if "?all" were specified as the last directive.  If there is a "redirect" modifier, check_host() proceeds as defined in Section 6.1.
 	// It is better to use either a "redirect" modifier or an "all" mechanism to explicitly terminate processing.  Although there is an implicit "?all" at the end of every record that is not explicitly terminated, it aids debugging efforts when it is explicitly provided.
 
-	slog.Debug("dnsScan: Checking spf completed")
+	slog.Debug("dnsScan: Checking SPF completed")
 
 	return "" // No issues found
 }

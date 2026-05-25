@@ -3,13 +3,16 @@ package tlsScan
 import (
 	"crypto/tls"
 	"log/slog"
+	"sync"
 
 	"github.com/thetillhoff/webscan/v3/pkg/status"
 	"github.com/thetillhoff/webscan/v3/pkg/types"
 )
 
-func scanEnabledTlsCiphers(status *status.Status, target types.Target, ip string) []tls.CipherSuite {
+func scanEnabledTLSCiphers(status *status.Status, target types.Target, ip string) []tls.CipherSuite {
 	var (
+		wg sync.WaitGroup
+
 		ciphers = []tls.CipherSuite{}
 
 		enabledTlsCiphersChan chan tls.CipherSuite
@@ -18,35 +21,33 @@ func scanEnabledTlsCiphers(status *status.Status, target types.Target, ip string
 	)
 
 	// Create list of all ciphers
-	for _, cipher := range tls.CipherSuites() { // Add the secure ciphers
+	for _, cipher := range tls.CipherSuites() {
 		ciphers = append(ciphers, *cipher)
 	}
-	for _, cipher := range tls.InsecureCipherSuites() { // Add the insecure ciphers
+	for _, cipher := range tls.InsecureCipherSuites() {
 		ciphers = append(ciphers, *cipher)
 	}
-
-	status.SpinningXOfInit(len(ciphers), "Scanning enabled tls ciphers...")
 
 	enabledTlsCiphersChan = make(chan tls.CipherSuite, len(ciphers))
 
-	slog.Debug("tlsScan: Get enabled tls ciphers started", "len(ciphers)", len(ciphers))
+	slog.Debug("tlsScan: Scanning enabled TLS ciphers started", "count", len(ciphers))
 
 	status.SpinningXOfInit(len(ciphers), "Scanning tls ciphers...")
 
-	for _, cipher := range ciphers { // For each cipher
-		wg.Add(1)                                                         // Wait for one more goroutine to finish
-		go checkCipher(status, target, ip, cipher, enabledTlsCiphersChan) // Start goroutine that checks if tlsVersion and cipher combination are enabled
+	for _, cipher := range ciphers {
+		wg.Add(1)
+		go checkCipher(status, target, ip, cipher, enabledTlsCiphersChan, &wg)
 	}
 
-	wg.Wait()                    // Wait until all goroutines are finished
-	close(enabledTlsCiphersChan) // Make sure channel is closed when goroutines are finished
+	wg.Wait()
+	close(enabledTlsCiphersChan)
 	status.SpinningXOfComplete("Scan of enabled tls ciphers completed.")
 
 	for enabledTlsCipher := range enabledTlsCiphersChan {
 		enabledTlsCiphers = append(enabledTlsCiphers, enabledTlsCipher)
 	}
 
-	slog.Debug("tlsScan: Get available tls ciphers completed")
+	slog.Debug("tlsScan: Scanning enabled TLS ciphers completed")
 
 	return enabledTlsCiphers
 }

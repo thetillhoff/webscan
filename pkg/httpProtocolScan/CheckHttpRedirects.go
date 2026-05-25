@@ -13,7 +13,7 @@ import (
 
 // Verifies http and https configuration for best practices
 // Returns http and https status codes & redirect locations, which are "" if they don't redirect plus an potential error
-func CheckHttpRedirects(target types.Target, client cachedHttpGetClient.Client) (int, string, error) {
+func CheckHTTPRedirects(target types.Target, client cachedHttpGetClient.Client) (int, string, error) {
 	var (
 		err  error
 		resp *http.Response

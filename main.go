@@ -150,15 +150,13 @@ GLOBAL OPTIONS:{{range .VisibleFlags}}
 
 			// Logging
 
-			switch verbosity {
-			case 0: // If it's not set at all, the number is -1, not 0
+			switch {
+			case verbosity <= 0:
 				level = slog.LevelWarn
-			case 1:
+			case verbosity == 1:
 				level = slog.LevelInfo
-			case 3:
-				level = slog.LevelDebug
 			default:
-				log.Fatalln(errors.New("invalid amount of verbosity flags"))
+				level = slog.LevelDebug
 			}
 
 			// set global logger with custom options
@@ -189,62 +187,22 @@ GLOBAL OPTIONS:{{range .VisibleFlags}}
 			engine, err = webscan.NewEngine(
 				stdout,
 				cmd.Bool("no-color"),
-				cmd.String("dnsServer"),
+				cmd.String("ns"),
 				cmd.Bool("follow"),
-				cmd.Bool("advancedDnsScan"),
-				cmd.Bool("ipScan"),
-				cmd.Bool("advancedPortScan"),
-				cmd.Bool("tlsScan"),
-				cmd.Bool("httpProtocolScan"),
-				cmd.Bool("httpHeaderScan"),
-				cmd.Bool("htmlContentScan"),
-				cmd.Bool("mailConfigScan"),
-				cmd.Bool("subDomainScan"),
+				cmd.Bool("dns"),
+				cmd.Bool("ip"),
+				cmd.Bool("port"),
+				cmd.Bool("tls"),
+				cmd.Bool("protocol") || cmd.Bool("web"),
+				cmd.Bool("header") || cmd.Bool("web"),
+				cmd.Bool("content") || cmd.Bool("web"),
+				cmd.Bool("mail"),
+				cmd.Bool("subdomains"),
 				&writeMutex,
 			)
 			if err != nil {
 				slog.Error("could not create webscan engine with provided parameters", "error", err)
 				os.Exit(1)
-			}
-
-			if cmd.Bool("dns") { // Enable advanced dns scans
-				engine.EnableDetailedDnsScan()
-			}
-
-			if cmd.Bool("ip") { // Enable ip scans
-				engine.EnableIpScan()
-			}
-
-			if cmd.Bool("port") { // Enable detailed port scans
-				engine.EnableDetailedPortScan()
-			}
-
-			if cmd.Bool("tls") { // Enable tls scans
-				engine.EnableTlsScan()
-			}
-
-			if cmd.Bool("protocol") { // Enable http protocol scans
-				engine.EnableHttpProtocolScan()
-			}
-
-			if cmd.Bool("header") { // Enable http header scans
-				engine.EnableHttpHeaderScan()
-			}
-
-			if cmd.Bool("content") { // Enable http content scans
-				engine.EnableHtmlContentScan()
-			}
-
-			if cmd.Bool("mail") { // Enable mail scans
-				engine.EnableMailConfigScan()
-			}
-
-			if cmd.Bool("subdomains") { // Enable subdomain scans
-				engine.EnableSubdomainScan()
-			}
-
-			if cmd.Bool("web") { // Enable webscans only
-				engine.EnableWebScans()
 			}
 
 			engine.EnableAllScansIfNoneAreExplicitlySet()

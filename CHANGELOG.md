@@ -1,5 +1,37 @@
 # CHANGELOG
 
+## v4.2.0
+
+### Breaking Changes
+
+- Renamed exported functions to follow Go naming conventions for acronyms (HTTP, TLS, DNS, IP, HTML):
+  - `EnableTlsScan()` → `EnableTLSScan()`
+  - `EnableHttpProtocolScan()` → `EnableHTTPProtocolScan()`
+  - `EnableHttpHeaderScan()` → `EnableHTTPHeaderScan()`
+  - `EnableHtmlContentScan()` → `EnableHTMLContentScan()`
+  - `EnableIpScan()` → `EnableIPScan()`
+  - `cachedHttpGetClient`: `GetHttpResponse()` → `HTTPResponse()`, `GetBody()` → `Body()`, `GetError()` → `Err()`, `DoesVerifyTls()` → `VerifyTLS()`, `GetTimeout()` → `Timeout()`
+  - `dnsScan`: `CheckDkim()` → `CheckDKIM()`, `CheckDmarc()` → `CheckDMARC()`, `CheckSpf()` → `CheckSPF()`, `CheckIpVersionCompatibility()` → `CheckIPVersionCompatibility()`
+  - `htmlContentScan`: `ValidateHtml()` → `ValidateHTML()`
+  - `httpProtocolScan`: `CheckHttpRedirects()` → `CheckHTTPRedirects()`, `CheckHttpVersions()` → `CheckHTTPVersions()`
+  - `tlsScan`: internal functions aligned with the same convention
+
+### Bug Fixes
+
+- Fixed crash when `-vv` verbosity flag was used (any verbosity ≥ 2 now enables debug level)
+- Fixed CLI flag name mismatches that caused several scan flags to be silently ignored
+- Fixed TLS connection leak in `tlsScan`: connections were opened to probe cipher/version support but never closed
+- Fixed HTTP response body leak in `cachedHttpGetClient`: body was read but not closed
+- Fixed `package-level sync.WaitGroup` in `tlsScan` that was unsafe for concurrent use; replaced with a local WaitGroup
+
+### Improvements
+
+- Consolidated `IsIPv4` and `IsIPv6` helpers into `pkg/types` (removed duplicate copies in `dnsScan` and `ipScan`)
+- Removed unused `Scanner` generic interface from `pkg/webscan`
+- Made `GetHttpProtocolRecommendationsForResult` unexported (only used within `httpProtocolScan`)
+- Added Windows portability: DNS config no longer attempts to read `/etc/resolv.conf` on Windows
+- Standardised all `slog` messages to `"<package>: <Description>"` format with structured key-value pairs
+
 ## v4.1.0
 
 ### New Features

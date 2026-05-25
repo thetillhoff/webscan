@@ -9,23 +9,12 @@ import (
 	"github.com/thetillhoff/webscan/v3/pkg/types"
 )
 
-func GetHttpProtocolRecommendationsForResult(target types.Target, result Result, isAvailableViaPort80 bool, isAvailableViaPort443 bool) []string {
+func httpProtocolRecommendations(target types.Target, result Result, isAvailableViaPort80 bool, isAvailableViaPort443 bool) []string {
 	var (
 		httpProtocolRecommendations = []string{}
 	)
 
-	slog.Debug("httpProtocolScan: Getting recommendations for http protocol result started")
-
-	slog.Debug("debugging",
-		"isAvailableViaPort80", isAvailableViaPort80,
-		"isAvailableViaPort443", isAvailableViaPort443,
-		"result.isAvailableViaHttp", result.isAvailableViaHttp,
-		"result.isAvailableViaHttps", result.isAvailableViaHttps,
-		"result.httpStatusCode", result.httpStatusCode,
-		"result.httpRedirectLocation", result.httpRedirectLocation,
-		"result.httpsStatusCode", result.httpsStatusCode,
-		"result.httpsRedirectLocation", result.httpsRedirectLocation,
-	)
+	slog.Debug("httpProtocolScan: Getting HTTP protocol recommendations started")
 
 	switch {
 	case result.isAvailableViaHttp:
@@ -69,9 +58,9 @@ func GetHttpProtocolRecommendationsForResult(target types.Target, result Result,
 
 	if isAvailableViaPort80 && isAvailableViaPort443 && result.isAvailableViaHttp && result.isAvailableViaHttps { // If is available via Http and Https
 		if result.httpRedirectLocation != "" && result.httpsRedirectLocation != "" { // If https is redirecting and http is redirecting
-			slog.Info("HTTP and HTTPS are both redirecting somewhere")
+			slog.Debug("httpProtocolScan: HTTP and HTTPS are both redirecting")
 			if result.httpRedirectLocation != result.httpsRedirectLocation { // If http redirectLocation != https redirectLocation
-				slog.Info("HTTP and HTTPS are not redirecting to the same location")
+				slog.Debug("httpProtocolScan: HTTP and HTTPS are not redirecting to the same location")
 
 				if !strings.HasPrefix(result.httpRedirectLocation, fmt.Sprintf("https://%s", target.ParsedUrl().Host)) { // If httpRedirectLocation starts with 'https://<target>'
 					httpProtocolRecommendations = append(httpProtocolRecommendations, "HTTP and HTTPS are not redirecting to the same location, neither is HTTP redirecting to use HTTPS instead.") // Recommend to either redirect http to same target as https or just to https with same origin
@@ -80,7 +69,7 @@ func GetHttpProtocolRecommendationsForResult(target types.Target, result Result,
 		}
 	}
 
-	slog.Debug("httpProtocolScan: Getting recommendations for http protocol result completed", "length", len(httpProtocolRecommendations))
+	slog.Debug("httpProtocolScan: Getting HTTP protocol recommendations completed", "count", len(httpProtocolRecommendations))
 
 	return httpProtocolRecommendations
 }

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log/slog"
 	"net"
+	"runtime"
 
 	"github.com/miekg/dns"
 	"github.com/thetillhoff/webscan/v3/pkg/status"
@@ -42,12 +43,6 @@ func WithFollowRedirects(followRedirects bool) ConfigOption {
 	}
 }
 
-// isIPv6 checks if the given string is a valid IPv6 address
-func isIPv6(ip string) bool {
-	parsedIP := net.ParseIP(ip)
-	return parsedIP != nil && parsedIP.To4() == nil
-}
-
 // resolveNameserver determines which nameserver to use based on configuration and system settings
 func resolveNameserver(customNameserver string) (string, *dns.ClientConfig) {
 	defaultNameserver := "1.1.1.1:53"
@@ -55,6 +50,11 @@ func resolveNameserver(customNameserver string) (string, *dns.ClientConfig) {
 	if customNameserver != "" {
 		slog.Debug("dnsScan: Using custom nameserver", "nameserver", customNameserver)
 		return customNameserver, nil
+	}
+
+	if runtime.GOOS == "windows" {
+		slog.Debug("dnsScan: resolv.conf not available on Windows, using fallback", "fallback", defaultNameserver)
+		return defaultNameserver, nil
 	}
 
 	// Load system nameservers from resolv.conf
@@ -70,7 +70,7 @@ func resolveNameserver(customNameserver string) (string, *dns.ClientConfig) {
 
 		// Handle IPv6 addresses properly by wrapping them in square brackets
 		var primaryNameserver string
-		if isIPv6(server) {
+		if types.IsIPv6(server) {
 			// This is an IPv6 address, wrap it in square brackets
 			primaryNameserver = "[" + server + "]:53"
 		} else {
@@ -117,7 +117,7 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) (
 
 	switch {
 	case target.TargetType() == types.Domain && target.Schema() == types.NONE:
-		slog.Info("input identified as domain without schema")
+		slog.Info("dnsScan: Input identified as domain without schema")
 
 		result, err = AdvancedScan(
 			status,
@@ -127,7 +127,7 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) (
 			config.followRedirects,
 		)
 	case target.TargetType() == types.Domain && target.Schema() != types.NONE:
-		slog.Info("input identified as domain with", "schema", target.Schema().String())
+		slog.Info("dnsScan: Input identified as domain with schema", "schema", target.Schema().String())
 
 		result, err = SimpleScan(
 			target,
@@ -136,10 +136,10 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) (
 			config.followRedirects,
 		)
 	case target.TargetType() == types.Ipv4:
-		slog.Info("input identified as ipv4")
+		slog.Info("dnsScan: Input identified as IPv4")
 		result.ARecords = []string{target.Hostname()}
 	case target.TargetType() == types.Ipv6:
-		slog.Info("input identified as ipv6")
+		slog.Info("dnsScan: Input identified as IPv6")
 		result.AAAARecords = []string{target.Hostname()}
 	default:
 		slog.Error("dnsScan: Scan failed", "targetType", target.TargetType())

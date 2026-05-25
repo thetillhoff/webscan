@@ -21,17 +21,6 @@ const (
 	Ipv6
 )
 
-// isIPv4 checks if the given string is a valid IPv4 address
-func isIPv4(ip string) bool {
-	parsedIP := net.ParseIP(ip)
-	return parsedIP != nil && parsedIP.To4() != nil
-}
-
-// isIPv6 checks if the given string is a valid IPv6 address
-func isIPv6(ip string) bool {
-	parsedIP := net.ParseIP(ip)
-	return parsedIP != nil && parsedIP.To4() == nil
-}
 
 type Target struct {
 	rawTarget  string
@@ -92,10 +81,10 @@ func NewTarget(targetString string) (Target, error) {
 			target.targetType = None
 			return target, errors.New("couldn't parse supposed ip address in hostname to neither ipv4 nor ipv6 address")
 		}
-	case isIPv4(target.parsedUrl.Hostname()):
+	case IsIPv4(target.parsedUrl.Hostname()):
 		target.targetType = Ipv4
 		slog.Debug("hostname identified as ipv4 address", "hostname", target.parsedUrl.Hostname())
-	case isIPv6(target.parsedUrl.Hostname()):
+	case IsIPv6(target.parsedUrl.Hostname()):
 		target.targetType = Ipv6
 		slog.Debug("hostname identified as ipv6 address", "hostname", target.parsedUrl.Hostname())
 	default:

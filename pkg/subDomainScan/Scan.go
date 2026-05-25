@@ -70,7 +70,7 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) R
 
 	result.subdomainsFromCrtSh, err = CheckCertLogs(target)
 	if err != nil {
-		slog.Warn("could not retrieve subdomains from crt.sh: " + err.Error())
+		slog.Warn("subDomainScan: Could not retrieve subdomains from crt.sh", "error", err)
 	}
 
 	status.SpinningComplete("Scan of subdomains complete.")

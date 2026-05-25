@@ -95,9 +95,9 @@ func NewEngine(
 				return d.DialContext(ctx, network, net.JoinHostPort(dnsServer, "53"))
 			},
 		}
-		slog.Info("Using custom dns server", "dnsServer", dnsServer) // TODO use INF
+		slog.Info("webscan: Using custom DNS server", "dnsServer", dnsServer)
 	} else {
-		slog.Info("Using system dns server") // TODO use INF
+		slog.Info("webscan: Using system DNS server")
 	}
 
 	client = cachedHttpGetClient.NewClient(

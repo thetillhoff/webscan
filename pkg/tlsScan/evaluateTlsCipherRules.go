@@ -7,7 +7,7 @@ import (
 
 // verify ciphers against best practices
 // The result is a map of rule description to list of ciphers that match the rule
-func evaluateTlsCipherRules(tlsCipherSuites []tls.CipherSuite) map[string][]string {
+func evaluateTLSCipherRules(tlsCipherSuites []tls.CipherSuite) map[string][]string {
 	var (
 		rules       = getRules()
 		ruleMatches = map[string][]string{}

@@ -22,34 +22,6 @@ func (engine *Engine) Scan(input string) error {
 
 	// TODO If tty supports color, use custom logger, else use structured logger with zerolog or slog
 
-	// TODO move the following test lines into a test case for `status` package. Ensure the final output looks the same as expected.
-	// engine.status.Update("working on a")
-	// time.Sleep(time.Second)
-	// engine.status.Update("working on b")
-	// time.Sleep(time.Second)
-	// engine.status.Update("working on c")
-	// time.Sleep(time.Second)
-	// engine.status.Complete("complete")
-
-	// engine.status.SpinningUpdate("working on a")
-	// time.Sleep(3 * time.Second)
-	// engine.status.SpinningUpdate("working on b")
-	// time.Sleep(3 * time.Second)
-	// engine.status.SpinningUpdate("working on c")
-	// time.Sleep(3 * time.Second)
-	// engine.status.SpinningComplete("complete")
-
-	// engine.status.SpinningXOfInit(3, "things completed")
-	// time.Sleep(3 * time.Second)
-	// engine.status.SpinningXOfUpdate()
-	// time.Sleep(3 * time.Second)
-	// engine.status.SpinningXOfUpdate()
-	// time.Sleep(3 * time.Second)
-	// engine.status.SpinningXOfUpdate()
-	// engine.status.SpinningXOfComplete()
-
-	// Debug
-
 	slog.Debug("webscan config",
 		"followRedirects", engine.followRedirects,
 		"advancedDnsScan", engine.advancedDnsScan,
@@ -64,7 +36,7 @@ func (engine *Engine) Scan(input string) error {
 
 	// Input
 
-	slog.Debug("raw", "input", input)
+	slog.Debug("webscan: Raw input", "input", input)
 	engine.target, err = types.NewTarget(input)
 	if err != nil {
 		return err
@@ -226,5 +198,5 @@ func (engine *Engine) Scan(input string) error {
 	// TODO if followRedirects is true, CNAMEs should be followed (scan them, too)
 	// TODO if followRedirects is true, http and https redirects should be followed (scan them, too)
 
-	return err
+	return nil
 }

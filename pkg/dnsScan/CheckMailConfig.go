@@ -14,17 +14,17 @@ func CheckMailConfig(url string, dnsClient *dns.Client, nameserver string, txtRe
 
 	slog.Debug("dnsScan: Checking mail started")
 
-	message = CheckSpf(txtRecords)
+	message = CheckSPF(txtRecords)
 	if message != "" {
 		messages = append(messages, message)
 	}
 
-	message = CheckDkim(dkimSelector+"._domainkey."+url, dnsClient, nameserver)
+	message = CheckDKIM(dkimSelector+"._domainkey."+url, dnsClient, nameserver)
 	if message != "" {
 		messages = append(messages, message)
 	}
 
-	message = CheckDmarc(url, dnsClient, nameserver)
+	message = CheckDMARC(url, dnsClient, nameserver)
 	if message != "" {
 		messages = append(messages, message)
 	}

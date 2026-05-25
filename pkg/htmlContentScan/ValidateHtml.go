@@ -9,7 +9,7 @@ import (
 
 // Only needs to be parsable, and to be html5
 
-func ValidateHtml(body []byte) (string, error) {
+func ValidateHTML(body []byte) (string, error) {
 	var (
 		err      error
 		doc      *html.Node

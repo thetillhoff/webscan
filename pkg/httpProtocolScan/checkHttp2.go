@@ -10,7 +10,7 @@ import (
 	"github.com/thetillhoff/webscan/v3/pkg/types"
 )
 
-func checkHttp2(target types.Target) (string, error) {
+func checkHTTP2(target types.Target) (string, error) {
 	var (
 		err    error
 		client = &http.Client{
@@ -48,7 +48,7 @@ func checkHttp2(target types.Target) (string, error) {
 			return response.Proto, nil
 		} else {
 			err = errors.New("http/2 is not supported")
-			slog.Debug("httpProtocolScan: Checking http/1 failed", "url", target.UrlString(), "proto", response.Proto, "error", err)
+			slog.Debug("httpProtocolScan: Checking http/2 failed", "url", target.UrlString(), "proto", response.Proto, "error", err)
 			return response.Proto, err
 		}
 

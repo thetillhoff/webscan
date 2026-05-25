@@ -7,14 +7,14 @@ import (
 	"github.com/miekg/dns"
 )
 
-func CheckDkim(selectorUrl string, dnsClient *dns.Client, nameserver string) string {
+func CheckDKIM(selectorUrl string, dnsClient *dns.Client, nameserver string) string {
 	var (
 		err         error
 		txtRecords  []string
 		cnameRecord string
 	)
 
-	slog.Debug("dnsScan: Checking dkim started")
+	slog.Debug("dnsScan: Checking DKIM started")
 
 	txtRecords, err = GetTXTRecords(selectorUrl, dnsClient, nameserver)
 	if err != nil {
@@ -41,7 +41,7 @@ func CheckDkim(selectorUrl string, dnsClient *dns.Client, nameserver string) str
 
 	// TODO Verify dkimRecord
 
-	slog.Debug("dnsScan: Checking dkim completed")
+	slog.Debug("dnsScan: Checking DKIM completed")
 
 	return ""
 }

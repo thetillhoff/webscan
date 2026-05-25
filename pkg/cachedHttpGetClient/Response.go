@@ -22,6 +22,7 @@ func NewResponse(httpResponse *http.Response, err error) Response {
 	}
 
 	body, err := io.ReadAll(httpResponse.Body)
+	httpResponse.Body.Close()
 	return Response{
 		httpResponse: httpResponse,
 		body:         body,
@@ -29,14 +30,14 @@ func NewResponse(httpResponse *http.Response, err error) Response {
 	}
 }
 
-func (response Response) GetHttpResponse() *http.Response {
+func (response Response) HTTPResponse() *http.Response {
 	return response.httpResponse
 }
 
-func (response Response) GetBody() []byte {
+func (response Response) Body() []byte {
 	return response.body
 }
 
-func (response Response) GetError() error {
+func (response Response) Err() error {
 	return response.err
 }

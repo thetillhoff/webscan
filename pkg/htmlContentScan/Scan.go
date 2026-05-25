@@ -89,7 +89,7 @@ func Scan(status *status.Status, target types.Target, options ...ConfigOption) (
 
 	if len(responseBody) > 0 {
 
-		message, err = ValidateHtml(responseBody)
+		message, err = ValidateHTML(responseBody)
 		if err != nil { // HTML content is not valid HTML
 			return result, errors.New("invalid html: " + err.Error())
 		}

@@ -1,5 +1,5 @@
 package cachedHttpGetClient
 
-func (client Client) DoesVerifyTls() bool {
+func (client Client) VerifyTLS() bool {
 	return client.verifyTls
 }

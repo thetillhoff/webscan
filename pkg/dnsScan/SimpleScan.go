@@ -30,7 +30,7 @@ func SimpleScan(target types.Target, dnsClient *dns.Client, nameserver string, f
 			return result, err
 		}
 		if result.CNAMERecord != "" { // If CNAME record exists
-			slog.Info("No A or AAAA records for", target.Hostname(), ". Following CNAME...")
+			slog.Info("dnsScan: No A or AAAA records, following CNAME", "hostname", target.Hostname())
 			newTarget, err := types.NewTarget(result.CNAMERecord)
 			if err != nil {
 				slog.Error("dnsScan: Could not create new target from CNAME", "cname", result.CNAMERecord, "error", err)

@@ -7,14 +7,14 @@ import (
 	"github.com/miekg/dns"
 )
 
-func CheckDmarc(url string, dnsClient *dns.Client, nameserver string) string {
+func CheckDMARC(url string, dnsClient *dns.Client, nameserver string) string {
 	var (
 		err         error
 		txtRecords  []string
 		cnameRecord string
 	)
 
-	slog.Debug("dnsScan: Checking dmarc started")
+	slog.Debug("dnsScan: Checking DMARC started")
 
 	txtRecords, err = GetTXTRecords("_dmarc."+url, dnsClient, nameserver)
 	if err != nil {
@@ -40,7 +40,7 @@ func CheckDmarc(url string, dnsClient *dns.Client, nameserver string) string {
 
 	// TODO Verify dmarcRecord
 
-	slog.Debug("dnsScan: Checking dmarc started")
+	slog.Debug("dnsScan: Checking DMARC completed")
 
 	return ""
 }

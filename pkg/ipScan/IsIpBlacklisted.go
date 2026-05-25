@@ -8,9 +8,11 @@ import (
 	"net/netip"
 	"strings"
 	"time"
+
+	"github.com/thetillhoff/webscan/v3/pkg/types"
 )
 
-func IsIpBlacklisted(ip string) ([]string, error) {
+func IsIPBlacklisted(ip string) ([]string, error) {
 	var (
 		err error
 
@@ -36,7 +38,7 @@ func IsIpBlacklisted(ip string) ([]string, error) {
 
 	slog.Debug("ipScan: Checking for ip blacklisting started")
 
-	if IsIpv4(ip) { // If ip is ipv4
+	if types.IsIPv4(ip) { // If ip is ipv4
 		network = "ip4"
 		for _, snippet := range strings.Split(ip, ".") {
 			searchPrefix = snippet + "." + searchPrefix
@@ -79,7 +81,7 @@ func IsIpBlacklisted(ip string) ([]string, error) {
 			}
 
 			if len(response) == 1 && ipv4Net.Contains(response[0]) { // If response is in error range
-				slog.Warn("Couldn't check ip blacklisting because of error code", "ip", ip, "response", response)
+				slog.Warn("ipScan: Could not check IP blacklisting due to error code", "ip", ip, "response", response)
 			} else { // If response isn't in error range
 				blacklistsWithMatches = append(blacklistsWithMatches, blacklist) // Add blacklist match
 			}

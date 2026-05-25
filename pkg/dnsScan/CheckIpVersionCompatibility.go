@@ -2,12 +2,12 @@ package dnsScan
 
 import "log/slog"
 
-func CheckIpVersionCompatibility(aRecords []string, aaaaRecords []string) string {
+func CheckIPVersionCompatibility(aRecords []string, aaaaRecords []string) string {
 	var (
 		message = ""
 	)
 
-	slog.Debug("dnsScan: Checking ip version compatibility started")
+	slog.Debug("dnsScan: Checking IP version compatibility started")
 
 	if len(aRecords) == 0 && len(aaaaRecords) == 0 {
 		message = "No ips defined for domain"
@@ -21,7 +21,7 @@ func CheckIpVersionCompatibility(aRecords []string, aaaaRecords []string) string
 		}
 	}
 
-	slog.Debug("dnsScan: Checking ip version compatibility completed")
+	slog.Debug("dnsScan: Checking IP version compatibility completed")
 
 	return message
 }

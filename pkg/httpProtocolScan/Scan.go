@@ -57,12 +57,12 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) (
 
 	// Scan HTTP for redirects
 	target.OverrideSchema(types.HTTP)
-	result.httpStatusCode, result.httpRedirectLocation, err = CheckHttpRedirects(target, config.client)
+	result.httpStatusCode, result.httpRedirectLocation, err = CheckHTTPRedirects(target, config.client)
 	result.isAvailableViaHttp = err == nil
 
 	// Scan HTTPS for redirects
 	target.OverrideSchema(types.HTTPS)
-	result.httpsStatusCode, result.httpsRedirectLocation, err = CheckHttpRedirects(target, config.client)
+	result.httpsStatusCode, result.httpsRedirectLocation, err = CheckHTTPRedirects(target, config.client)
 	result.isAvailableViaHttps = err == nil
 
 	// TODO check redirect from http zone apex to https www. prefix
@@ -79,7 +79,7 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) (
 		target.OverrideSchema(types.HTTP)
 
 		// Scan http versions
-		result.httpVersions, err = CheckHttpVersions(target)
+		result.httpVersions, err = CheckHTTPVersions(target)
 		if err != nil {
 			return result, err
 		}
@@ -89,13 +89,13 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) (
 		target.OverrideSchema(types.HTTPS)
 
 		// Scan https versions
-		result.httpsVersions, err = CheckHttpVersions(target)
+		result.httpsVersions, err = CheckHTTPVersions(target)
 		if err != nil {
 			return result, err
 		}
 	}
 
-	result.recommendations = GetHttpProtocolRecommendationsForResult(target, result, config.isAvailableViaPort80, config.isAvailableViaPort443)
+	result.recommendations = httpProtocolRecommendations(target, result, config.isAvailableViaPort80, config.isAvailableViaPort443)
 
 	status.SpinningComplete("Scan of http protocols completed.")
 

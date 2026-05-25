@@ -10,7 +10,7 @@ import (
 // and whether http and/or https should be checked
 // and checks which HTTP versions the server can speak for each
 // Return available versions on http, then https and finally a potential error
-func CheckHttpVersions(target types.Target) ([]string, error) {
+func CheckHTTPVersions(target types.Target) ([]string, error) {
 	var (
 		err                   error
 		availableHttpVersions = []string{}
@@ -29,17 +29,17 @@ func CheckHttpVersions(target types.Target) ([]string, error) {
 
 	slog.Debug("httpProtocolScan: Checking available http versions started", "url", target.UrlString())
 
-	httpVersion1, err = checkHttp1(target)
+	httpVersion1, err = checkHTTP1(target)
 	if err == nil {
 		availableHttpVersions = append(availableHttpVersions, httpVersion1)
 	}
 
-	httpVersion2, err = checkHttp2(target)
+	httpVersion2, err = checkHTTP2(target)
 	if err == nil {
 		availableHttpVersions = append(availableHttpVersions, httpVersion2)
 	}
 
-	httpVersion3, err = checkHttp3(target)
+	httpVersion3, err = checkHTTP3(target)
 	if err == nil {
 		availableHttpVersions = append(availableHttpVersions, httpVersion3)
 	}

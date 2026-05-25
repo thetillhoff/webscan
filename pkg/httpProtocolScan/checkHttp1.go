@@ -10,7 +10,7 @@ import (
 	"github.com/thetillhoff/webscan/v3/pkg/types"
 )
 
-func checkHttp1(target types.Target) (string, error) {
+func checkHTTP1(target types.Target) (string, error) {
 	var (
 		err    error
 		client = &http.Client{

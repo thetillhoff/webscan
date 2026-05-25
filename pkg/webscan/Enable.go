@@ -38,7 +38,7 @@ func (engine *Engine) EnableDetailedDnsScan() {
 	engine.advancedDnsScan = true
 }
 
-func (engine *Engine) EnableIpScan() {
+func (engine *Engine) EnableIPScan() {
 	engine.ipScan = true
 }
 
@@ -46,19 +46,19 @@ func (engine *Engine) EnableDetailedPortScan() {
 	engine.advancedPortScan = true
 }
 
-func (engine *Engine) EnableTlsScan() {
+func (engine *Engine) EnableTLSScan() {
 	engine.tlsScan = true
 }
 
-func (engine *Engine) EnableHttpProtocolScan() {
+func (engine *Engine) EnableHTTPProtocolScan() {
 	engine.httpProtocolScan = true
 }
 
-func (engine *Engine) EnableHttpHeaderScan() {
+func (engine *Engine) EnableHTTPHeaderScan() {
 	engine.httpHeaderScan = true
 }
 
-func (engine *Engine) EnableHtmlContentScan() {
+func (engine *Engine) EnableHTMLContentScan() {
 	engine.htmlContentScan = true
 }
 

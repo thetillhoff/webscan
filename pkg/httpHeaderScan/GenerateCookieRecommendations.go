@@ -61,8 +61,8 @@ func GenerateCookieRecommendations(response *http.Response) (map[string][]string
 		}
 
 		if len(cookie.Value) > 450 {
-			// Cookie value length close to 512 chars, which is the upper limit
-			cookieRecommendations = append(cookieRecommendations, "should have a length of <450 characters, because that's quite close to 512 (4k), the upper limit in many browsers.")
+			// Cookie value length close to 512 bytes, which is the per-cookie limit in many servers and proxies
+			cookieRecommendations = append(cookieRecommendations, "should have a length of <450 characters, because that's quite close to 512 bytes, the upper limit in many servers and proxies.")
 		}
 
 		err = scanCookieChars(cookie.Value)

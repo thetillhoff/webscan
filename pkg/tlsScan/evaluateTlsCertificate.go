@@ -10,7 +10,7 @@ import (
 )
 
 // checks whether the certificate is valid
-func evaluateTlsCertificate(target types.Target, ip string) ([]certInfo, error, error) {
+func evaluateTLSCertificate(target types.Target, ip string) ([]certInfo, error, error) {
 	var (
 		targetEndpoint = ip + ":" + target.Port()
 		err            error
@@ -21,11 +21,14 @@ func evaluateTlsCertificate(target types.Target, ip string) ([]certInfo, error, 
 
 	slog.Debug("tlsScan: Evaluating TLS certificate started", "targetEndpoint", targetEndpoint, "ServerName", target.Hostname())
 
-	_, tlsErr = tls.Dial("tcp", targetEndpoint, &tls.Config{
+	strictConn, tlsErr := tls.Dial("tcp", targetEndpoint, &tls.Config{
 		MinVersion: tls.VersionTLS10,
 		MaxVersion: tls.VersionTLS13,
 		ServerName: target.Hostname(),
 	})
+	if strictConn != nil {
+		strictConn.Close()
+	}
 
 	if os.IsTimeout(tlsErr) {
 		return certInfos, errors.New("http call exceeded 5s timeout"), nil
@@ -58,31 +61,31 @@ func evaluateTlsCertificate(target types.Target, ip string) ([]certInfo, error, 
 		// TODO: Add expiry date to result
 		// Sample: fmt.Printf("Expiry: %s \n", cert.NotAfter.Format("2006-11-02"))
 
-		slog.Debug("tlsScan", "idx", idx, "common name", cert.Subject.CommonName)
+		slog.Debug("tlsScan: Certificate field", "idx", idx, "common_name", cert.Subject.CommonName)
 		certInfo.names = append(certInfo.names, cert.Subject.CommonName)
 
-		slog.Debug("tlsScan", "idx", idx, "dns names", cert.DNSNames)
+		slog.Debug("tlsScan: Certificate field", "idx", idx, "dns_names", cert.DNSNames)
 		certInfo.names = append(certInfo.names, cert.DNSNames...)
 
-		slog.Debug("tlsScan", "idx", idx, "email addresses", cert.EmailAddresses)
+		slog.Debug("tlsScan: Certificate field", "idx", idx, "email_addresses", cert.EmailAddresses)
 		certInfo.names = append(certInfo.names, cert.EmailAddresses...)
 
-		slog.Debug("tlsScan", "idx", idx, "ip addresses", cert.IPAddresses)
+		slog.Debug("tlsScan: Certificate field", "idx", idx, "ip_addresses", cert.IPAddresses)
 		for _, ipAddress := range cert.IPAddresses {
 			certInfo.names = append(certInfo.names, ipAddress.String())
 		}
 
-		slog.Debug("tlsScan", "idx", idx, "uris", cert.URIs)
+		slog.Debug("tlsScan: Certificate field", "idx", idx, "uris", cert.URIs)
 		for _, uri := range cert.URIs {
 			certInfo.names = append(certInfo.names, uri.Host)
 		}
 
 		certInfo.issuers = append(certInfo.issuers, cert.Issuer.String())
-		slog.Debug("tlsScan", "idx", idx, "issuer", cert.Issuer.String())
+		slog.Debug("tlsScan: Certificate field", "idx", idx, "issuer", cert.Issuer.String())
 
 		certInfos = append(certInfos, certInfo)
 
-		slog.Debug("tlsScan: certInfo", "idx", idx, "cert names", certInfo.names, "cert issuers", certInfo.issuers)
+		slog.Debug("tlsScan: Certificate parsed", "idx", idx, "cert_names", certInfo.names, "cert_issuers", certInfo.issuers)
 	}
 
 	slog.Debug("tlsScan: Evaluating TLS certificate completed")

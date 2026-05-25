@@ -11,7 +11,7 @@ import (
 	"github.com/thetillhoff/webscan/v3/pkg/types"
 )
 
-func checkHttp3(target types.Target) (string, error) {
+func checkHTTP3(target types.Target) (string, error) {
 	var (
 		err    error
 		client = &http.Client{

@@ -59,18 +59,18 @@ func Scan(target types.Target, status *status.Status, aRecords []string, aaaaRec
 	for _, ip := range ipsToScan {
 		tlsScanResult := TlsScanResult{}
 
-		tlsScanResult.certInfos, tlsScanResult.tlsErr, err = evaluateTlsCertificate(target, ip) // Verify validity of tls certificate
+		tlsScanResult.certInfos, tlsScanResult.tlsErr, err = evaluateTLSCertificate(target, ip)
 		if err != nil {
 			if errors.Unwrap(err) != nil {
 				err = errors.Unwrap(err)
 			}
-			slog.Error("Could not evaluate tls certificate", "error", err)
+			slog.Error("tlsScan: Could not evaluate TLS certificate", "error", err)
 			return result, nil // No need to continue if the tlsDial didn't work before, but returning an error ends the scan prematurely
 		}
-		tlsScanResult.enabledTlsVersions = scanEnabledTlsVersions(status, target, ip) // Try all tls versions
-		tlsScanResult.enabledTlsCiphers = scanEnabledTlsCiphers(status, target, ip)   // Try all ciphers
+		tlsScanResult.enabledTlsVersions = scanEnabledTLSVersions(status, target, ip)
+		tlsScanResult.enabledTlsCiphers = scanEnabledTLSCiphers(status, target, ip)
 
-		tlsScanResult.cipherRulesEvaluationResult = evaluateTlsCipherRules(tlsScanResult.enabledTlsCiphers) // Evaluate cipher rules
+		tlsScanResult.cipherRulesEvaluationResult = evaluateTLSCipherRules(tlsScanResult.enabledTlsCiphers)
 
 		result.tlsScanResultPerIp[ip] = tlsScanResult
 	}
