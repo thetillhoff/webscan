@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## v4.4.0
+
+### Bug Fixes
+
+- Fixed silent exit when no target argument is provided: `log.Fatalln` was silently dropped because Go 1.21+ bridges `log.*` through slog, and the message level (Info) was below the default threshold (Warn); the check is now handled in `types.NewTarget` and surfaces as a visible error message
+
 ## v4.3.0
 
 ### Improvements

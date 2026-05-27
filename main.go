@@ -5,7 +5,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -172,10 +171,6 @@ GLOBAL OPTIONS:{{range .VisibleFlags}}
 			))
 
 			// Args
-
-			if cmd.Args().Len() != 1 {
-				log.Fatalln(errors.New("exactly one argument expected"))
-			}
 
 			var stdout io.Writer
 			if cmd.Bool("quiet") {

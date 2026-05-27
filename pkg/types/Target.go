@@ -44,6 +44,10 @@ func NewTarget(targetString string) (Target, error) {
 	targetString = strings.TrimSpace(targetString)
 	targetString = strings.ToLower(targetString)
 
+	if targetString == "" {
+		return target, errors.New("no target provided")
+	}
+
 	target.schema = ParseSchema(strings.Split(targetString, "://")[0])
 
 	switch target.schema {
