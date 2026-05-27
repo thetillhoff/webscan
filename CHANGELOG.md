@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## v4.3.0
+
+### Improvements
+
+- Unified functional options pattern across all scan packages via `types.Option[C]` and `types.ApplyOptions` generics; each package now uses a type alias `ConfigOption = types.Option[scanConfig]` instead of a redundant inline definition
+
 ## v4.2.0
 
 ### Breaking Changes

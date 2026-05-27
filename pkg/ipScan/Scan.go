@@ -14,8 +14,7 @@ type scanConfig struct {
 	aaaaRecords []string
 }
 
-// ConfigOption represents a configuration option for IP scanning
-type ConfigOption func(*scanConfig)
+type ConfigOption = types.Option[scanConfig]
 
 // WithARecords sets the A records to scan
 func WithARecords(aRecords []string) ConfigOption {
@@ -41,11 +40,8 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) (
 		maxIpAddressLength = 0
 	)
 
-	// Apply configuration options
 	config := &scanConfig{}
-	for _, option := range options {
-		option(config)
-	}
+	types.ApplyOptions(config, options)
 
 	totalIPs := len(config.aRecords) + len(config.aaaaRecords)
 

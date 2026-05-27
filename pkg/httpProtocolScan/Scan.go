@@ -14,8 +14,7 @@ type scanConfig struct {
 	isAvailableViaPort443 bool
 }
 
-// ConfigOption represents a configuration option for HTTP protocol scanning
-type ConfigOption func(*scanConfig)
+type ConfigOption = types.Option[scanConfig]
 
 // WithClient sets the client
 func WithClient(client cachedHttpGetClient.Client) ConfigOption {
@@ -45,11 +44,8 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) (
 		result = Result{}
 	)
 
-	// Apply configuration options
 	config := &scanConfig{}
-	for _, option := range options {
-		option(config)
-	}
+	types.ApplyOptions(config, options)
 
 	slog.Debug("httpProtocolScan: Scan started")
 

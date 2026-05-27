@@ -12,8 +12,7 @@ type scanConfig struct {
 	// Currently placeholder - will be expanded as functionality is implemented
 }
 
-// ConfigOption represents a configuration option for SEO scanning
-type ConfigOption func(*scanConfig)
+type ConfigOption = types.Option[scanConfig]
 
 // WithRobotsTxt enables robots.txt scanning
 func WithRobotsTxt() ConfigOption {
@@ -34,11 +33,8 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) (
 		result = Result{}
 	)
 
-	// Apply configuration options
 	config := &scanConfig{}
-	for _, option := range options {
-		option(config)
-	}
+	types.ApplyOptions(config, options)
 
 	slog.Debug("seoScan: Scan started")
 

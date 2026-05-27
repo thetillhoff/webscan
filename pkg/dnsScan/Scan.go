@@ -19,8 +19,7 @@ type scanConfig struct {
 	followRedirects bool
 }
 
-// ConfigOption represents a configuration option for DNS scanning
-type ConfigOption func(*scanConfig)
+type ConfigOption = types.Option[scanConfig]
 
 // WithCustomNameServer sets a custom nameserver to use for DNS queries
 func WithCustomNameServer(nameserver string) ConfigOption {
@@ -97,11 +96,8 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) (
 		result Result
 	)
 
-	// Apply configuration options
 	config := &scanConfig{}
-	for _, option := range options {
-		option(config)
-	}
+	types.ApplyOptions(config, options)
 
 	slog.Debug("dnsScan: Scan started")
 

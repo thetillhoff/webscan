@@ -23,8 +23,7 @@ type scanConfig struct {
 	overrideSchema types.Schema
 }
 
-// ConfigOption represents a configuration option for DNS scanning
-type ConfigOption func(*scanConfig)
+type ConfigOption = types.Option[scanConfig]
 
 // WithClient sets the client
 func WithClient(client cachedHttpGetClient.Client) ConfigOption {
@@ -65,9 +64,7 @@ func Scan(status *status.Status, target types.Target, options ...ConfigOption) (
 	slog.Debug("htmlContentScan: Scan started")
 
 	config := &scanConfig{}
-	for _, option := range options {
-		option(config)
-	}
+	types.ApplyOptions(config, options)
 
 	target.OverrideSchema(config.overrideSchema)
 

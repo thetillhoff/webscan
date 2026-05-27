@@ -11,8 +11,7 @@ type scanConfig struct {
 	advanced    bool
 }
 
-// ConfigOption represents a configuration option for port scanning
-type ConfigOption func(*scanConfig)
+type ConfigOption = types.Option[scanConfig]
 
 // WithARecords sets the A records to scan
 func WithARecords(aRecords []string) ConfigOption {
@@ -36,11 +35,8 @@ func WithAdvanced(advanced bool) ConfigOption {
 }
 
 func Scan(target types.Target, status *status.Status, options ...ConfigOption) (Result, error) {
-	// Apply configuration options
 	config := &scanConfig{}
-	for _, option := range options {
-		option(config)
-	}
+	types.ApplyOptions(config, options)
 
 	switch {
 	case config.advanced && target.Port() == "" && target.Schema() == types.NONE:
