@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -53,6 +54,11 @@ func (s *Server) scanHandler(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{
 			"error": fmt.Sprintf("target too long (max %d chars)", s.maxTargetLength),
 		})
+		return
+	}
+
+	if s.isBlocked(req.Target) {
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": "target domain is not allowed"})
 		return
 	}
 
@@ -129,6 +135,39 @@ func writeJSON(w http.ResponseWriter, status int, payload any) {
 	if err := json.NewEncoder(w).Encode(payload); err != nil {
 		slog.Warn("failed to encode json response", "error", err)
 	}
+}
+
+func (s *Server) isBlocked(target string) bool {
+	host := strings.ToLower(strings.TrimSpace(extractHost(target)))
+
+	if ip := net.ParseIP(host); ip != nil {
+		for _, cidr := range s.blockedCIDRs {
+			if cidr.Contains(ip) {
+				return true
+			}
+		}
+		return false
+	}
+
+	for _, entry := range s.blockedDomains {
+		if host == entry || strings.HasSuffix(host, "."+entry) {
+			return true
+		}
+	}
+	return false
+}
+
+func extractHost(target string) string {
+	if strings.Contains(target, "://") {
+		if u, err := url.Parse(target); err == nil {
+			return u.Hostname()
+		}
+	}
+	host, _, err := net.SplitHostPort(target)
+	if err != nil {
+		return target
+	}
+	return host
 }
 
 func getRemoteIP(r *http.Request) string {

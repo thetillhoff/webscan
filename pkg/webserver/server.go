@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"io/fs"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -54,6 +55,8 @@ type Server struct {
 	queueKey            string
 	jobPrefix           string
 	jobIDKey            string
+	blockedDomains      []string
+	blockedCIDRs        []*net.IPNet
 }
 
 func NewServer(
@@ -70,6 +73,8 @@ func NewServer(
 	redisPassword string,
 	redisDB int,
 	maxQueueSize int,
+	domainBlocklist []string,
+	ipBlocklist []string,
 ) (*Server, error) {
 	if writeMutex == nil {
 		writeMutex = &sync.Mutex{}
@@ -107,6 +112,16 @@ func NewServer(
 		requestTimeout = 5 * time.Second
 	}
 
+	var blockedCIDRs []*net.IPNet
+	for _, entry := range ipBlocklist {
+		_, cidr, err := net.ParseCIDR(entry)
+		if err != nil {
+			slog.Warn("invalid CIDR in IP_BLOCKLIST, skipping", "entry", entry, "error", err)
+			continue
+		}
+		blockedCIDRs = append(blockedCIDRs, cidr)
+	}
+
 	server := &Server{
 		writeMutex:          writeMutex,
 		dnsServer:           dnsServer,
@@ -126,6 +141,8 @@ func NewServer(
 		queueKey:            "webscan:jobs:queue",
 		jobPrefix:           "webscan:job:",
 		jobIDKey:            "webscan:jobs:next_id",
+		blockedDomains:      domainBlocklist,
+		blockedCIDRs:        blockedCIDRs,
 	}
 
 	server.setupRouter()

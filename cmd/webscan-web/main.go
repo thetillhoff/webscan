@@ -12,6 +12,7 @@ import (
 	"log"
 	"log/slog"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -71,6 +72,10 @@ func main() {
 		target = flag.Arg(0)
 	}
 
+	// Parse blocklists from env vars (one entry per line)
+	domainBlocklist := parseBlocklist(os.Getenv("DOMAIN_BLOCKLIST"))
+	ipBlocklist := parseBlocklist(os.Getenv("IP_BLOCKLIST"))
+
 	// Create and run server
 	server, err := webserver.NewServer(
 		*noColor,
@@ -86,6 +91,8 @@ func main() {
 		*redisPassword,
 		*redisDB,
 		*maxQueueSize,
+		domainBlocklist,
+		ipBlocklist,
 	)
 	if err != nil {
 		slog.Error("Could not create webscan web server", "error", err)
@@ -105,4 +112,15 @@ func main() {
 	}
 
 	log.Println("Web server stopped")
+}
+
+func parseBlocklist(raw string) []string {
+	var entries []string
+	for _, line := range strings.Split(raw, "\n") {
+		line = strings.TrimSpace(line)
+		if line != "" {
+			entries = append(entries, line)
+		}
+	}
+	return entries
 }
