@@ -6,6 +6,10 @@
 
 - **Domain and IP Blocklist**: `DOMAIN_BLOCKLIST` and `IP_BLOCKLIST` env vars block scan targets matching specified domain suffixes or IP CIDR ranges; prevents scanning of internal cluster services and private IP space
 
+### Improvements
+
+- **Redirect section headers**: Each followed redirect now starts with a `---` separator and a header showing the target URL and the HTTP status code that triggered the follow (e.g. `HTTP 301 redirect`)
+
 ## v5.0.0
 
 ### Breaking Changes

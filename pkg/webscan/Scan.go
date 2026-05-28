@@ -257,21 +257,27 @@ func (engine *Engine) Scan(input string) error {
 
 	// Follow HTTP redirects: run web scans (protocol, header, content) on redirect targets
 	if engine.followRedirects {
+		type redirectJob struct {
+			loc    string
+			reason string
+		}
+
 		visited := map[string]bool{
 			engine.target.UrlString(): true,
 		}
 
-		var redirectTargets []string
+		var redirectTargets []redirectJob
 		if loc := engine.httpProtocolScanResult.HttpRedirectLocation(); loc != "" {
-			redirectTargets = append(redirectTargets, loc)
+			redirectTargets = append(redirectTargets, redirectJob{loc, fmt.Sprintf("HTTP %d", engine.httpProtocolScanResult.HttpStatusCode())})
 		}
 		if loc := engine.httpProtocolScanResult.HttpsRedirectLocation(); loc != "" {
-			redirectTargets = append(redirectTargets, loc)
+			redirectTargets = append(redirectTargets, redirectJob{loc, fmt.Sprintf("HTTPS %d", engine.httpProtocolScanResult.HttpsStatusCode())})
 		}
 
 		for len(redirectTargets) > 0 {
-			loc := redirectTargets[0]
+			job := redirectTargets[0]
 			redirectTargets = redirectTargets[1:]
+			loc := job.loc
 
 			if visited[loc] {
 				continue
@@ -284,7 +290,7 @@ func (engine *Engine) Scan(input string) error {
 				continue
 			}
 
-			if _, err := fmt.Fprintf(engine.stdout, "\n# Following redirect to %s\n\n", loc); err != nil {
+			if _, err := fmt.Fprintf(engine.stdout, "\n---\n\n# webscan results for %s (%s redirect)\n\n", loc, job.reason); err != nil {
 				slog.Debug("webscan: Error writing to output", "error", err)
 			}
 
@@ -337,10 +343,10 @@ func (engine *Engine) Scan(input string) error {
 
 			// Queue further redirects from this target
 			if newLoc := redirectProtocolResult.HttpRedirectLocation(); newLoc != "" && !visited[newLoc] {
-				redirectTargets = append(redirectTargets, newLoc)
+				redirectTargets = append(redirectTargets, redirectJob{newLoc, fmt.Sprintf("HTTP %d", redirectProtocolResult.HttpStatusCode())})
 			}
 			if newLoc := redirectProtocolResult.HttpsRedirectLocation(); newLoc != "" && !visited[newLoc] {
-				redirectTargets = append(redirectTargets, newLoc)
+				redirectTargets = append(redirectTargets, redirectJob{newLoc, fmt.Sprintf("HTTPS %d", redirectProtocolResult.HttpsStatusCode())})
 			}
 		}
 	}
