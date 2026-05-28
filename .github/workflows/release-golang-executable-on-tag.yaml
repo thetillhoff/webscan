@@ -40,11 +40,12 @@ jobs:
           - arm64
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      - uses: thetillhoff/action-golang-build@63a1bfaa47f4f5c94c6b642b0723111128a9c118 # v1.0.1
+      - uses: thetillhoff/action-golang-build@b94bf8d46bc2dd0f7324fcbd0c6530838943976e # v1.1.0
         with:
           OS: "${{ matrix.os }}"
           ARCH: "${{ matrix.arch }}"
           BUILDARGS: -ldflags="-X main.version=${{ env.TAG }}"
+          RELATIVE_PACKAGE_PATH: ./cmd/webscan/
 
   verify-version:
     needs: golang-build
