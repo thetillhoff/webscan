@@ -7,7 +7,7 @@ import (
 	"sort"
 )
 
-func PrintResult(result Result, out io.Writer) {
+func PrintResult(result Result, schemaLabel string, out io.Writer) {
 	var expectedPresent []FileResult
 	var expectedMissing []FileResult
 	var sensitiveExposed []FileResult
@@ -31,7 +31,7 @@ func PrintResult(result Result, out io.Writer) {
 		return
 	}
 
-	if _, err := fmt.Fprintf(out, "\n\n## Well-known files scan results (%s)\n\n", result.schema.String()); err != nil {
+	if _, err := fmt.Fprintf(out, "\n\n## Well-known files scan results (%s)\n\n", schemaLabel); err != nil {
 		slog.Debug("knownFilesScan: Error writing to output", "error", err)
 	}
 

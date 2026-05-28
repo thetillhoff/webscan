@@ -172,51 +172,68 @@ func (engine *Engine) Scan(input string) error {
 	}
 
 	if engine.htmlContentScan {
+		httpAvail := engine.portScanResult.IsPortOpen(80) && engine.httpProtocolScanResult.IsAvailableViaHttp()
+		httpsAvail := engine.portScanResult.IsPortOpen(443) && engine.httpProtocolScanResult.IsAvailableViaHttps()
 
-		if engine.portScanResult.IsPortOpen(80) && engine.httpProtocolScanResult.IsAvailableViaHttp() {
+		if httpAvail {
 			engine.httpHtmlContentScanResult, err = htmlContentScan.Scan(&engine.status, engine.target, htmlContentScan.WithClient(engine.client), htmlContentScan.WithSchemaOverride(types.HTTP))
 			if err != nil {
 				return err
 			}
-
-			htmlContentScan.PrintResult(engine.httpHtmlContentScanResult, "http", engine.stdout)
 		}
 
-		if engine.portScanResult.IsPortOpen(443) && engine.httpProtocolScanResult.IsAvailableViaHttps() {
+		if httpsAvail {
 			engine.httpsHtmlContentScanResult, err = htmlContentScan.Scan(&engine.status, engine.target, htmlContentScan.WithClient(engine.client), htmlContentScan.WithSchemaOverride(types.HTTPS))
 			if err != nil {
 				return err
 			}
-
-			htmlContentScan.PrintResult(engine.httpsHtmlContentScanResult, "https", engine.stdout)
 		}
 
+		if httpAvail && httpsAvail && engine.httpHtmlContentScanResult.Equal(engine.httpsHtmlContentScanResult) {
+			htmlContentScan.PrintResult(engine.httpHtmlContentScanResult, "HTTP & HTTPS", engine.stdout)
+		} else {
+			if httpAvail {
+				htmlContentScan.PrintResult(engine.httpHtmlContentScanResult, "http", engine.stdout)
+			}
+			if httpsAvail {
+				htmlContentScan.PrintResult(engine.httpsHtmlContentScanResult, "https", engine.stdout)
+			}
+		}
 	}
 
 	// Known files scan
 
 	if engine.knownFilesScan {
+		httpAvail := engine.portScanResult.IsPortOpen(80) && engine.httpProtocolScanResult.IsAvailableViaHttp()
+		httpsAvail := engine.portScanResult.IsPortOpen(443) && engine.httpProtocolScanResult.IsAvailableViaHttps()
 
-		if engine.portScanResult.IsPortOpen(80) && engine.httpProtocolScanResult.IsAvailableViaHttp() {
+		if httpAvail {
 			engine.httpKnownFilesScanResult = knownFilesScan.Scan(
 				engine.target,
 				&engine.status,
 				types.HTTP,
 				knownFilesScan.WithTimeout(engine.timeout),
 			)
-
-			knownFilesScan.PrintResult(engine.httpKnownFilesScanResult, engine.stdout)
 		}
 
-		if engine.portScanResult.IsPortOpen(443) && engine.httpProtocolScanResult.IsAvailableViaHttps() {
+		if httpsAvail {
 			engine.httpsKnownFilesScanResult = knownFilesScan.Scan(
 				engine.target,
 				&engine.status,
 				types.HTTPS,
 				knownFilesScan.WithTimeout(engine.timeout),
 			)
+		}
 
-			knownFilesScan.PrintResult(engine.httpsKnownFilesScanResult, engine.stdout)
+		if httpAvail && httpsAvail && engine.httpKnownFilesScanResult.EqualContent(engine.httpsKnownFilesScanResult) {
+			knownFilesScan.PrintResult(engine.httpKnownFilesScanResult, "HTTP & HTTPS", engine.stdout)
+		} else {
+			if httpAvail {
+				knownFilesScan.PrintResult(engine.httpKnownFilesScanResult, "http", engine.stdout)
+			}
+			if httpsAvail {
+				knownFilesScan.PrintResult(engine.httpsKnownFilesScanResult, "https", engine.stdout)
+			}
 		}
 	}
 
@@ -315,7 +332,7 @@ func (engine *Engine) Scan(input string) error {
 					schema,
 					knownFilesScan.WithTimeout(engine.timeout),
 				)
-				knownFilesScan.PrintResult(filesResult, engine.stdout)
+				knownFilesScan.PrintResult(filesResult, schema.String(), engine.stdout)
 			}
 
 			// Queue further redirects from this target

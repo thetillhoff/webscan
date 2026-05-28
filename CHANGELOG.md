@@ -19,9 +19,12 @@
 - **HTTP Redirect Detection**: Protocol scan now correctly detects HTTP redirects (301/302/303/307/308) and displays the redirect target and status code
 - **Follow Redirect Chain**: `--follow` now runs web scans (protocol, headers, content) on each redirect target in sequence, without repeating DNS/IP/port/TLS scans
 - **Parallel HTTP Protocol Checks**: HTTP/1, HTTP/2, HTTP/3 version checks and redirect detection all run concurrently per port and IP
-- **Structured Header Output**: HTTP header scan results now use a structured `HeaderEntry` type with separate Name, Value, and Recommendation fields; output shows actionable guidance with a `→` prefix
+- **Structured Header Output**: HTTP header scan results now use a structured `HeaderEntry` type; each header shows its value and recommendation inline with a `→` prefix; multi-line values (e.g. CSP) are indented cleanly
+- **HTTP & HTTPS Section Deduplication**: Content scan and well-known file scan results are printed once as "HTTP & HTTPS" when both protocols return identical results
 - **TLS Labeled Certificate Names**: Certificate names are now prefixed with `SN:` (Subject Name) or `SAN:` (Subject Alternative Name) and always shown when the TLS scan runs
-- **TLS Cipher Rule Ordering**: Cipher rules are now printed in definition order (deterministic) instead of map iteration order; each rule shows both its title and description
+- **TLS Cipher Rule Titles**: Each cipher rule now has a short title (e.g. "RC4 ciphers") printed before its description, making sections immediately identifiable
+- **TLS Cipher Rule Ordering**: Cipher rules are now printed in definition order (deterministic) instead of map iteration order
+- **TLS Cipher Cross-Rule Deduplication**: Ciphers already flagged by a specific rule (RC4, 3DES, CBC) no longer also appear under "Ciphers deemed insecure by Golang"
 - **Well-Known File Analysis**: robots.txt, security.txt, and sitemap.xml are parsed and analyzed — robots.txt checks for sitemap directives and overly broad disallow rules; security.txt validates required fields and expiry; sitemap.xml reports URL and sub-sitemap counts
 - **TLS Output Deduplication**: Shared certificate info printed once; only per-IP differences shown
 - **IP Blacklist Codes**: Comprehensive Spamhaus return code handling with human-readable descriptions; error codes (rate limiting, public resolver) logged as warnings instead of confusing the user
@@ -31,9 +34,10 @@
 
 ### Bug Fixes
 
+- **Referrer-Policy Scan**: Fixed incorrect check of `Referer` (a request header) — now correctly checks `Referrer-Policy` (the response header that controls referrer behaviour)
 - **HSTS for HTTP**: No longer recommends HSTS headers for plain HTTP responses (only HTTPS)
 - **TLS Cipher Deduplication**: Cipher rules that are identical across IPs are no longer printed per-IP
-- **External Resource Fetch**: HTML content scan now handles unreachable external stylesheets and scripts gracefully instead of aborting the scan
+- **External Resource Fetch**: HTML content scan now handles unreachable external stylesheets and scripts gracefully instead of aborting the scan; error reason (e.g. DNS returning 0.0.0.0) is included in the output
 - **Redirect Output**: Protocol scan no longer emits a redundant "traffic is redirected to" line; redirect info is shown in the scan summary
 - **Subdomain Scan Flags**: `--subdomains` no longer triggers advanced DNS or prints TLS results; TLS scan runs internally for SANs only
 - **Protocol Scan Flags**: `--protocol` no longer triggers advanced DNS scan

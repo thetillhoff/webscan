@@ -45,7 +45,7 @@ func validateSTS(content string) error {
 	}
 
 	if includeSubdomains && !preload {
-		return errors.New("subdomains are included, so preload can be enabled as well")
+		return errors.New("subdomains are included, so 'preload' should be enabled as well")
 	}
 
 	if !includeSubdomains && preload {
@@ -53,7 +53,7 @@ func validateSTS(content string) error {
 	}
 
 	if !includeSubdomains && !preload {
-		return errors.New("'includeSubdomains' and 'preload' should be enabled when you are sure your https setup works fine")
+		return errors.New("'includeSubdomains' and 'preload' should be enabled once you have verified your HTTPS setup is working correctly")
 	}
 
 	slog.Debug("httpHeaderScan: Validating HSTS completed")
