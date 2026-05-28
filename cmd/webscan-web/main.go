@@ -78,6 +78,7 @@ func main() {
 
 	// Create and run server
 	server, err := webserver.NewServer(
+		version,
 		*noColor,
 		*dnsServer,
 		*follow,

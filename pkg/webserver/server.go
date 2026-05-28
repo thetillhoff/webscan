@@ -36,6 +36,7 @@ var (
 )
 
 type Server struct {
+	version             string
 	writeMutex          *sync.Mutex
 	dnsServer           string
 	follow              bool
@@ -60,6 +61,7 @@ type Server struct {
 }
 
 func NewServer(
+	version string,
 	noColor bool,
 	dnsServer string,
 	followRedirects bool,
@@ -123,6 +125,7 @@ func NewServer(
 	}
 
 	server := &Server{
+		version:             version,
 		writeMutex:          writeMutex,
 		dnsServer:           dnsServer,
 		follow:              followRedirects,
@@ -175,7 +178,8 @@ func (s *Server) withRequestLogging(next http.Handler) http.Handler {
 func (s *Server) indexHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := s.templates.ExecuteTemplate(w, "index.html", map[string]any{
-		"title": "webscan - Web Security Scanner",
+		"title":   "webscan - Web Security Scanner",
+		"version": s.version,
 	}); err != nil {
 		slog.Error("failed to render index template", "error", err)
 		http.Error(w, "template rendering failed", http.StatusInternalServerError)

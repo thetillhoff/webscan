@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## v5.2.0
+
+### New Features
+
+- **Footer**: Web UI now shows a link to the GitHub repo and the running version at the bottom of the page
+
 ## v5.1.0
 
 ### New Features
