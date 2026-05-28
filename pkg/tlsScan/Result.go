@@ -7,8 +7,9 @@ import (
 )
 
 type certInfo struct {
-	names   []string
-	issuers []string
+	commonName string
+	sans       []string
+	issuers    []string
 }
 
 type Result struct {
@@ -25,15 +26,60 @@ type TlsScanResult struct {
 	cipherRulesEvaluationResult map[string][]string
 }
 
-// Returns list of cert names for an ip
+// Returns list of cert names for an ip (combined CN + SANs, for comparison logic)
 func (r *Result) ListCertNamesForIp(ip string) []string {
-
 	certNames := []string{}
 	if len(r.tlsScanResultPerIp[ip].certInfos) > 0 {
-		certNames = append(certNames, r.tlsScanResultPerIp[ip].certInfos[0].names...) // Only the first one, since others are for the certificate chain
+		ci := r.tlsScanResultPerIp[ip].certInfos[0] // Only the first one, since others are for the certificate chain
+		certNames = append(certNames, ci.commonName)
+		certNames = append(certNames, ci.sans...)
 	}
 	slices.Sort(certNames)
 	return slices.Compact(certNames)
+}
+
+// Returns cert names with SN:/SAN: prefixes for the names shared across all IPs
+func (r *Result) LabeledSharedCertNames() []string {
+	if len(r.tlsScanResultPerIp) == 0 {
+		return nil
+	}
+	sharedNames := r.ListSharedCertNames()
+	var labeled []string
+	for ip := range r.tlsScanResultPerIp {
+		if len(r.tlsScanResultPerIp[ip].certInfos) == 0 {
+			continue
+		}
+		ci := r.tlsScanResultPerIp[ip].certInfos[0]
+		if slices.Contains(sharedNames, ci.commonName) {
+			labeled = append(labeled, "SN:  "+ci.commonName)
+		}
+		for _, san := range ci.sans {
+			if slices.Contains(sharedNames, san) {
+				labeled = append(labeled, "SAN: "+san)
+			}
+		}
+		break // use first IP only — shared means same on all
+	}
+	return labeled
+}
+
+// Returns cert names with SN:/SAN: prefixes for names unique to this IP
+func (r *Result) LabeledNonSharedCertNamesForIp(ip string) []string {
+	sharedNames := r.ListSharedCertNames()
+	var labeled []string
+	if len(r.tlsScanResultPerIp[ip].certInfos) == 0 {
+		return labeled
+	}
+	ci := r.tlsScanResultPerIp[ip].certInfos[0]
+	if !slices.Contains(sharedNames, ci.commonName) {
+		labeled = append(labeled, "SN:  "+ci.commonName)
+	}
+	for _, san := range ci.sans {
+		if !slices.Contains(sharedNames, san) {
+			labeled = append(labeled, "SAN: "+san)
+		}
+	}
+	return labeled
 }
 
 // Returns list of all cert names for all ips

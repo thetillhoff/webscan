@@ -9,7 +9,7 @@
 
 ### New Features
 
-- **Web Server Mode**: New `webscan-web` binary provides a browser-based scanning interface with Redis-backed job queue (`cmd/webscan-web/`, `pkg/webserver/`)
+- **Web Server Mode**: New browser-based scanning interface with Redis-backed job queue (`cmd/webscan-web/`, `pkg/webserver/`); distributed as a Docker image, not a standalone binary
 - **Docker Compose**: Full stack deployment with Redis and web server
 - **Well-Known Files Scan**: New `--files` flag checks for standard files (robots.txt, sitemap.xml, security.txt, llms.txt, AI plugin manifest) and warns on exposed sensitive files (.htaccess, .env, .git/config, wp-config.php, server-status)
 - **Unified Timeout Flag**: New `--timeout` flag (default 5s) controls all network requests (DNS, port scan, HTTP, RDAP, blacklist checks); previously hardcoded per scan type
@@ -19,6 +19,10 @@
 - **HTTP Redirect Detection**: Protocol scan now correctly detects HTTP redirects (301/302/303/307/308) and displays the redirect target and status code
 - **Follow Redirect Chain**: `--follow` now runs web scans (protocol, headers, content) on each redirect target in sequence, without repeating DNS/IP/port/TLS scans
 - **Parallel HTTP Protocol Checks**: HTTP/1, HTTP/2, HTTP/3 version checks and redirect detection all run concurrently per port and IP
+- **Structured Header Output**: HTTP header scan results now use a structured `HeaderEntry` type with separate Name, Value, and Recommendation fields; output shows actionable guidance with a `→` prefix
+- **TLS Labeled Certificate Names**: Certificate names are now prefixed with `SN:` (Subject Name) or `SAN:` (Subject Alternative Name) and always shown when the TLS scan runs
+- **TLS Cipher Rule Ordering**: Cipher rules are now printed in definition order (deterministic) instead of map iteration order; each rule shows both its title and description
+- **Well-Known File Analysis**: robots.txt, security.txt, and sitemap.xml are parsed and analyzed — robots.txt checks for sitemap directives and overly broad disallow rules; security.txt validates required fields and expiry; sitemap.xml reports URL and sub-sitemap counts
 - **TLS Output Deduplication**: Shared certificate info printed once; only per-IP differences shown
 - **IP Blacklist Codes**: Comprehensive Spamhaus return code handling with human-readable descriptions; error codes (rate limiting, public resolver) logged as warnings instead of confusing the user
 - **crt.sh Error Handling**: Certificate transparency log failures (timeout, rate limit, server error, unreachable) shown as a brief note instead of raw errors
@@ -29,6 +33,8 @@
 
 - **HSTS for HTTP**: No longer recommends HSTS headers for plain HTTP responses (only HTTPS)
 - **TLS Cipher Deduplication**: Cipher rules that are identical across IPs are no longer printed per-IP
+- **External Resource Fetch**: HTML content scan now handles unreachable external stylesheets and scripts gracefully instead of aborting the scan
+- **Redirect Output**: Protocol scan no longer emits a redundant "traffic is redirected to" line; redirect info is shown in the scan summary
 - **Subdomain Scan Flags**: `--subdomains` no longer triggers advanced DNS or prints TLS results; TLS scan runs internally for SANs only
 - **Protocol Scan Flags**: `--protocol` no longer triggers advanced DNS scan
 

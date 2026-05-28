@@ -21,7 +21,6 @@ const (
 	Ipv6
 )
 
-
 type Target struct {
 	rawTarget  string
 	schema     Schema

@@ -8,40 +8,48 @@ import (
 )
 
 func PrintResult(result Result, schemaName string, out io.Writer) {
-	var (
-		messages = []string{}
-	)
+	hasEntries := len(result.httpHeaderEntries) > 0
+	hasCookies := len(result.httpCookieRecommendations)+len(result.httpOtherCookieRecommendations) > 0
 
 	slog.Debug("httpHeaderScan: Printing result started")
 
-	messages = append(messages, result.httpHeaderRecommendations...)
-
-	if len(result.httpCookieRecommendations)+len(result.httpOtherCookieRecommendations) > 0 { // If any recommendations for cookies exist
-		messages = append(messages, "\nCookies:\n") // Add empty line and subheading for better readability
+	if !hasEntries && !hasCookies {
+		slog.Debug("httpHeaderScan: No information found")
+		return
 	}
 
-	for cookieName, recommendations := range result.httpCookieRecommendations {
-		for _, recommendation := range recommendations {
-			messages = append(messages, fmt.Sprintf("Cookie '%s' %s", cookieName, recommendation))
-		}
-	}
+	fmt.Fprintf(out, "\n## %s header scan results\n\n", strings.ToUpper(schemaName))
 
-	messages = append(messages, result.httpOtherCookieRecommendations...)
-
-	if len(messages) > 0 {
-		if _, err := fmt.Fprintf(out, "\n## %s header scan results\n\n", strings.ToUpper(schemaName)); err != nil {
-			slog.Debug("httpHeaderScan: Error writing to output", "error", err)
-		}
-
-		for _, message := range messages {
-			if _, err := fmt.Fprintf(out, "%s\n", message); err != nil {
-				slog.Debug("httpHeaderScan: Error writing to output", "error", err)
+	if hasEntries {
+		fmt.Fprintf(out, "Headers:\n")
+		for _, entry := range result.httpHeaderEntries {
+			if strings.Contains(entry.Value, "\n") {
+				fmt.Fprintf(out, "- %s:\n", entry.Name)
+				for _, line := range strings.Split(entry.Value, "\n") {
+					fmt.Fprintf(out, "    %s\n", line)
+				}
+			} else if entry.Value == "" {
+				fmt.Fprintf(out, "- %s: (not set)\n", entry.Name)
+			} else {
+				fmt.Fprintf(out, "- %s: %s\n", entry.Name, entry.Value)
+			}
+			if entry.Recommendation != "" {
+				fmt.Fprintf(out, "  → %s\n", entry.Recommendation)
 			}
 		}
-	} else {
-		slog.Debug("httpHeaderScan: No information found")
+	}
+
+	if hasCookies {
+		fmt.Fprintf(out, "\nCookies:\n")
+		for cookieName, recommendations := range result.httpCookieRecommendations {
+			for _, recommendation := range recommendations {
+				fmt.Fprintf(out, "- Cookie '%s' %s\n", cookieName, recommendation)
+			}
+		}
+		for _, rec := range result.httpOtherCookieRecommendations {
+			fmt.Fprintf(out, "- %s\n", rec)
+		}
 	}
 
 	slog.Debug("httpHeaderScan: Printing result completed")
-
 }

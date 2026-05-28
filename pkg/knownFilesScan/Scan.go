@@ -2,6 +2,7 @@ package knownFilesScan
 
 import (
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"sync"
@@ -14,8 +15,8 @@ import (
 type fileCategory int
 
 const (
-	categoryExpected fileCategory = iota
-	categorySensitive
+	categoryExpected  fileCategory = iota
+	categorySensitive fileCategory = iota
 )
 
 type fileCheck struct {
@@ -98,6 +99,22 @@ func Scan(target types.Target, status *status.Status, schema types.Schema, optio
 				Found:      resp.StatusCode == http.StatusOK,
 			}
 
+			if entry.Found {
+				body, err := io.ReadAll(resp.Body)
+				if err != nil {
+					slog.Debug("knownFilesScan: failed to read body", "url", url, "error", err)
+				} else {
+					switch fc.path {
+					case "/robots.txt":
+						entry.Observations, entry.Recommendations, entry.sitemapURLs = analyzeRobotsTxt(body)
+					case "/sitemap.xml":
+						entry.Observations, entry.Recommendations = analyzeSitemapXml(body)
+					case "/.well-known/security.txt":
+						entry.Observations, entry.Recommendations = analyzeSecurityTxt(body)
+					}
+				}
+			}
+
 			mu.Lock()
 			result.files = append(result.files, entry)
 			mu.Unlock()
@@ -105,6 +122,33 @@ func Scan(target types.Target, status *status.Status, schema types.Schema, optio
 	}
 
 	wg.Wait()
+
+	// Cross-reference: check that robots.txt Sitemap directive matches found sitemap.xml
+	expectedSitemapURL := schema.String() + "://" + target.Hostname() + "/sitemap.xml"
+	robotsIdx, sitemapIdx := -1, -1
+	for i, f := range result.files {
+		switch f.Path {
+		case "/robots.txt":
+			robotsIdx = i
+		case "/sitemap.xml":
+			sitemapIdx = i
+		}
+	}
+	if robotsIdx >= 0 && sitemapIdx >= 0 && result.files[robotsIdx].Found && result.files[sitemapIdx].Found {
+		referenced := false
+		for _, u := range result.files[robotsIdx].sitemapURLs {
+			if u == expectedSitemapURL {
+				referenced = true
+				break
+			}
+		}
+		if !referenced && len(result.files[robotsIdx].sitemapURLs) > 0 {
+			result.files[robotsIdx].Recommendations = append(
+				result.files[robotsIdx].Recommendations,
+				"Sitemap directive doesn't reference the found sitemap.xml at "+expectedSitemapURL,
+			)
+		}
+	}
 
 	status.SpinningComplete(fmt.Sprintf("Scan of %s well-known files complete.", schema.String()))
 

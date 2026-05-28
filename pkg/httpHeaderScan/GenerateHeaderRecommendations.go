@@ -8,114 +8,116 @@ import (
 	"github.com/thetillhoff/webscan/v3/pkg/types"
 )
 
-func GenerateHeaderRecommendations(response *http.Response, schema types.Schema) []string {
-	var (
-		err                   error
-		headerRecommendations = []string{}
-
-		headerName  string
-		headerValue string
-	)
+func GenerateHeaderRecommendations(response *http.Response, schema types.Schema) []HeaderEntry {
+	var entries []HeaderEntry
 
 	slog.Debug("httpHeaderScan: Generating header recommendations started")
 
-	// Server
-	headerName = "Server"
-	headerValue = response.Header.Get(headerName)
-	headerValue = strings.ToLower(headerValue)
-	if headerValue != "" { // If 'Server' header is set
-		headerRecommendations = append(headerRecommendations, headerName+" header: "+headerValue)
+	// Server — informational only
+	if v := strings.ToLower(response.Header.Get("Server")); v != "" {
+		entries = append(entries, HeaderEntry{Name: "Server", Value: v})
 	}
 
-	// HSTS (only relevant for HTTPS responses)
+	// Strict-Transport-Security (HTTPS only)
 	if schema == types.HTTPS {
-		headerName = "Strict-Transport-Security"
-		headerValue = response.Header.Get(headerName)
-		headerValue = strings.ToLower(headerValue)
-		if headerValue == "" {
-			headerRecommendations = append(headerRecommendations, headerName+" header should be implemented: https://infosec.mozilla.org/guidelines/web_security#http-strict-transport-security")
+		v := response.Header.Get("Strict-Transport-Security")
+		if v == "" {
+			entries = append(entries, HeaderEntry{
+				Name:           "Strict-Transport-Security",
+				Recommendation: "Should be implemented: https://infosec.mozilla.org/guidelines/web_security#http-strict-transport-security",
+			})
 		} else {
-			err = validateSTS(headerValue)
-			if err != nil {
-				headerRecommendations = append(headerRecommendations, headerName+" header: "+err.Error())
+			entry := HeaderEntry{Name: "Strict-Transport-Security", Value: strings.ToLower(v)}
+			if err := validateSTS(strings.ToLower(v)); err != nil {
+				entry.Recommendation = err.Error()
 			}
+			entries = append(entries, entry)
 		}
 	}
 
 	// Content-Security-Policy
-	headerName = "Content-Security-Policy"
-	headerValue = response.Header.Get(headerName)
-	headerValue = strings.ToLower(headerValue)
-	cspPolicies := strings.Split(headerValue, ";")
-	for index, cspPolicy := range cspPolicies {
-		cspPolicies[index] = "  " + strings.TrimSpace(cspPolicy)
-	}
-	headerValue = strings.Join(cspPolicies, ";\n")
-	if headerValue == "" {
-		headerRecommendations = append(headerRecommendations, headerName+" header should be implemented: https://infosec.mozilla.org/guidelines/web_security#content-security-policy")
+	if v := response.Header.Get("Content-Security-Policy"); v == "" {
+		entries = append(entries, HeaderEntry{
+			Name:           "Content-Security-Policy",
+			Recommendation: "Should be implemented: https://infosec.mozilla.org/guidelines/web_security#content-security-policy",
+		})
 	} else {
-		headerRecommendations = append(headerRecommendations, headerName+" header:")
-		headerRecommendations = append(headerRecommendations, headerValue) // TODO instead of just printing the header value, check it against the best practices described in the link above
+		var directives []string
+		for _, d := range strings.Split(strings.ToLower(v), ";") {
+			if d = strings.TrimSpace(d); d != "" {
+				directives = append(directives, d)
+			}
+		}
+		entries = append(entries, HeaderEntry{
+			Name:  "Content-Security-Policy",
+			Value: strings.Join(directives, ";\n"),
+		})
 	}
 
 	// X-Frame-Options
-	headerName = "X-Frame-Options"
-	headerValue = response.Header.Get(headerName)
-	headerValue = strings.ToLower(headerValue)
-	switch headerValue {
+	switch v := strings.ToLower(response.Header.Get("X-Frame-Options")); v {
 	case "":
-		headerRecommendations = append(headerRecommendations, headerName+" header should be set to 'sameorigin' or 'deny' as described in: https://infosec.mozilla.org/guidelines/web_security#x-frame-options")
-	case "sameorigin":
-		// Config okay
-	case "deny":
-		// Config okay
+		entries = append(entries, HeaderEntry{
+			Name:           "X-Frame-Options",
+			Recommendation: "Should be set to 'sameorigin' or 'deny': https://infosec.mozilla.org/guidelines/web_security#x-frame-options",
+		})
+	case "sameorigin", "deny":
+		// correctly configured
 	default:
-		headerRecommendations = append(headerRecommendations, headerName+" should be set to 'sameorigin' or 'deny', but got '"+headerValue+"'")
+		entries = append(entries, HeaderEntry{
+			Name:           "X-Frame-Options",
+			Value:          v,
+			Recommendation: "Should be 'sameorigin' or 'deny'",
+		})
 	}
 
 	// X-Content-Type-Options
-	headerName = "X-Content-Type-Options"
-	headerValue = response.Header.Get(headerName)
-	headerValue = strings.ToLower(headerValue)
-	switch headerValue {
+	switch v := strings.ToLower(response.Header.Get("X-Content-Type-Options")); v {
 	case "":
-		headerRecommendations = append(headerRecommendations, headerName+" header should be set to 'nosniff' as described in: https://infosec.mozilla.org/guidelines/web_security#x-content-type-options")
+		entries = append(entries, HeaderEntry{
+			Name:           "X-Content-Type-Options",
+			Recommendation: "Should be set to 'nosniff': https://infosec.mozilla.org/guidelines/web_security#x-content-type-options",
+		})
 	case "nosniff":
-		// Perfectly configured
+		// correctly configured
 	default:
-		headerRecommendations = append(headerRecommendations, headerName+" should be set to 'nosniff', but got '"+headerValue+"'")
+		entries = append(entries, HeaderEntry{
+			Name:           "X-Content-Type-Options",
+			Value:          v,
+			Recommendation: "Should be 'nosniff'",
+		})
 	}
 
-	// Referrer
-	headerName = "Referer"
-	headerValue = response.Header.Get(headerName)
-	headerValue = strings.ToLower(headerValue)
-	switch headerValue {
-	case "":
-		// headerRecommendations = append(headerRecommendations, headerName+" header should be implemented: https://infosec.mozilla.org/guidelines/web_security#referrer-policy")
-		// Default is used, which is strict-origin-when-cross-origin and therefore okay
-	case "no-referrer":
-		// Config okay
-	case "same-origin":
-		// Config okay
-	case "strict-origin":
-		// Config okay
-	case "strict-origin-when-cross-origin":
-		// Config okay
+	// Referrer-Policy (note: "Referer" is a request header; "Referrer-Policy" is the response header)
+	switch v := strings.ToLower(response.Header.Get("Referrer-Policy")); v {
+	case "", "no-referrer", "no-referrer-when-downgrade", "origin", "origin-when-cross-origin",
+		"same-origin", "strict-origin", "strict-origin-when-cross-origin":
+		// not set uses browser default (strict-origin-when-cross-origin), all listed values are acceptable
+	case "unsafe-url":
+		entries = append(entries, HeaderEntry{
+			Name:           "Referrer-Policy",
+			Value:          v,
+			Recommendation: "'unsafe-url' sends the full URL on all requests including cross-origin — consider 'strict-origin-when-cross-origin'",
+		})
 	default:
-		headerRecommendations = append(headerRecommendations, headerName+" should be set to one of 'no-referrer', 'same-origin', 'strict-origin', 'strict-origin-when-cross-origin', but got '"+headerValue+"'")
+		entries = append(entries, HeaderEntry{
+			Name:           "Referrer-Policy",
+			Value:          v,
+			Recommendation: "Unknown value; valid options: no-referrer, no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url",
+		})
 	}
 
 	// Cache-Control
-	headerName = "Cache-Control"
-	headerValue = response.Header.Get(headerName)
-	if headerValue == "" {
-		headerRecommendations = append(headerRecommendations, headerName+" header should be configured, for example as described here: https://medium.com/pixelpoint/best-practices-for-cache-control-settings-for-your-website-ff262b38c5a2")
+	if v := response.Header.Get("Cache-Control"); v == "" {
+		entries = append(entries, HeaderEntry{
+			Name:           "Cache-Control",
+			Recommendation: "Should be configured: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control",
+		})
 	} else {
-		headerRecommendations = append(headerRecommendations, headerName+" header: "+headerValue) // TODO instead of just printing the header value check it against the best practices described in the link above
+		entries = append(entries, HeaderEntry{Name: "Cache-Control", Value: v})
 	}
 
 	slog.Debug("httpHeaderScan: Generating header recommendations completed")
 
-	return headerRecommendations
+	return entries
 }

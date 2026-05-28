@@ -1,9 +1,9 @@
-.PHONY: list install run run-web test test-e2e test-api build build-web format lint upgrade compose-start compose-stop compose-restart
+.PHONY: list install run run-web test test-e2e test-api build build-web format vet tidy lint upgrade compose-start compose-stop compose-restart
 help:
 	@grep -E '^[[:alpha:]].*:' Makefile | cat # Get all targets in this file, without color-coding the matching letters
 
 install:
-	go get ./...
+	go install ./...
 
 # Filter out known targets so extra args are passed through to the binary
 RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
@@ -42,6 +42,12 @@ build-web:
 
 format:
 	go fmt ./...
+
+vet:
+	go vet ./...
+
+tidy:
+	go mod tidy
 
 lint:
 	go vet ./...

@@ -21,19 +21,16 @@ func PrintResult(result Result, out io.Writer) {
 		return
 	}
 
-	// Shared certificate names
-	sharedCertNames := result.ListSharedCertNames()
-	if len(sharedCertNames) > 0 {
-		messages = append(messages, "")
-		messages = append(messages, "Certificate names (SN & SANs):")
-		for _, certName := range sharedCertNames {
-			messages = append(messages, fmt.Sprintf("- %s", certName))
-		}
+	// Shared certificate names — always shown
+	messages = append(messages, "")
+	messages = append(messages, "Certificate names:")
+	for _, certName := range result.LabeledSharedCertNames() {
+		messages = append(messages, fmt.Sprintf("- %s", certName))
 	}
 
 	// Per-IP certificate name differences
 	for ip := range result.tlsScanResultPerIp {
-		nonSharedCertNames := result.ListNonSharedCertNamesForIp(ip)
+		nonSharedCertNames := result.LabeledNonSharedCertNamesForIp(ip)
 		if len(nonSharedCertNames) > 0 {
 			messages = append(messages, "")
 			messages = append(messages, fmt.Sprintf("Special certificate names on ip %s:", ip))
@@ -145,18 +142,34 @@ func PrintResult(result Result, out io.Writer) {
 		}
 	}
 
-	// Shared cipher rules
-	sharedCipherRules := result.ListSharedCipherRules()
-	if len(sharedCipherRules) > 0 {
-		messages = append(messages, "")
-		for rule, ciphers := range sharedCipherRules {
+	// Build title → description lookup from rule definitions
+	ruleDescriptions := map[string]string{}
+	for _, rule := range getRules() {
+		ruleDescriptions[rule.title] = rule.description
+	}
+
+	printCipherRules := func(rules map[string][]string) {
+		// Print in definition order so output is deterministic
+		for _, rule := range getRules() {
+			ciphers, ok := rules[rule.title]
+			if !ok || len(ciphers) == 0 {
+				continue
+			}
 			messages = append(messages, "")
-			messages = append(messages, rule)
+			messages = append(messages, rule.title)
+			messages = append(messages, ruleDescriptions[rule.title])
 			messages = append(messages, "Affected ciphers:")
 			for _, affectedCipher := range ciphers {
 				messages = append(messages, fmt.Sprintf("- %s", affectedCipher))
 			}
 		}
+	}
+
+	// Shared cipher rules
+	sharedCipherRules := result.ListSharedCipherRules()
+	if len(sharedCipherRules) > 0 {
+		messages = append(messages, "")
+		printCipherRules(sharedCipherRules)
 	}
 
 	// Per-IP cipher rule differences
@@ -165,14 +178,7 @@ func PrintResult(result Result, out io.Writer) {
 		if len(nonSharedCipherRules) > 0 {
 			messages = append(messages, "")
 			messages = append(messages, fmt.Sprintf("Special cipher rules on ip %s:", ip))
-			for rule, ciphers := range nonSharedCipherRules {
-				messages = append(messages, "")
-				messages = append(messages, rule)
-				messages = append(messages, "Affected ciphers:")
-				for _, affectedCipher := range ciphers {
-					messages = append(messages, fmt.Sprintf("- %s", affectedCipher))
-				}
-			}
+			printCipherRules(nonSharedCipherRules)
 		}
 	}
 

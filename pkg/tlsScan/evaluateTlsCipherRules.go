@@ -25,14 +25,40 @@ func evaluateTLSCipherRules(tlsCipherSuites []tls.CipherSuite) map[string][]stri
 
 			if rule.matchFunc(tlsCipherSuite) {
 
-				if _, ok := ruleMatches[rule.description]; !ok { // If map entry doesn't exist
-					ruleMatches[rule.description] = []string{} // Initialize map entry
+				if _, ok := ruleMatches[rule.title]; !ok { // If map entry doesn't exist
+					ruleMatches[rule.title] = []string{} // Initialize map entry
 				}
 
-				ruleMatches[rule.description] = append(ruleMatches[rule.description], tlsCipherSuite.Name) // Add cipherSuite name to list
+				ruleMatches[rule.title] = append(ruleMatches[rule.title], tlsCipherSuite.Name) // Add cipherSuite name to list
 			}
 		}
 
+	}
+
+	// Post-processing: remove from the Golang entry any ciphers already matched by another rule
+	const golangTitle = "Ciphers deemed insecure by Golang"
+	if golangMatches, ok := ruleMatches[golangTitle]; ok {
+		// Collect all cipher names matched by non-Golang rules
+		otherMatched := map[string]bool{}
+		for title, names := range ruleMatches {
+			if title != golangTitle {
+				for _, name := range names {
+					otherMatched[name] = true
+				}
+			}
+		}
+		// Filter the Golang entry
+		filtered := golangMatches[:0]
+		for _, name := range golangMatches {
+			if !otherMatched[name] {
+				filtered = append(filtered, name)
+			}
+		}
+		if len(filtered) == 0 {
+			delete(ruleMatches, golangTitle)
+		} else {
+			ruleMatches[golangTitle] = filtered
+		}
 	}
 
 	slog.Debug("tlsScan: Evaluating cipher rules completed")

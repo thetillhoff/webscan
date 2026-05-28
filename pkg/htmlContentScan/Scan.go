@@ -148,7 +148,9 @@ func Scan(status *status.Status, target types.Target, options ...ConfigOption) (
 
 			_, body, err = config.client.Get(parsedUrl.String())
 			if err != nil {
-				return result, err
+				slog.Warn("htmlContentScan: Failed to fetch external stylesheet", "url", parsedUrl.String(), "err", err)
+				messages = append(messages, "External stylesheet could not be fetched: "+stylesheetSource+" ("+err.Error()+")")
+				continue
 			}
 			result.httpContentStylesheetSizes[stylesheetSource] = len(body)
 		}
@@ -188,7 +190,9 @@ func Scan(status *status.Status, target types.Target, options ...ConfigOption) (
 
 			_, body, err = config.client.Get(parsedUrl.String())
 			if err != nil {
-				return result, err
+				slog.Warn("htmlContentScan: Failed to fetch external script", "url", parsedUrl.String(), "err", err)
+				messages = append(messages, "External script could not be fetched: "+scriptSource+" ("+err.Error()+")")
+				continue
 			}
 			result.httpContentScriptSizes[scriptSource] = len(body)
 		}

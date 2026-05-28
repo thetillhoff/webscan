@@ -4,7 +4,20 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net/url"
 )
+
+func stripDefaultPort(rawURL string) string {
+	u, err := url.Parse(rawURL)
+	if err != nil || u.Host == "" {
+		return rawURL
+	}
+	port := u.Port()
+	if (u.Scheme == "http" && port == "80") || (u.Scheme == "https" && port == "443") {
+		u.Host = u.Hostname()
+	}
+	return u.String()
+}
 
 func PrintResult(result Result, out io.Writer) {
 	var (

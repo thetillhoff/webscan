@@ -54,7 +54,6 @@ func evaluateTLSCertificate(target types.Target, ip string) ([]certInfo, error, 
 	for idx, cert := range peerCerts {
 
 		certInfo := certInfo{
-			names:   []string{},
 			issuers: []string{},
 		}
 
@@ -62,22 +61,22 @@ func evaluateTLSCertificate(target types.Target, ip string) ([]certInfo, error, 
 		// Sample: fmt.Printf("Expiry: %s \n", cert.NotAfter.Format("2006-11-02"))
 
 		slog.Debug("tlsScan: Certificate field", "idx", idx, "common_name", cert.Subject.CommonName)
-		certInfo.names = append(certInfo.names, cert.Subject.CommonName)
+		certInfo.commonName = cert.Subject.CommonName
 
 		slog.Debug("tlsScan: Certificate field", "idx", idx, "dns_names", cert.DNSNames)
-		certInfo.names = append(certInfo.names, cert.DNSNames...)
+		certInfo.sans = append(certInfo.sans, cert.DNSNames...)
 
 		slog.Debug("tlsScan: Certificate field", "idx", idx, "email_addresses", cert.EmailAddresses)
-		certInfo.names = append(certInfo.names, cert.EmailAddresses...)
+		certInfo.sans = append(certInfo.sans, cert.EmailAddresses...)
 
 		slog.Debug("tlsScan: Certificate field", "idx", idx, "ip_addresses", cert.IPAddresses)
 		for _, ipAddress := range cert.IPAddresses {
-			certInfo.names = append(certInfo.names, ipAddress.String())
+			certInfo.sans = append(certInfo.sans, ipAddress.String())
 		}
 
 		slog.Debug("tlsScan: Certificate field", "idx", idx, "uris", cert.URIs)
 		for _, uri := range cert.URIs {
-			certInfo.names = append(certInfo.names, uri.Host)
+			certInfo.sans = append(certInfo.sans, uri.Host)
 		}
 
 		certInfo.issuers = append(certInfo.issuers, cert.Issuer.String())
@@ -85,7 +84,7 @@ func evaluateTLSCertificate(target types.Target, ip string) ([]certInfo, error, 
 
 		certInfos = append(certInfos, certInfo)
 
-		slog.Debug("tlsScan: Certificate parsed", "idx", idx, "cert_names", certInfo.names, "cert_issuers", certInfo.issuers)
+		slog.Debug("tlsScan: Certificate parsed", "idx", idx, "common_name", certInfo.commonName, "sans", certInfo.sans, "cert_issuers", certInfo.issuers)
 	}
 
 	slog.Debug("tlsScan: Evaluating TLS certificate completed")

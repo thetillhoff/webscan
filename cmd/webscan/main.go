@@ -229,7 +229,6 @@ GLOBAL OPTIONS:{{range .VisibleFlags}}
 				engine.EnableWebScans()
 			}
 
-
 			engine.EnableAllScansIfNoneAreExplicitlySet()
 
 			err = engine.Scan(cmd.Args().First())

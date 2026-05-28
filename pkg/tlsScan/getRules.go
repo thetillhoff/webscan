@@ -10,20 +10,18 @@ func getRules() []Rule {
 		rules = []Rule{}
 	)
 
+	// Verify ciphers (https://ciphersuite.info/cs/?tls=tls12&singlepage=true has some nice hints on the reasons behind deeming a cipher insecure)
 	rules = append(rules, Rule{
-
-		// Verify ciphers (https://ciphersuite.info/cs/?tls=tls12&singlepage=true has some nice hints on the reasons behind deeming a cipher insecure)
-		description: `Some ciphers are deemed unsecure by Golang.
+		title: "Ciphers deemed insecure by Golang",
+		description: `These cipher suites are explicitly marked insecure by the Go TLS library.
 More information: https://ciphersuite.info/cs/?tls=tls12&singlepage=true`,
 		matchFunc: func(cipherSuite tls.CipherSuite) bool {
-			isCipherSecure := true
 			for _, insecureCipher := range tls.InsecureCipherSuites() {
 				if cipherSuite.ID == insecureCipher.ID {
-					isCipherSecure = false
-					break
+					return true
 				}
 			}
-			return isCipherSecure
+			return false
 		},
 	})
 
@@ -36,6 +34,7 @@ More information: https://ciphersuite.info/cs/?tls=tls12&singlepage=true`,
 
 	// 3DES has 64-bit blocks, which makes it fundamentally vulnerable to birthday attacks given enough traffic https://sweet32.info/
 	rules = append(rules, Rule{
+		title: "3DES ciphers",
 		description: `3DES is fundamentally vulnerable to birthday attacks given enough traffic.
 More information: https://sweet32.info/`,
 		matchFunc: func(cipherSuite tls.CipherSuite) bool {
@@ -46,6 +45,7 @@ More information: https://sweet32.info/`,
 	// RC4 has practically exploitable biases that can lead to plaintext recovery without side channels
 	// https://www.rc4nomore.com/ & https://blog.cloudflare.com/killing-rc4-the-long-goodbye/ & https://blog.cloudflare.com/end-of-the-road-for-rc4/ & https://datatracker.ietf.org/doc/html/rfc7465
 	rules = append(rules, Rule{
+		title: "RC4 ciphers",
 		description: `RC4 was prohibited by the IETF in 2015.
 More information: https://www.rc4nomore.com/, https://datatracker.ietf.org/doc/html/rfc7465`,
 		matchFunc: func(cipherSuite tls.CipherSuite) bool {
@@ -64,6 +64,7 @@ More information: https://www.rc4nomore.com/, https://datatracker.ietf.org/doc/h
 	//
 	// CBC only with Encrypt-then-MAC -> recommend against it, as it's hard to get right https://blog.cloudflare.com/yet-another-padding-oracle-in-openssl-cbc-ciphersuites/
 	rules = append(rules, Rule{
+		title: "CBC ciphers",
 		description: `CBC seems to be fundamentally flawed since the Lucky13 vulnerability was discovered - even though no known attacks exists. Yet.
 More information: https://en.wikipedia.org/wiki/Lucky_Thirteen_attack, https://security.stackexchange.com/a/207414`,
 		matchFunc: func(cipherSuite tls.CipherSuite) bool {

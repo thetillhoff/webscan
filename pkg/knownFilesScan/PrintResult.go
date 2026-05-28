@@ -49,19 +49,45 @@ func PrintResult(result Result, out io.Writer) {
 		}
 	}
 
-	if len(expectedPresent) > 0 {
-		for _, f := range expectedPresent {
-			if _, err := fmt.Fprintf(out, "- %s found\n", f.Label); err != nil {
-				slog.Debug("knownFilesScan: Error writing to output", "error", err)
-			}
+	for _, f := range expectedPresent {
+		if _, err := fmt.Fprintf(out, "- %s found\n", f.Label); err != nil {
+			slog.Debug("knownFilesScan: Error writing to output", "error", err)
 		}
+		printFileDetails(f, out)
 	}
 
-	if len(expectedMissing) > 0 {
-		for _, f := range expectedMissing {
-			if _, err := fmt.Fprintf(out, "- %s not found (consider adding %s)\n", f.Label, f.Path); err != nil {
-				slog.Debug("knownFilesScan: Error writing to output", "error", err)
-			}
+	for _, f := range expectedMissing {
+		if _, err := fmt.Fprintf(out, "- %s not found (consider adding %s)\n", f.Label, f.Path); err != nil {
+			slog.Debug("knownFilesScan: Error writing to output", "error", err)
+		}
+	}
+}
+
+func printFileDetails(f FileResult, out io.Writer) {
+	hasObs := len(f.Observations) > 0
+	hasRec := len(f.Recommendations) > 0
+
+	if !hasObs && !hasRec {
+		return
+	}
+
+	if hasObs && hasRec {
+		fmt.Fprintf(out, "  Observations:\n")
+		for _, obs := range f.Observations {
+			fmt.Fprintf(out, "  - %s\n", obs)
+		}
+		fmt.Fprintf(out, "  Recommendations:\n")
+		for _, rec := range f.Recommendations {
+			fmt.Fprintf(out, "  - %s\n", rec)
+		}
+	} else if hasObs {
+		for _, obs := range f.Observations {
+			fmt.Fprintf(out, "  - %s\n", obs)
+		}
+	} else {
+		fmt.Fprintf(out, "  Recommendations:\n")
+		for _, rec := range f.Recommendations {
+			fmt.Fprintf(out, "  - %s\n", rec)
 		}
 	}
 }

@@ -19,8 +19,6 @@ func httpProtocolRecommendations(target types.Target, result Result, isAvailable
 	switch {
 	case result.isAvailableViaHttp:
 		if result.httpRedirectLocation != "" { // If http has redirectLocation
-			httpProtocolRecommendations = append(httpProtocolRecommendations, "HTTP traffic is redirected to "+result.httpRedirectLocation) // Print note with redirectLocation
-
 			// 301 & 308 are permanent redirects, 302, 303, 307 are temporary redirects, 300 and 304 are special cases are not meant for normal redirects
 			if result.httpStatusCode != 301 && result.httpStatusCode != 308 { // If status code != 301 or 308
 				httpProtocolRecommendations = append(httpProtocolRecommendations, "HTTP should only be used to redirect with a 301 or 308 status code. Got "+strconv.Itoa(result.httpStatusCode)) // Recommend to use 301 or 308 for redirect
@@ -39,8 +37,6 @@ func httpProtocolRecommendations(target types.Target, result Result, isAvailable
 	switch {
 	case result.isAvailableViaHttps:
 		if result.httpsRedirectLocation != "" { // If https has redirectLocation
-			httpProtocolRecommendations = append(httpProtocolRecommendations, "HTTPS traffic is redirected to "+result.httpRedirectLocation) // Print note with redirectLocation
-
 			// 301 & 308 are permanent redirects, 302, 303, 307 are temporary redirects, 300 and 304 are special cases are not meant for normal redirects
 			if result.httpsStatusCode != 301 && result.httpsStatusCode != 308 { // If status code != 301 or 308
 				httpProtocolRecommendations = append(httpProtocolRecommendations, "HTTPS should only be used to redirect with a 301 or 308 status code. Got "+strconv.Itoa(result.httpsStatusCode)) // Recommend to use 301 or 308 for redirect

@@ -34,7 +34,7 @@ func WithSchemaOverride(schema types.Schema) ConfigOption {
 func Scan(status *status.Status, target types.Target, options ...ConfigOption) (Result, error) {
 	var (
 		result = Result{
-			httpHeaderRecommendations:      []string{},
+			httpHeaderEntries:              []HeaderEntry{},
 			httpCookieRecommendations:      map[string][]string{},
 			httpOtherCookieRecommendations: []string{},
 		}
@@ -57,7 +57,7 @@ func Scan(status *status.Status, target types.Target, options ...ConfigOption) (
 		return result, err
 	}
 
-	result.httpHeaderRecommendations = append(result.httpHeaderRecommendations, GenerateHeaderRecommendations(response, config.schemaOverride)...)
+	result.httpHeaderEntries = GenerateHeaderRecommendations(response, config.schemaOverride)
 
 	result.httpCookieRecommendations, result.httpOtherCookieRecommendations = GenerateCookieRecommendations(response) // TODO append instead
 
