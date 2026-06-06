@@ -13,7 +13,7 @@ jobs:
       CURRENT_VERSION: ${{ steps.versions.outputs.CURRENT_VERSION }}
       NEW_VERSION: ${{ steps.versions.outputs.NEW_VERSION }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           fetch-depth: 0
           fetch-tags: true
@@ -31,7 +31,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Update CHANGELOG
         run: |
@@ -63,7 +63,7 @@ jobs:
         arch:
           - amd64
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       - uses: thetillhoff/action-golang-build@b94bf8d46bc2dd0f7324fcbd0c6530838943976e # v1.1.0
         with:
           OS: "${{ matrix.os }}"
@@ -97,7 +97,7 @@ jobs:
     permissions:
       contents: write # Needed to push the tag
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       - name: Pull latest changes and create tag
         run: |
           git pull origin main
