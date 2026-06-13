@@ -26,6 +26,7 @@ jobs:
           OS: "${{ matrix.os }}"
           ARCH: "${{ matrix.arch }}"
           BUILDARGS: -ldflags="-X main.version=${{ github.sha }}"
+          RELATIVE_PACKAGE_PATH: ./cmd/webscan/
 
   verify-version:
     needs: golang-build

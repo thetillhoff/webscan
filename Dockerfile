@@ -12,12 +12,14 @@ COPY . .
 # Build stage for webscan CLI
 FROM src AS builder-cli
 WORKDIR /workspace
-RUN go build -o /artifacts/webscan ./cmd/webscan/
+ARG VERSION=dev
+RUN go build -ldflags="-X main.version=${VERSION}" -o /artifacts/webscan ./cmd/webscan/
 
 # Build stage for webscan-web
 FROM src AS builder-web
 WORKDIR /workspace
-RUN go build -o /artifacts/webscan-web ./cmd/webscan-web/
+ARG VERSION=dev
+RUN go build -ldflags="-X main.version=${VERSION}" -o /artifacts/webscan-web ./cmd/webscan-web/
 
 # Final stage for CLI version
 FROM alpine:3.24.0@sha256:a2d49ea686c2adfe3c992e47dc3b5e7fa6e6b5055609400dc2acaeb241c829f4

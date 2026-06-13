@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## v5.2.1
+
+### Fixes
+
+- **Version display**: Docker image now shows the correct release version in the web UI footer instead of `dev`
+
+### Chores
+
+- **CI**: Update `action-golang-build` to v1.1.0, `actions/checkout` digest
+- **Dependencies**: Update `alpine` to v3.24.0, Go module directive to v1.26.4, update Go dependencies (`quic-go`, `redis`, `urfave/cli`)
+
 ## v5.2.0
 
 ### New Features
