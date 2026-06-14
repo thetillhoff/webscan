@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -168,6 +169,60 @@ func extractHost(target string) string {
 		return target
 	}
 	return host
+}
+
+func (s *Server) indexHandler(w http.ResponseWriter, r *http.Request) {
+	q := strings.TrimSpace(r.URL.Query().Get("q"))
+	if q != "" {
+		dest := "/scan?q=" + url.QueryEscape(q)
+		if r.URL.Query().Get("follow") == "1" {
+			dest += "&follow=1"
+		}
+		http.Redirect(w, r, dest, http.StatusFound)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := s.templates.ExecuteTemplate(w, "index.html", map[string]any{
+		"title":   "webscan",
+		"version": s.version,
+	}); err != nil {
+		slog.Error("failed to render index template", "error", err)
+		http.Error(w, "template rendering failed", http.StatusInternalServerError)
+	}
+}
+
+func (s *Server) scanPageHandler(w http.ResponseWriter, r *http.Request) {
+	q := strings.TrimSpace(r.URL.Query().Get("q"))
+	if q == "" {
+		http.Redirect(w, r, "/", http.StatusFound)
+		return
+	}
+	follow := r.URL.Query().Get("follow") == "1"
+	if r.URL.Query().Get("md") == "1" {
+		s.markdownScanHandler(w, r, q, follow)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := s.templates.ExecuteTemplate(w, "scan.html", map[string]any{
+		"title":   "webscan — " + q,
+		"version": s.version,
+		"query":   q,
+		"follow":  follow,
+	}); err != nil {
+		slog.Error("failed to render scan template", "error", err)
+		http.Error(w, "template rendering failed", http.StatusInternalServerError)
+	}
+}
+
+// markdownScanHandler stub — replaced in Task 6
+func (s *Server) markdownScanHandler(w http.ResponseWriter, _ *http.Request, _ string, _ bool) {
+	http.Error(w, "not yet implemented", http.StatusNotImplemented)
+}
+
+var ansiEscapeRe = regexp.MustCompile(`\x1b\[[0-9;?]*[ -/]*[@-~]`)
+
+func stripANSI(s string) string {
+	return ansiEscapeRe.ReplaceAllString(s, "")
 }
 
 func getRemoteIP(r *http.Request) string {

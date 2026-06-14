@@ -162,6 +162,7 @@ func (s *Server) setupRouter() {
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticFiles))))
 
 	mux.HandleFunc("GET /", s.indexHandler)
+	mux.HandleFunc("GET /scan", s.scanPageHandler)
 	mux.HandleFunc("GET /api/health", s.healthHandler)
 	mux.HandleFunc("POST /api/scan", s.scanHandler)
 	mux.HandleFunc("GET /api/scan/", s.scanStatusHandler)
@@ -173,17 +174,6 @@ func (s *Server) withRequestLogging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		next.ServeHTTP(w, r)
 	})
-}
-
-func (s *Server) indexHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := s.templates.ExecuteTemplate(w, "index.html", map[string]any{
-		"title":   "webscan - Web Security Scanner",
-		"version": s.version,
-	}); err != nil {
-		slog.Error("failed to render index template", "error", err)
-		http.Error(w, "template rendering failed", http.StatusInternalServerError)
-	}
 }
 
 func (s *Server) healthHandler(w http.ResponseWriter, _ *http.Request) {
