@@ -182,3 +182,35 @@ footer a:hover {
         flex-direction: column;
     }
 }
+
+/* Landing page */
+.landing-main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0 1rem;
+}
+
+.landing-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+    width: 100%;
+    max-width: 600px;
+}
+
+.landing-title {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #4285f4;
+    letter-spacing: -1px;
+}
+
+.landing-form {
+    width: 100%;
+}
