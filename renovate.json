@@ -19,7 +19,7 @@
     {
       "matchUpdateTypes": ["major"],
       "automerge": false,
-      "dependencyDashboardApproval": true
+      "dependencyDashboardApproval": false
     },
     {
       "matchManagers": ["gomod"],
