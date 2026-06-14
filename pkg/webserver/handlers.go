@@ -214,9 +214,19 @@ func (s *Server) scanPageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// markdownScanHandler stub — replaced in Task 6
-func (s *Server) markdownScanHandler(w http.ResponseWriter, _ *http.Request, _ string, _ bool) {
-	http.Error(w, "not yet implemented", http.StatusNotImplemented)
+func (s *Server) markdownScanHandler(w http.ResponseWriter, r *http.Request, target string, follow bool) {
+	result, err := s.runInlineScan(r.Context(), target, follow)
+	if err != nil {
+		status := http.StatusInternalServerError
+		if strings.Contains(err.Error(), "timed out") {
+			status = http.StatusGatewayTimeout
+		}
+		http.Error(w, err.Error(), status)
+		return
+	}
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	fmt.Fprint(w, stripANSI(result))
 }
 
 var ansiEscapeRe = regexp.MustCompile(`\x1b\[[0-9;?]*[ -/]*[@-~]`)

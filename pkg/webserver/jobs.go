@@ -238,6 +238,34 @@ func (s *Server) finishJob(ctx context.Context, jobKey, status, result, statusOu
 	}
 }
 
+func (s *Server) runInlineScan(ctx context.Context, target string, follow bool) (string, error) {
+	outputBuffer := &synchronizedBuffer{}
+	statusBuffer := &synchronizedBuffer{}
+
+	engine, err := s.newEngine(outputBuffer, statusBuffer, follow)
+	if err != nil {
+		return "", fmt.Errorf("failed to initialize scan engine: %w", err)
+	}
+
+	scanCtx, cancel := context.WithTimeout(ctx, s.scanTimeout)
+	defer cancel()
+
+	done := make(chan error, 1)
+	go func() {
+		done <- engine.Scan(target)
+	}()
+
+	select {
+	case err := <-done:
+		if err != nil {
+			return "", fmt.Errorf("scan failed: %w", err)
+		}
+		return outputBuffer.String(), nil
+	case <-scanCtx.Done():
+		return "", fmt.Errorf("scan timed out after %s", s.scanTimeout)
+	}
+}
+
 func (s *Server) newEngine(stdout io.Writer, statusOut io.Writer, followRedirects bool) (*webscan.Engine, error) {
 	engine, err := webscan.NewEngine(
 		stdout,
