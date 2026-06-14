@@ -28,7 +28,15 @@ go build -o webscan-web ./cmd/webscan-web/
 # Open http://localhost:8080 in your browser
 ```
 
-Then enter any domain, IP, or URL and click "Scan" - all features are auto-enabled!
+Open http://localhost:8080, enter any domain, IP, or URL and click "Scan" — or jump straight to a result:
+
+```bash
+# Open scan directly in browser
+open "http://localhost:8080/scan?q=example.com"
+
+# Get plain-text output (great for scripts)
+curl "http://localhost:8080/scan?q=example.com&md=1"
+```
 
 ## Installation
 
@@ -88,14 +96,34 @@ webscan http://example.com:8080                # Scan specific port
 
 ### Web Interface
 
-The web interface provides a simple, Google-like search experience:
+The web interface provides a Google-like search experience across two pages:
 
-1. **Search Bar**: Enter any domain, IP, or URL
-2. **Scan Button**: Click to start scanning
-3. **Results Area**: View comprehensive scan results
-4. **Options**: Toggle "Follow CNAMEs and HTTP redirects"
+- **`/`** — Landing page with centered search bar. Enter a target and click "Scan".
+- **`/scan?q=<target>`** — Scan and results page. The scan starts automatically.
 
-All features are automatically enabled in the web version - no flags needed!
+**URL parameters:**
+
+| Parameter | Description |
+|---|---|
+| `q=<target>` | Domain, IP, or URL to scan |
+| `follow=1` | Follow CNAMEs and HTTP redirects |
+| `md=1` | Return plain-text output instead of the HTML page |
+
+Share or bookmark any scan directly:
+
+```
+https://your-instance/scan?q=example.com
+https://your-instance/scan?q=example.com&follow=1
+```
+
+**Scripting / curl** — `?md=1` returns raw scan output as `text/plain`:
+
+```bash
+curl "https://your-instance/scan?q=example.com&md=1"
+curl "https://your-instance/scan?q=example.com&follow=1&md=1"
+```
+
+All scan features are automatically enabled — no flags needed.
 
 ## Project Structure
 
@@ -121,8 +149,8 @@ tests/
 The web interface uses a hybrid approach:
 
 - **Backend**: Go web server performing all scans
-- **Frontend**: Simple HTML/JS/CSS served by the Go backend
-- **API**: `/api/scan` endpoint executes scans with all features enabled
+- **Frontend**: Two-page HTML/JS/CSS app served by the Go backend (`/` landing, `/scan` results)
+- **API**: `/api/scan` (async, Redis-backed) for browser polling; `/scan?md=1` for synchronous plain-text output
 
 This approach ensures maximum compatibility and feature parity with the CLI while providing a user-friendly web interface.
 

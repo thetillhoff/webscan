@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## v5.3.0
+
+### New Features
+
+- **Two-page layout**: Landing page (`/`) centers the search bar like a search engine; scan and results live on `/scan?q=<target>`
+- **URL query parameter**: Share or bookmark a scan directly via `/scan?q=example.com`; visiting `/?q=example.com` redirects automatically
+- **Follow redirects in URL**: `?follow=1` parameter wires the follow-redirects option end-to-end from URL through to the scan engine
+- **Markdown output**: `?md=1` on `/scan` runs the scan inline and returns plain-text results — useful for `curl` and scripting
+
 ## v5.2.1
 
 ### Fixes
