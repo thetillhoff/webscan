@@ -26,7 +26,9 @@ func checkTLSVersion(status *status.Status, target types.Target, ip string, tlsV
 	})
 
 	if !os.IsTimeout(err) && err == nil {
-		conn.Close()
+		if closeErr := conn.Close(); closeErr != nil {
+			slog.Debug("tlsScan: Error closing connection", "error", closeErr)
+		}
 		allowedTlsVersions <- tlsVersion
 	}
 

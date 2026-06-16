@@ -89,14 +89,16 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) (
 		}
 		result.IpOwners = append(result.IpOwners, fmt.Sprintf("According to RDAP information, IP %-*s is registered at %s", maxIpAddressLength, aRecord, response))
 
-		blacklistMatches, err := IsIPBlacklisted(aRecord, config.timeout)
-		if err != nil {
-			slog.Debug("ipScan: Error on blacklist check of IPv4", "ipv4", aRecord, "error", err.Error())
-			return result, err
-		}
+		if !types.IsPrivateIP(aRecord) {
+			blacklistMatches, err := IsIPBlacklisted(aRecord, config.timeout)
+			if err != nil {
+				slog.Debug("ipScan: Error on blacklist check of IPv4", "ipv4", aRecord, "error", err.Error())
+				return result, err
+			}
 
-		if len(blacklistMatches) > 0 { // If ip was listed on at least one blacklist
-			result.IpIsBlacklistedAt[aRecord] = blacklistMatches
+			if len(blacklistMatches) > 0 { // If ip was listed on at least one blacklist
+				result.IpIsBlacklistedAt[aRecord] = blacklistMatches
+			}
 		}
 
 		status.SpinningXOfUpdate()
@@ -110,14 +112,16 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) (
 		}
 		result.IpOwners = append(result.IpOwners, fmt.Sprintf("According to RDAP information, IP %-*s is registered at %s", maxIpAddressLength, aaaaRecord, response))
 
-		blacklistMatches, err := IsIPBlacklisted(aaaaRecord, config.timeout)
-		if err != nil {
-			slog.Debug("ipScan: Error on blacklist check of IPv6", "ipv6", aaaaRecord, "error", err.Error())
-			return result, err
-		}
+		if !types.IsPrivateIP(aaaaRecord) {
+			blacklistMatches, err := IsIPBlacklisted(aaaaRecord, config.timeout)
+			if err != nil {
+				slog.Debug("ipScan: Error on blacklist check of IPv6", "ipv6", aaaaRecord, "error", err.Error())
+				return result, err
+			}
 
-		if len(blacklistMatches) > 0 { // If ip was listed on at least one blacklist
-			result.IpIsBlacklistedAt[aaaaRecord] = blacklistMatches
+			if len(blacklistMatches) > 0 { // If ip was listed on at least one blacklist
+				result.IpIsBlacklistedAt[aaaaRecord] = blacklistMatches
+			}
 		}
 
 		status.SpinningXOfUpdate()

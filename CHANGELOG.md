@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## v5.3.1
+
+### Fixes
+
+- **Skip blacklist checks for private IPs**: IP addresses in private/loopback/link-local ranges no longer trigger DNS blacklist lookups (e.g. Spamhaus), which are not applicable and produce misleading errors for local network scans
+
 ## v5.3.0
 
 ### New Features

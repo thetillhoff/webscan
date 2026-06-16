@@ -72,22 +72,36 @@ func printFileDetails(f FileResult, out io.Writer) {
 	}
 
 	if hasObs && hasRec {
-		fmt.Fprintf(out, "  Observations:\n")
-		for _, obs := range f.Observations {
-			fmt.Fprintf(out, "  - %s\n", obs)
+		if _, err := fmt.Fprintf(out, "  Observations:\n"); err != nil {
+			slog.Debug("knownFilesScan: Error writing to output", "error", err)
 		}
-		fmt.Fprintf(out, "  Recommendations:\n")
+		for _, obs := range f.Observations {
+			if _, err := fmt.Fprintf(out, "  - %s\n", obs); err != nil {
+				slog.Debug("knownFilesScan: Error writing to output", "error", err)
+			}
+		}
+		if _, err := fmt.Fprintf(out, "  Recommendations:\n"); err != nil {
+			slog.Debug("knownFilesScan: Error writing to output", "error", err)
+		}
 		for _, rec := range f.Recommendations {
-			fmt.Fprintf(out, "  - %s\n", rec)
+			if _, err := fmt.Fprintf(out, "  - %s\n", rec); err != nil {
+				slog.Debug("knownFilesScan: Error writing to output", "error", err)
+			}
 		}
 	} else if hasObs {
 		for _, obs := range f.Observations {
-			fmt.Fprintf(out, "  - %s\n", obs)
+			if _, err := fmt.Fprintf(out, "  - %s\n", obs); err != nil {
+				slog.Debug("knownFilesScan: Error writing to output", "error", err)
+			}
 		}
 	} else {
-		fmt.Fprintf(out, "  Recommendations:\n")
+		if _, err := fmt.Fprintf(out, "  Recommendations:\n"); err != nil {
+			slog.Debug("knownFilesScan: Error writing to output", "error", err)
+		}
 		for _, rec := range f.Recommendations {
-			fmt.Fprintf(out, "  - %s\n", rec)
+			if _, err := fmt.Fprintf(out, "  - %s\n", rec); err != nil {
+				slog.Debug("knownFilesScan: Error writing to output", "error", err)
+			}
 		}
 	}
 }

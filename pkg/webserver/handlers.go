@@ -226,7 +226,9 @@ func (s *Server) markdownScanHandler(w http.ResponseWriter, r *http.Request, tar
 	}
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-	fmt.Fprint(w, stripANSI(result))
+	if _, err := fmt.Fprint(w, stripANSI(result)); err != nil {
+		slog.Debug("webserver: Error writing response", "error", err)
+	}
 }
 
 var ansiEscapeRe = regexp.MustCompile(`\x1b\[[0-9;?]*[ -/]*[@-~]`)

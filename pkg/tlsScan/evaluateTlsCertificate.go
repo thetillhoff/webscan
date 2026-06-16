@@ -27,7 +27,9 @@ func evaluateTLSCertificate(target types.Target, ip string) ([]certInfo, error, 
 		ServerName: target.Hostname(),
 	})
 	if strictConn != nil {
-		strictConn.Close()
+		if closeErr := strictConn.Close(); closeErr != nil {
+			slog.Debug("tlsScan: Error closing connection", "error", closeErr)
+		}
 	}
 
 	if os.IsTimeout(tlsErr) {

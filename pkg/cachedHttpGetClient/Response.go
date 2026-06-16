@@ -22,7 +22,9 @@ func NewResponse(httpResponse *http.Response, err error) Response {
 	}
 
 	body, err := io.ReadAll(httpResponse.Body)
-	httpResponse.Body.Close()
+	if closeErr := httpResponse.Body.Close(); closeErr != nil && err == nil {
+		err = closeErr
+	}
 	return Response{
 		httpResponse: httpResponse,
 		body:         body,
