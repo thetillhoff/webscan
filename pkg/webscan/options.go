@@ -48,35 +48,15 @@ func WebScanOptions() ScanOptions {
 	return NewScanOptions(true, true, true, true, true, true, true, true, false, false)
 }
 
-func (o ScanOptions) Apply(engine *Engine) {
-	if o.AdvancedDNS {
-		engine.EnableDetailedDnsScan()
-	}
-	if o.IP {
-		engine.EnableIPScan()
-	}
-	if o.AdvancedPort {
-		engine.EnableDetailedPortScan()
-	}
-	if o.TLS {
-		engine.EnableTLSScan()
-	}
-	if o.HTTPProtocol {
-		engine.EnableHTTPProtocolScan()
-	}
-	if o.HTTPHeader {
-		engine.EnableHTTPHeaderScan()
-	}
-	if o.HTMLContent {
-		engine.EnableHTMLContentScan()
-	}
-	if o.KnownFiles {
-		engine.EnableKnownFilesScan()
-	}
-	if o.MailConfig {
-		engine.EnableMailConfigScan()
-	}
-	if o.Subdomain {
-		engine.EnableSubdomainScan()
-	}
+// IsEmpty reports whether no scan group is enabled.
+func (o ScanOptions) IsEmpty() bool {
+	return o == ScanOptions{}
+}
+
+// EnableWeb enables the HTTP-facing scan groups (protocol, header, content, known files).
+func (o *ScanOptions) EnableWeb() {
+	o.HTTPProtocol = true
+	o.HTTPHeader = true
+	o.HTMLContent = true
+	o.KnownFiles = true
 }

@@ -175,8 +175,20 @@ func (s *Server) setupRouter() {
 
 func (s *Server) withRequestLogging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		setSecurityHeaders(w)
 		next.ServeHTTP(w, r)
 	})
+}
+
+// setSecurityHeaders applies baseline hardening to every response. The CSP
+// allows 'self' scripts/styles plus inline style attributes used by the
+// templates, and forbids framing.
+func setSecurityHeaders(w http.ResponseWriter) {
+	h := w.Header()
+	h.Set("X-Content-Type-Options", "nosniff")
+	h.Set("X-Frame-Options", "DENY")
+	h.Set("Referrer-Policy", "no-referrer")
+	h.Set("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'")
 }
 
 func (s *Server) healthHandler(w http.ResponseWriter, _ *http.Request) {

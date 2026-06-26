@@ -16,8 +16,10 @@ func GenerateCookieRecommendations(response *http.Response) (map[string][]string
 
 	slog.Debug("httpHeaderScan: Generating cookie recommendations started")
 
+	cookies := response.Cookies()
+
 	// Cookies
-	for _, cookie := range response.Cookies() {
+	for _, cookie := range cookies {
 		cookieRecommendations = []string{} // Initialize for every cookie
 
 		if cookie.Domain != "" {
@@ -75,7 +77,7 @@ func GenerateCookieRecommendations(response *http.Response) (map[string][]string
 		}
 	}
 
-	if len(response.Cookies()) > 10 {
+	if len(cookies) > 10 {
 		otherRecommendations = append(otherRecommendations, "More then 10 cookies detected. Are all of them really necessary? Think about storing session information on server-side and localStorage on client-side.")
 	}
 

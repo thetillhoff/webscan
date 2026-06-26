@@ -3,7 +3,6 @@ package tlsScan
 import (
 	"crypto/tls"
 	"log/slog"
-	"os"
 	"sync"
 
 	"github.com/thetillhoff/webscan/v5/pkg/status"
@@ -25,7 +24,7 @@ func checkTLSVersion(status *status.Status, target types.Target, ip string, tlsV
 		ServerName:       target.Hostname(),
 	})
 
-	if !os.IsTimeout(err) && err == nil {
+	if err == nil {
 		if closeErr := conn.Close(); closeErr != nil {
 			slog.Debug("tlsScan: Error closing connection", "error", closeErr)
 		}

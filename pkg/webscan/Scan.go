@@ -1,6 +1,7 @@
 package webscan
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 
@@ -16,7 +17,7 @@ import (
 	"github.com/thetillhoff/webscan/v5/pkg/types"
 )
 
-func (engine *Engine) Scan(input string) error {
+func (engine *Engine) Scan(ctx context.Context, input string) error {
 	var (
 		err error
 	)
@@ -49,6 +50,10 @@ func (engine *Engine) Scan(input string) error {
 	}
 
 	// DNS
+
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 
 	engine.dnsScanResult, err = dnsScan.Scan(
 		engine.target,
@@ -88,6 +93,10 @@ func (engine *Engine) Scan(input string) error {
 	}
 
 	// Port scan
+
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 
 	engine.portScanResult, err = portScan.Scan(
 		engine.target,
@@ -130,6 +139,10 @@ func (engine *Engine) Scan(input string) error {
 	}
 
 	// HTTP protocol scan (required by header, content, and known files scans)
+
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 
 	if engine.httpProtocolScan || engine.httpHeaderScan || engine.htmlContentScan || engine.knownFilesScan {
 		engine.httpProtocolScanResult, err = httpProtocolScan.Scan(
@@ -275,6 +288,10 @@ func (engine *Engine) Scan(input string) error {
 		}
 
 		for len(redirectTargets) > 0 {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+
 			job := redirectTargets[0]
 			redirectTargets = redirectTargets[1:]
 			loc := job.loc

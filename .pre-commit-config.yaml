@@ -23,4 +23,3 @@ repos:
       - id: go-unit-tests
       - id: go-mod-tidy
       - id: golangci-lint
-      - id: go-unit-tests

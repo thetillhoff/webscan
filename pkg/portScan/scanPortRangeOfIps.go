@@ -8,11 +8,9 @@ import (
 	"github.com/thetillhoff/webscan/v5/pkg/status"
 )
 
-// var wgIpScan sync.WaitGroup
-var wgPortScan sync.WaitGroup
-
 func scanPortRangeOfIps(status *status.Status, ips []string, ports []uint16, timeout time.Duration) map[string][]uint16 {
 	var (
+		wg                 sync.WaitGroup
 		openPortsPerIp     = map[string][]uint16{}
 		ipPortTupleChannel = make(chan IpPortTuple, len(ips)*len(ports))
 	)
@@ -23,8 +21,9 @@ func scanPortRangeOfIps(status *status.Status, ips []string, ports []uint16, tim
 
 	for _, ip := range ips { // For each ip
 		for _, port := range ports { // For each port
-			wgPortScan.Add(1)
+			wg.Add(1)
 			go isOpenTcpPort(
+				&wg,
 				status,
 				IpPortTuple{
 					Ip:   ip,
@@ -36,7 +35,7 @@ func scanPortRangeOfIps(status *status.Status, ips []string, ports []uint16, tim
 		}
 	}
 
-	wgPortScan.Wait()         // Wait until all goroutines are finished
+	wg.Wait()                 // Wait until all goroutines are finished
 	close(ipPortTupleChannel) // Make sure channel is closed when goroutines are finished
 	status.SpinningXOfComplete("Scan of open ports completed.")
 

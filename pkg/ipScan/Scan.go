@@ -84,16 +84,18 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) (
 	for _, aRecord := range config.aRecords {
 		response, err := GetIPOwnerViaRDAP(aRecord, config.timeout)
 		if err != nil {
-			slog.Debug("ipScan: Error getting IP owner via RDAP for IPv4", "ipv4", aRecord, "error", err.Error())
-			return result, err
+			slog.Warn("ipScan: Error getting IP owner via RDAP for IPv4", "ipv4", aRecord, "error", err.Error())
+			status.SpinningXOfUpdate()
+			continue
 		}
 		result.IpOwners = append(result.IpOwners, fmt.Sprintf("According to RDAP information, IP %-*s is registered at %s", maxIpAddressLength, aRecord, response))
 
 		if !types.IsPrivateIP(aRecord) {
 			blacklistMatches, err := IsIPBlacklisted(aRecord, config.timeout)
 			if err != nil {
-				slog.Debug("ipScan: Error on blacklist check of IPv4", "ipv4", aRecord, "error", err.Error())
-				return result, err
+				slog.Warn("ipScan: Error on blacklist check of IPv4", "ipv4", aRecord, "error", err.Error())
+				status.SpinningXOfUpdate()
+				continue
 			}
 
 			if len(blacklistMatches) > 0 { // If ip was listed on at least one blacklist
@@ -107,16 +109,18 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) (
 	for _, aaaaRecord := range config.aaaaRecords {
 		response, err := GetIPOwnerViaRDAP(aaaaRecord, config.timeout)
 		if err != nil {
-			slog.Debug("ipScan: Error getting IP owner via RDAP for IPv6", "ipv6", aaaaRecord, "error", err.Error())
-			return result, err
+			slog.Warn("ipScan: Error getting IP owner via RDAP for IPv6", "ipv6", aaaaRecord, "error", err.Error())
+			status.SpinningXOfUpdate()
+			continue
 		}
 		result.IpOwners = append(result.IpOwners, fmt.Sprintf("According to RDAP information, IP %-*s is registered at %s", maxIpAddressLength, aaaaRecord, response))
 
 		if !types.IsPrivateIP(aaaaRecord) {
 			blacklistMatches, err := IsIPBlacklisted(aaaaRecord, config.timeout)
 			if err != nil {
-				slog.Debug("ipScan: Error on blacklist check of IPv6", "ipv6", aaaaRecord, "error", err.Error())
-				return result, err
+				slog.Warn("ipScan: Error on blacklist check of IPv6", "ipv6", aaaaRecord, "error", err.Error())
+				status.SpinningXOfUpdate()
+				continue
 			}
 
 			if len(blacklistMatches) > 0 { // If ip was listed on at least one blacklist

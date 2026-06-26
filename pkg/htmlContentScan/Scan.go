@@ -137,8 +137,8 @@ func Scan(status *status.Status, target types.Target, options ...ConfigOption) (
 				parsedUrl.Scheme = "https" // Add scheme
 			}
 
-			if parsedUrl.Host == "" { // Doesn't include hostname
-				parsedUrl.Host = target.Hostname()                        // Add hostname
+			if parsedUrl.Host == "" { // Doesn't include host
+				parsedUrl.Host = target.Host()                            // Add host (with port if any)
 				parsedUrl.Path = path.Join(target.Path(), parsedUrl.Path) // Add path prefix
 			}
 
@@ -179,8 +179,8 @@ func Scan(status *status.Status, target types.Target, options ...ConfigOption) (
 				parsedUrl.Scheme = "https" // Add scheme
 			}
 
-			if parsedUrl.Host == "" { // Doesn't include hostname
-				parsedUrl.Host = target.Hostname()                        // Add hostname
+			if parsedUrl.Host == "" { // Doesn't include host
+				parsedUrl.Host = target.Host()                            // Add host (with port if any)
 				parsedUrl.Path = path.Join(target.Path(), parsedUrl.Path) // Add path prefix
 			}
 

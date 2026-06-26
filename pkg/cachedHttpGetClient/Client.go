@@ -3,6 +3,7 @@ package cachedHttpGetClient
 import (
 	"crypto/tls"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -10,6 +11,8 @@ type Client struct {
 	client    *http.Client
 	userAgent string
 	verifyTls bool
+	mu        *sync.Mutex
+	// ponytail: cache is unbounded but scoped to one short-lived engine instance per scan; upgrade to an LRU if engines become long-lived.
 	responses map[string]Response
 }
 
@@ -32,6 +35,7 @@ func NewClient(timeout time.Duration, followRedirects int, verifyTls bool, userA
 
 	client.userAgent = userAgent
 	client.verifyTls = verifyTls
+	client.mu = &sync.Mutex{}
 	client.responses = map[string]Response{}
 
 	return client

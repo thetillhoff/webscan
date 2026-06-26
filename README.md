@@ -54,7 +54,7 @@ If you have `brew` installed:
 brew install thetillhoff/homebrew-tap/webscan
 ```
 
-or manually from [releases](https://github.com/thetillhoff/webscan/v3/releases/latest).
+or manually from [releases](https://github.com/thetillhoff/webscan/releases/latest).
 
 ### Web Installation
 
@@ -267,7 +267,7 @@ MIT License - See [LICENSE](LICENSE) for details.
 Questions, issues, or contributions welcome:
 
 - GitHub: <https://github.com/thetillhoff/webscan>
-- Issues: <https://github.com/thetillhoff/webscan/v3/issues>
+- Issues: <https://github.com/thetillhoff/webscan/issues>
 
 ## Roadmap
 

@@ -82,7 +82,7 @@ func Scan(target types.Target, status *status.Status, schema types.Schema, optio
 		go func(fc fileCheck) {
 			defer wg.Done()
 
-			url := schema.String() + "://" + target.Hostname() + fc.path
+			url := schema.String() + "://" + target.Host() + fc.path
 
 			resp, err := httpClient.Get(url)
 			if err != nil {
@@ -124,7 +124,7 @@ func Scan(target types.Target, status *status.Status, schema types.Schema, optio
 	wg.Wait()
 
 	// Cross-reference: check that robots.txt Sitemap directive matches found sitemap.xml
-	expectedSitemapURL := schema.String() + "://" + target.Hostname() + "/sitemap.xml"
+	expectedSitemapURL := schema.String() + "://" + target.Host() + "/sitemap.xml"
 	robotsIdx, sitemapIdx := -1, -1
 	for i, f := range result.files {
 		switch f.Path {

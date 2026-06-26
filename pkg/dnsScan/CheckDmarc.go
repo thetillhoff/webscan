@@ -23,13 +23,14 @@ func CheckDMARC(url string, dnsClient *dns.Client, nameserver string) string {
 			return "Hint: Neither TXT nor CNAME records are set up for DMARC."
 		}
 
-		return "Hint: DKIM selector redirects to " + cnameRecord
+		return "Hint: DMARC record redirects to " + cnameRecord
 		// TODO recursively follow subDomainEngine.CNAMERecord
 	}
 
 	dmarcRecord := ""
 	for _, txtRecord := range txtRecords {
-		if strings.HasPrefix(txtRecord, "v=DMARC1;") {
+		trimmedRecord := strings.TrimSpace(txtRecord)
+		if strings.HasPrefix(trimmedRecord, "v=DMARC1;") || strings.HasPrefix(trimmedRecord, "v=DMARC1 ;") {
 			if dmarcRecord == "" { // Check if there was a dmarc record detected before
 				dmarcRecord = txtRecord
 			} else {

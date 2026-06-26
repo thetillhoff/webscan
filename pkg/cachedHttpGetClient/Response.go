@@ -5,6 +5,9 @@ import (
 	"net/http"
 )
 
+// ponytail: cap response bodies at 10 MB to prevent memory exhaustion from hostile targets; raise if larger bodies must be scanned.
+const maxBodySize = 10 << 20 // 10 MB
+
 type Response struct {
 	httpResponse *http.Response
 	body         []byte
@@ -21,7 +24,7 @@ func NewResponse(httpResponse *http.Response, err error) Response {
 		}
 	}
 
-	body, err := io.ReadAll(httpResponse.Body)
+	body, err := io.ReadAll(io.LimitReader(httpResponse.Body, maxBodySize))
 	if closeErr := httpResponse.Body.Close(); closeErr != nil && err == nil {
 		err = closeErr
 	}

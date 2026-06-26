@@ -149,12 +149,17 @@ func (s *Server) processJob(ctx context.Context, workerID int, jobID string) {
 	}
 
 	started := time.Now()
+	// Cancel propagates to engine.Scan on timeout so the scan goroutine stops
+	// making outbound requests instead of leaking.
+	scanCtx, cancel := context.WithTimeout(ctx, s.scanTimeout)
+	defer cancel()
+
 	done := make(chan struct{})
 	var scanErr error
 
 	go func() {
 		defer close(done)
-		scanErr = engine.Scan(target)
+		scanErr = engine.Scan(scanCtx, target)
 	}()
 
 	select {
@@ -165,7 +170,7 @@ func (s *Server) processJob(ctx context.Context, workerID int, jobID string) {
 			return
 		}
 		s.finishJob(ctx, jobKey, statusCompleted, outputBuffer.String(), statusBuffer.String(), "", duration)
-	case <-time.After(s.scanTimeout):
+	case <-scanCtx.Done():
 		duration := time.Since(started).String()
 		s.finishJob(ctx, jobKey, statusTimeout, outputBuffer.String(), statusBuffer.String(), fmt.Sprintf("scan timed out after %s", s.scanTimeout), duration)
 	}
@@ -252,7 +257,7 @@ func (s *Server) runInlineScan(ctx context.Context, target string, follow bool) 
 
 	done := make(chan error, 1)
 	go func() {
-		done <- engine.Scan(target)
+		done <- engine.Scan(scanCtx, target)
 	}()
 
 	select {
@@ -274,21 +279,12 @@ func (s *Server) newEngine(stdout io.Writer, statusOut io.Writer, followRedirect
 		s.dnsServer,
 		followRedirects,
 		s.requestTimeout,
-		false,
-		false,
-		false,
-		false,
-		false,
-		false,
-		false,
-		false,
-		false,
+		s.scanOptions,
 		s.writeMutex,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	s.scanOptions.Apply(&engine)
 	return &engine, nil
 }
