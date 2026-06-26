@@ -13,7 +13,7 @@
 ## File Map
 
 | File | Action | What changes |
-|---|---|---|
+| --- | --- | --- |
 | `pkg/webserver/handlers_test.go` | Create | Unit tests: routing redirects, `stripANSI` |
 | `pkg/webserver/handlers.go` | Modify | Update `indexHandler`; add `scanPageHandler`, `markdownScanHandler`, `stripANSI` |
 | `pkg/webserver/jobs.go` | Modify | Add `runInlineScan` |
@@ -29,6 +29,7 @@
 ## Task 1: Write failing handler tests
 
 **Files:**
+
 - Create: `pkg/webserver/handlers_test.go`
 
 - [ ] **Step 1: Create the test file**
@@ -37,96 +38,96 @@
 package webserver
 
 import (
-	"html/template"
-	"net/http"
-	"net/http/httptest"
-	"testing"
+ "html/template"
+ "net/http"
+ "net/http/httptest"
+ "testing"
 )
 
 func testServer(t *testing.T) *Server {
-	t.Helper()
-	tmpl, err := template.ParseFS(htmlTemplates, "templates/*")
-	if err != nil {
-		t.Fatalf("failed to parse templates: %v", err)
-	}
-	return &Server{templates: tmpl, version: "test"}
+ t.Helper()
+ tmpl, err := template.ParseFS(htmlTemplates, "templates/*")
+ if err != nil {
+  t.Fatalf("failed to parse templates: %v", err)
+ }
+ return &Server{templates: tmpl, version: "test"}
 }
 
 func TestStripANSI(t *testing.T) {
-	tests := []struct {
-		in   string
-		want string
-	}{
-		{"plain text", "plain text"},
-		{"\x1b[32mgreen\x1b[0m", "green"},
-		{"\x1b[1;31mbold red\x1b[0m text", "bold red text"},
-		{"no escapes", "no escapes"},
-	}
-	for _, tt := range tests {
-		got := stripANSI(tt.in)
-		if got != tt.want {
-			t.Errorf("stripANSI(%q) = %q, want %q", tt.in, got, tt.want)
-		}
-	}
+ tests := []struct {
+  in   string
+  want string
+ }{
+  {"plain text", "plain text"},
+  {"\x1b[32mgreen\x1b[0m", "green"},
+  {"\x1b[1;31mbold red\x1b[0m text", "bold red text"},
+  {"no escapes", "no escapes"},
+ }
+ for _, tt := range tests {
+  got := stripANSI(tt.in)
+  if got != tt.want {
+   t.Errorf("stripANSI(%q) = %q, want %q", tt.in, got, tt.want)
+  }
+ }
 }
 
 func TestIndexHandler_NoQ_RendersLandingPage(t *testing.T) {
-	s := testServer(t)
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	rec := httptest.NewRecorder()
-	s.indexHandler(rec, req)
-	if rec.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", rec.Code)
-	}
+ s := testServer(t)
+ req := httptest.NewRequest(http.MethodGet, "/", nil)
+ rec := httptest.NewRecorder()
+ s.indexHandler(rec, req)
+ if rec.Code != http.StatusOK {
+  t.Fatalf("expected 200, got %d", rec.Code)
+ }
 }
 
 func TestIndexHandler_WithQ_Redirects(t *testing.T) {
-	s := testServer(t)
-	req := httptest.NewRequest(http.MethodGet, "/?q=example.com", nil)
-	rec := httptest.NewRecorder()
-	s.indexHandler(rec, req)
-	if rec.Code != http.StatusFound {
-		t.Fatalf("expected 302, got %d", rec.Code)
-	}
-	if got := rec.Header().Get("Location"); got != "/scan?q=example.com" {
-		t.Fatalf("expected /scan?q=example.com, got %s", got)
-	}
+ s := testServer(t)
+ req := httptest.NewRequest(http.MethodGet, "/?q=example.com", nil)
+ rec := httptest.NewRecorder()
+ s.indexHandler(rec, req)
+ if rec.Code != http.StatusFound {
+  t.Fatalf("expected 302, got %d", rec.Code)
+ }
+ if got := rec.Header().Get("Location"); got != "/scan?q=example.com" {
+  t.Fatalf("expected /scan?q=example.com, got %s", got)
+ }
 }
 
 func TestIndexHandler_WithQAndFollow_Redirects(t *testing.T) {
-	s := testServer(t)
-	req := httptest.NewRequest(http.MethodGet, "/?q=example.com&follow=1", nil)
-	rec := httptest.NewRecorder()
-	s.indexHandler(rec, req)
-	if rec.Code != http.StatusFound {
-		t.Fatalf("expected 302, got %d", rec.Code)
-	}
-	if got := rec.Header().Get("Location"); got != "/scan?q=example.com&follow=1" {
-		t.Fatalf("expected /scan?q=example.com&follow=1, got %s", got)
-	}
+ s := testServer(t)
+ req := httptest.NewRequest(http.MethodGet, "/?q=example.com&follow=1", nil)
+ rec := httptest.NewRecorder()
+ s.indexHandler(rec, req)
+ if rec.Code != http.StatusFound {
+  t.Fatalf("expected 302, got %d", rec.Code)
+ }
+ if got := rec.Header().Get("Location"); got != "/scan?q=example.com&follow=1" {
+  t.Fatalf("expected /scan?q=example.com&follow=1, got %s", got)
+ }
 }
 
 func TestScanPageHandler_NoQ_RedirectsToRoot(t *testing.T) {
-	s := testServer(t)
-	req := httptest.NewRequest(http.MethodGet, "/scan", nil)
-	rec := httptest.NewRecorder()
-	s.scanPageHandler(rec, req)
-	if rec.Code != http.StatusFound {
-		t.Fatalf("expected 302, got %d", rec.Code)
-	}
-	if got := rec.Header().Get("Location"); got != "/" {
-		t.Fatalf("expected /, got %s", got)
-	}
+ s := testServer(t)
+ req := httptest.NewRequest(http.MethodGet, "/scan", nil)
+ rec := httptest.NewRecorder()
+ s.scanPageHandler(rec, req)
+ if rec.Code != http.StatusFound {
+  t.Fatalf("expected 302, got %d", rec.Code)
+ }
+ if got := rec.Header().Get("Location"); got != "/" {
+  t.Fatalf("expected /, got %s", got)
+ }
 }
 
 func TestScanPageHandler_WithQ_RendersPage(t *testing.T) {
-	s := testServer(t)
-	req := httptest.NewRequest(http.MethodGet, "/scan?q=example.com", nil)
-	rec := httptest.NewRecorder()
-	s.scanPageHandler(rec, req)
-	if rec.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d; body: %s", rec.Code, rec.Body.String())
-	}
+ s := testServer(t)
+ req := httptest.NewRequest(http.MethodGet, "/scan?q=example.com", nil)
+ rec := httptest.NewRecorder()
+ s.scanPageHandler(rec, req)
+ if rec.Code != http.StatusOK {
+  t.Fatalf("expected 200, got %d; body: %s", rec.Code, rec.Body.String())
+ }
 }
 ```
 
@@ -143,6 +144,7 @@ Expected: compilation error mentioning `stripANSI` and `scanPageHandler` undefin
 ## Task 2: Backend — routing logic and stubs
 
 **Files:**
+
 - Modify: `pkg/webserver/handlers.go`
 - Modify: `pkg/webserver/server.go`
 
@@ -154,7 +156,7 @@ Add `"regexp"` to the import block. Add after the `getRemoteIP` function (line 1
 var ansiEscapeRe = regexp.MustCompile(`\x1b\[[0-9;?]*[ -/]*[@-~]`)
 
 func stripANSI(s string) string {
-	return ansiEscapeRe.ReplaceAllString(s, "")
+ return ansiEscapeRe.ReplaceAllString(s, "")
 }
 ```
 
@@ -164,23 +166,23 @@ func stripANSI(s string) string {
 
 ```go
 func (s *Server) indexHandler(w http.ResponseWriter, r *http.Request) {
-	q := strings.TrimSpace(r.URL.Query().Get("q"))
-	if q != "" {
-		dest := "/scan?q=" + url.QueryEscape(q)
-		if r.URL.Query().Get("follow") == "1" {
-			dest += "&follow=1"
-		}
-		http.Redirect(w, r, dest, http.StatusFound)
-		return
-	}
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := s.templates.ExecuteTemplate(w, "index.html", map[string]any{
-		"title":   "webscan",
-		"version": s.version,
-	}); err != nil {
-		slog.Error("failed to render index template", "error", err)
-		http.Error(w, "template rendering failed", http.StatusInternalServerError)
-	}
+ q := strings.TrimSpace(r.URL.Query().Get("q"))
+ if q != "" {
+  dest := "/scan?q=" + url.QueryEscape(q)
+  if r.URL.Query().Get("follow") == "1" {
+   dest += "&follow=1"
+  }
+  http.Redirect(w, r, dest, http.StatusFound)
+  return
+ }
+ w.Header().Set("Content-Type", "text/html; charset=utf-8")
+ if err := s.templates.ExecuteTemplate(w, "index.html", map[string]any{
+  "title":   "webscan",
+  "version": s.version,
+ }); err != nil {
+  slog.Error("failed to render index template", "error", err)
+  http.Error(w, "template rendering failed", http.StatusInternalServerError)
+ }
 }
 ```
 
@@ -190,31 +192,31 @@ Append to `handlers.go`:
 
 ```go
 func (s *Server) scanPageHandler(w http.ResponseWriter, r *http.Request) {
-	q := strings.TrimSpace(r.URL.Query().Get("q"))
-	if q == "" {
-		http.Redirect(w, r, "/", http.StatusFound)
-		return
-	}
-	follow := r.URL.Query().Get("follow") == "1"
-	if r.URL.Query().Get("md") == "1" {
-		s.markdownScanHandler(w, r, q, follow)
-		return
-	}
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := s.templates.ExecuteTemplate(w, "scan.html", map[string]any{
-		"title":   "webscan — " + q,
-		"version": s.version,
-		"query":   q,
-		"follow":  follow,
-	}); err != nil {
-		slog.Error("failed to render scan template", "error", err)
-		http.Error(w, "template rendering failed", http.StatusInternalServerError)
-	}
+ q := strings.TrimSpace(r.URL.Query().Get("q"))
+ if q == "" {
+  http.Redirect(w, r, "/", http.StatusFound)
+  return
+ }
+ follow := r.URL.Query().Get("follow") == "1"
+ if r.URL.Query().Get("md") == "1" {
+  s.markdownScanHandler(w, r, q, follow)
+  return
+ }
+ w.Header().Set("Content-Type", "text/html; charset=utf-8")
+ if err := s.templates.ExecuteTemplate(w, "scan.html", map[string]any{
+  "title":   "webscan — " + q,
+  "version": s.version,
+  "query":   q,
+  "follow":  follow,
+ }); err != nil {
+  slog.Error("failed to render scan template", "error", err)
+  http.Error(w, "template rendering failed", http.StatusInternalServerError)
+ }
 }
 
 // markdownScanHandler stub — replaced in Task 6
 func (s *Server) markdownScanHandler(w http.ResponseWriter, _ *http.Request, _ string, _ bool) {
-	http.Error(w, "not yet implemented", http.StatusNotImplemented)
+ http.Error(w, "not yet implemented", http.StatusNotImplemented)
 }
 ```
 
@@ -239,6 +241,7 @@ Expected: `TestStripANSI`, `TestIndexHandler_*`, `TestScanPageHandler_NoQ_Redire
 ## Task 3: Templates — landing page and scan page
 
 **Files:**
+
 - Modify: `pkg/webserver/templates/index.html`
 - Create: `pkg/webserver/templates/scan.html`
 
@@ -369,6 +372,7 @@ git commit -m "feat: add two-page routing with scan page handler"
 ## Task 4: CSS — landing page centered layout
 
 **Files:**
+
 - Modify: `pkg/webserver/static/style.css`
 
 - [ ] **Step 1: Add landing page styles to the end of `style.css`**
@@ -427,6 +431,7 @@ git commit -m "feat: add centered landing page layout"
 ## Task 5: JS — two-page script
 
 **Files:**
+
 - Modify: `pkg/webserver/static/script.js`
 
 - [ ] **Step 1: Replace `script.js` entirely**
@@ -608,6 +613,7 @@ git commit -m "feat: rewrite JS for two-page scan flow"
 ## Task 6: Markdown mode — inline scan
 
 **Files:**
+
 - Modify: `pkg/webserver/jobs.go`
 - Modify: `pkg/webserver/handlers.go`
 
@@ -617,31 +623,31 @@ Append to `jobs.go` (after `newEngine`):
 
 ```go
 func (s *Server) runInlineScan(ctx context.Context, target string, follow bool) (string, error) {
-	outputBuffer := &synchronizedBuffer{}
-	statusBuffer := &synchronizedBuffer{}
+ outputBuffer := &synchronizedBuffer{}
+ statusBuffer := &synchronizedBuffer{}
 
-	engine, err := s.newEngine(outputBuffer, statusBuffer, follow)
-	if err != nil {
-		return "", fmt.Errorf("failed to initialize scan engine: %w", err)
-	}
+ engine, err := s.newEngine(outputBuffer, statusBuffer, follow)
+ if err != nil {
+  return "", fmt.Errorf("failed to initialize scan engine: %w", err)
+ }
 
-	scanCtx, cancel := context.WithTimeout(ctx, s.scanTimeout)
-	defer cancel()
+ scanCtx, cancel := context.WithTimeout(ctx, s.scanTimeout)
+ defer cancel()
 
-	done := make(chan error, 1)
-	go func() {
-		done <- engine.Scan(target)
-	}()
+ done := make(chan error, 1)
+ go func() {
+  done <- engine.Scan(target)
+ }()
 
-	select {
-	case err := <-done:
-		if err != nil {
-			return "", fmt.Errorf("scan failed: %w", err)
-		}
-		return outputBuffer.String(), nil
-	case <-scanCtx.Done():
-		return "", fmt.Errorf("scan timed out after %s", s.scanTimeout)
-	}
+ select {
+ case err := <-done:
+  if err != nil {
+   return "", fmt.Errorf("scan failed: %w", err)
+  }
+  return outputBuffer.String(), nil
+ case <-scanCtx.Done():
+  return "", fmt.Errorf("scan timed out after %s", s.scanTimeout)
+ }
 }
 ```
 
@@ -652,7 +658,7 @@ Replace:
 ```go
 // markdownScanHandler stub — replaced in Task 6
 func (s *Server) markdownScanHandler(w http.ResponseWriter, _ *http.Request, _ string, _ bool) {
-	http.Error(w, "not yet implemented", http.StatusNotImplemented)
+ http.Error(w, "not yet implemented", http.StatusNotImplemented)
 }
 ```
 
@@ -660,18 +666,18 @@ With:
 
 ```go
 func (s *Server) markdownScanHandler(w http.ResponseWriter, r *http.Request, target string, follow bool) {
-	result, err := s.runInlineScan(r.Context(), target, follow)
-	if err != nil {
-		status := http.StatusInternalServerError
-		if strings.Contains(err.Error(), "timed out") {
-			status = http.StatusGatewayTimeout
-		}
-		http.Error(w, err.Error(), status)
-		return
-	}
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-	fmt.Fprint(w, stripANSI(result))
+ result, err := s.runInlineScan(r.Context(), target, follow)
+ if err != nil {
+  status := http.StatusInternalServerError
+  if strings.Contains(err.Error(), "timed out") {
+   status = http.StatusGatewayTimeout
+  }
+  http.Error(w, err.Error(), status)
+  return
+ }
+ w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+ w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+ fmt.Fprint(w, stripANSI(result))
 }
 ```
 
@@ -695,6 +701,7 @@ git commit -m "feat: add markdown mode with inline scan for ?md=1"
 ## Task 7: Update e2e test
 
 **Files:**
+
 - Modify: `tests/e2e/webscan.spec.ts`
 
 The existing test references `#scanStatus` which does not exist in the templates. Update the test to use the new two-page flow.

@@ -133,7 +133,6 @@
 - Added Windows portability: DNS config no longer attempts to read `/etc/resolv.conf` on Windows
 - Standardised all `slog` messages to `"<package>: <Description>"` format with structured key-value pairs
 
-
 ## v4.1.0
 
 ### New Features
