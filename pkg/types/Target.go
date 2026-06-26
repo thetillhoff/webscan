@@ -135,7 +135,7 @@ func (target *Target) Hostname() string {
 
 // Overrides the hostname of the target (no port)
 func (target *Target) OverrideHostname(hostname string) {
-	target.parsedUrl.Host = hostname + ":" + target.parsedUrl.Port()
+	target.parsedUrl.Host = net.JoinHostPort(hostname, target.parsedUrl.Port())
 }
 
 // Hostname with port
@@ -159,7 +159,7 @@ func (target *Target) PortAsUint16() uint16 {
 }
 
 func (target *Target) OverridePort(port string) {
-	target.parsedUrl.Host = target.parsedUrl.Hostname() + ":" + port
+	target.parsedUrl.Host = net.JoinHostPort(target.parsedUrl.Hostname(), port)
 }
 
 func (target *Target) Path() string {

@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/thetillhoff/webscan/v3/pkg/types"
+	"github.com/thetillhoff/webscan/v5/pkg/types"
 )
 
 // CheckHTTPRedirects checks if the target redirects without following it.

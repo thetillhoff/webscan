@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/thetillhoff/webscan/v3/pkg/webscan"
+	"github.com/thetillhoff/webscan/v5/pkg/webscan"
 )
 
 const (

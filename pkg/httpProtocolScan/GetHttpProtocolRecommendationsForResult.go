@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/thetillhoff/webscan/v3/pkg/types"
+	"github.com/thetillhoff/webscan/v5/pkg/types"
 )
 
 func httpProtocolRecommendations(target types.Target, result Result, isAvailableViaPort80 bool, isAvailableViaPort443 bool) []string {

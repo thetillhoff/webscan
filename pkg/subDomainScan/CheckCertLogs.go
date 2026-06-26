@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/thetillhoff/webscan/v3/pkg/types"
+	"github.com/thetillhoff/webscan/v5/pkg/types"
 )
 
 type Cert struct {
@@ -97,7 +97,7 @@ func CheckCertLogs(target types.Target, timeout time.Duration) (map[string]struc
 	}
 
 	for _, cert := range certs {
-		if strings.HasSuffix(cert.CommonName, target.ParsedUrl().Host) {
+		if strings.HasSuffix(cert.CommonName, target.Hostname()) {
 			domainNames[cert.CommonName] = struct{}{}
 		}
 	}

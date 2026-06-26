@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/thetillhoff/webscan/v3/pkg/status"
-	"github.com/thetillhoff/webscan/v3/pkg/types"
+	"github.com/thetillhoff/webscan/v5/pkg/status"
+	"github.com/thetillhoff/webscan/v5/pkg/types"
 )
 
 type scanConfig struct {
@@ -52,18 +52,24 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) (
 
 	status.SpinningUpdate("Scanning http protocols...")
 
-	// Check redirects for HTTP and HTTPS in parallel
+	// Check redirects for HTTP and HTTPS in parallel.
+	// Each goroutine writes to its own locals; results are assigned after Wait()
+	// to avoid a data race on the shared result struct.
 	var wg sync.WaitGroup
 	wg.Add(2)
+
+	var httpStatusCode, httpsStatusCode int
+	var httpRedirectLocation, httpsRedirectLocation string
+	var httpAvailable, httpsAvailable bool
 
 	go func() {
 		defer wg.Done()
 		target80 := target
 		target80.OverrideSchema(types.HTTP)
 		statusCode, redirectLocation, err := CheckHTTPRedirects(target80, config.timeout)
-		result.httpStatusCode = statusCode
-		result.httpRedirectLocation = redirectLocation
-		result.isAvailableViaHttp = err == nil
+		httpStatusCode = statusCode
+		httpRedirectLocation = redirectLocation
+		httpAvailable = err == nil
 	}()
 
 	go func() {
@@ -71,12 +77,19 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) (
 		target443 := target
 		target443.OverrideSchema(types.HTTPS)
 		statusCode, redirectLocation, err := CheckHTTPRedirects(target443, config.timeout)
-		result.httpsStatusCode = statusCode
-		result.httpsRedirectLocation = redirectLocation
-		result.isAvailableViaHttps = err == nil
+		httpsStatusCode = statusCode
+		httpsRedirectLocation = redirectLocation
+		httpsAvailable = err == nil
 	}()
 
 	wg.Wait()
+
+	result.httpStatusCode = httpStatusCode
+	result.httpRedirectLocation = httpRedirectLocation
+	result.isAvailableViaHttp = httpAvailable
+	result.httpsStatusCode = httpsStatusCode
+	result.httpsRedirectLocation = httpsRedirectLocation
+	result.isAvailableViaHttps = httpsAvailable
 
 	// Check HTTP versions for port 80 and port 443 in parallel
 	var wg2 sync.WaitGroup

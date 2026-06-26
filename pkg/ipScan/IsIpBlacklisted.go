@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/thetillhoff/webscan/v3/pkg/types"
+	"github.com/thetillhoff/webscan/v5/pkg/types"
 )
 
 var spamhausListingCodes = map[string]string{

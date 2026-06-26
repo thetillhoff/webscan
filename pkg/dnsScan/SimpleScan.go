@@ -4,7 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/miekg/dns"
-	"github.com/thetillhoff/webscan/v3/pkg/types"
+	"github.com/thetillhoff/webscan/v5/pkg/types"
 )
 
 func SimpleScan(target types.Target, dnsClient *dns.Client, nameserver string, followRedirects bool) (Result, error) {

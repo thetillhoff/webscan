@@ -11,9 +11,9 @@ import (
 	"path"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/thetillhoff/webscan/v3/pkg/cachedHttpGetClient"
-	"github.com/thetillhoff/webscan/v3/pkg/status"
-	"github.com/thetillhoff/webscan/v3/pkg/types"
+	"github.com/thetillhoff/webscan/v5/pkg/cachedHttpGetClient"
+	"github.com/thetillhoff/webscan/v5/pkg/status"
+	"github.com/thetillhoff/webscan/v5/pkg/types"
 )
 
 // TODO return image / media / video / audio / svgs / ... as well

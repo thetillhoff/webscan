@@ -13,8 +13,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/thetillhoff/webscan/v3/pkg/logger"
-	"github.com/thetillhoff/webscan/v3/pkg/webscan"
+	"github.com/thetillhoff/webscan/v5/pkg/logger"
+	"github.com/thetillhoff/webscan/v5/pkg/webscan"
 	"github.com/urfave/cli/v3"
 )
 

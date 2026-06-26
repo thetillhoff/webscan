@@ -4,16 +4,16 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/thetillhoff/webscan/v3/pkg/dnsScan"
-	"github.com/thetillhoff/webscan/v3/pkg/htmlContentScan"
-	"github.com/thetillhoff/webscan/v3/pkg/httpHeaderScan"
-	"github.com/thetillhoff/webscan/v3/pkg/httpProtocolScan"
-	"github.com/thetillhoff/webscan/v3/pkg/ipScan"
-	"github.com/thetillhoff/webscan/v3/pkg/knownFilesScan"
-	"github.com/thetillhoff/webscan/v3/pkg/portScan"
-	"github.com/thetillhoff/webscan/v3/pkg/subDomainScan"
-	"github.com/thetillhoff/webscan/v3/pkg/tlsScan"
-	"github.com/thetillhoff/webscan/v3/pkg/types"
+	"github.com/thetillhoff/webscan/v5/pkg/dnsScan"
+	"github.com/thetillhoff/webscan/v5/pkg/htmlContentScan"
+	"github.com/thetillhoff/webscan/v5/pkg/httpHeaderScan"
+	"github.com/thetillhoff/webscan/v5/pkg/httpProtocolScan"
+	"github.com/thetillhoff/webscan/v5/pkg/ipScan"
+	"github.com/thetillhoff/webscan/v5/pkg/knownFilesScan"
+	"github.com/thetillhoff/webscan/v5/pkg/portScan"
+	"github.com/thetillhoff/webscan/v5/pkg/subDomainScan"
+	"github.com/thetillhoff/webscan/v5/pkg/tlsScan"
+	"github.com/thetillhoff/webscan/v5/pkg/types"
 )
 
 func (engine *Engine) Scan(input string) error {

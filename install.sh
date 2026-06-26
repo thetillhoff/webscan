@@ -33,22 +33,22 @@ esac
 
 
 # Check if jq is available
-if [ ! 'command -v jq' ]; then
+if ! command -v jq >/dev/null 2>&1; then
   printf "jq is required to run this script"
   exit 1
 fi
 
 # Check if sha256sum is available
-if [ ! 'command -v sha256sum' ]; then
+if ! command -v sha256sum >/dev/null 2>&1; then
   printf "sha256sum is required to run this script"
   exit 1
 fi
 
 # Check if curl or wget are available
-if [ 'command -v curl' ]; then
+if command -v curl >/dev/null 2>&1; then
   DOWNLOAD_FILE_CMD="curl -Lo"
   DOWNLOAD_BODY_CMD="curl -sL"
-elif [ 'command -v wget' ]; then
+elif command -v wget >/dev/null 2>&1; then
   DOWNLOAD_FILE_CMD="wget -O"
   DOWNLOAD_BODY_CMD="wget -qO-"
 else

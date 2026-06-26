@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/thetillhoff/webscan/v3/pkg/types"
+	"github.com/thetillhoff/webscan/v5/pkg/types"
 )
 
 // TODO
@@ -27,7 +27,7 @@ func CheckSPF(txtRecords []string) string {
 	for _, txtRecord := range txtRecords {
 		if txtRecord == "v=spf1" || strings.HasPrefix(txtRecord, "v=spf1 ") {
 			if spfRecord == "" { // Check if there was a spf record detected before
-				spfRecord = strings.ToLower(spfRecord) // spf records are case insensitive
+				spfRecord = strings.ToLower(txtRecord) // spf records are case insensitive
 			} else {
 				return "Hint: Multiple SPF records detected."
 			}
@@ -116,7 +116,7 @@ func CheckSPF(txtRecords []string) string {
 			}
 
 			// "ip4:<ip4-network>[<ip4-cidr-length>]
-			word = strings.TrimPrefix(word, "ipv4:") // Remove mechanism prefix
+			word = strings.TrimPrefix(word, "ip4:") // Remove mechanism prefix
 
 			if strings.Contains(word, "/") { // Contains both <ipv4-network> and <ipv4-cidr-length>
 				// ip4-network      = qnum "." qnum "." qnum "." qnum
@@ -147,7 +147,7 @@ func CheckSPF(txtRecords []string) string {
 			}
 
 			// "ip6:<ip6-network>[<ip6-cidr-length>]
-			word = strings.TrimPrefix(word, "ipv6:") // Remove mechanism prefix
+			word = strings.TrimPrefix(word, "ip6:") // Remove mechanism prefix
 
 			if strings.Contains(word, "/") { // Contains both <ipv6-network> and <ipv6-cidr-length>
 				// ip6-network      = <as per Section 2.2 of [RFC4291]>

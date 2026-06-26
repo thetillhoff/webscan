@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/thetillhoff/webscan/v3/pkg/webscan"
+	"github.com/thetillhoff/webscan/v5/pkg/webscan"
 )
 
 const (
@@ -58,6 +58,7 @@ type Server struct {
 	jobIDKey            string
 	blockedDomains      []string
 	blockedCIDRs        []*net.IPNet
+	allowPrivateTargets bool
 }
 
 func NewServer(
@@ -77,6 +78,7 @@ func NewServer(
 	maxQueueSize int,
 	domainBlocklist []string,
 	ipBlocklist []string,
+	allowPrivateTargets bool,
 ) (*Server, error) {
 	if writeMutex == nil {
 		writeMutex = &sync.Mutex{}
@@ -146,6 +148,7 @@ func NewServer(
 		jobIDKey:            "webscan:jobs:next_id",
 		blockedDomains:      domainBlocklist,
 		blockedCIDRs:        blockedCIDRs,
+		allowPrivateTargets: allowPrivateTargets,
 	}
 
 	server.setupRouter()

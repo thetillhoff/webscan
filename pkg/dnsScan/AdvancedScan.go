@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/miekg/dns"
-	"github.com/thetillhoff/webscan/v3/pkg/status"
-	"github.com/thetillhoff/webscan/v3/pkg/types"
+	"github.com/thetillhoff/webscan/v5/pkg/status"
+	"github.com/thetillhoff/webscan/v5/pkg/types"
 )
 
 func AdvancedScan(status *status.Status, target types.Target, dnsClient *dns.Client, nameserver string, followRedirects bool, timeout time.Duration) (Result, error) {
