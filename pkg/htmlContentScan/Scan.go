@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"log"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -130,7 +129,7 @@ func Scan(status *status.Status, target types.Target, options ...ConfigOption) (
 			}
 			if parsedUrl.IsAbs() { // Includes a scheme
 				if parsedUrl.Scheme != "https" {
-					log.Println(parsedUrl.Scheme)
+					slog.Warn("htmlContentScan: external stylesheet not HTTPS", "scheme", parsedUrl.Scheme, "url", stylesheetSource)
 					messages = append(messages, "External stylesheets should only be referenced via HTTPS. Got "+stylesheetSource)
 				}
 			} else { // Doesn't include a scheme
@@ -172,7 +171,7 @@ func Scan(status *status.Status, target types.Target, options ...ConfigOption) (
 			}
 			if parsedUrl.IsAbs() { // Includes a scheme
 				if parsedUrl.Scheme != "https" {
-					log.Println(parsedUrl.Scheme)
+					slog.Warn("htmlContentScan: external script not HTTPS", "scheme", parsedUrl.Scheme, "url", scriptSource)
 					messages = append(messages, "External scripts should only be referenced via HTTPS. Got "+scriptSource)
 				}
 			} else { // Doesn't include a scheme

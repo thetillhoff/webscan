@@ -1,5 +1,35 @@
 # CHANGELOG
 
+## Unreleased
+
+### Fixes
+
+- **SSRF guard**: Web server now resolves scan targets to IPs before scanning and blocks private/loopback/link-local/CGNAT ranges by default; set `ALLOW_PRIVATE_TARGETS=1` to allow LAN targets
+- **X-Forwarded-For trust**: Client IP override headers are only trusted when the direct peer is in a private CIDR range (reverse-proxy scenario); untrusted on public peers
+- **SPF scan**: Fixed dead assignment bug that prevented any SPF record from being read; corrected `ipv4:`/`ipv6:` prefix typos to `ip4:`/`ip6:` per RFC 7208
+- **Subdomain scan**: Fixed sibling-domain false positive (e.g. `evilexample.com` no longer matches `example.com`)
+- **IPv6 host construction**: `OverrideHostname`/`OverridePort` now use `net.JoinHostPort` to produce correct `[::1]:port` form
+- **TLS dial timeout**: All `tls.Dial` calls now use `tls.DialWithDialer` with a 5-second timeout
+- **HTTP body size cap**: Responses capped at 10 MB via `io.LimitReader`
+- **Cached HTTP client**: Map reads and writes protected with a mutex
+- **Spinner data race**: Spinner state guarded by `sync.Mutex`; goroutines no longer race on shared fields
+- **Port scan waitgroup**: Package-level `sync.WaitGroup` replaced with a local one per scan call
+- **IP scan error handling**: Per-IP errors logged and skipped instead of aborting the entire scan
+- **Context cancellation**: Scan engine threads `context.Context` through all phases; honours timeout/cancel between phases and in redirect loops
+- **Security headers**: Web server adds `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and `Content-Security-Policy` to every response
+- **Non-root Docker image**: Both CLI and web final images run as uid 10001 (`app` user)
+- **DMARC copy-paste**: Fixed "DKIM selector redirects" message appearing in DMARC output
+- **Logger TTY detection**: TTY check now uses the configured `io.Writer` instead of always checking `os.Stdout`
+- **`log.Println` in HTML scan**: Replaced stdlib `log` calls with `slog.Warn` for consistent structured logging
+- **Module path**: Corrected import path from `/v3` to `/v5` across all packages
+- **Config paths in README**: Corrected `/v3/releases/latest` and `/v3/issues` URL fragments
+
+### Improvements
+
+- **CI**: Added `go vet` and `go test -race` job to the build workflow
+- **ScanOptions consolidation**: Three overlapping configuration mechanisms collapsed into a single `ScanOptions` struct; `Enable.go` deleted
+- **SSRF environment variables**: `ALLOW_PRIVATE_TARGETS`, `DOMAIN_BLOCKLIST`, and `IP_BLOCKLIST` documented in README
+
 ## v5.3.1
 
 ### Fixes
