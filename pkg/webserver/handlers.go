@@ -1,6 +1,7 @@
 package webserver
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -58,8 +59,8 @@ func (s *Server) scanHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if s.isBlocked(req.Target) {
-		writeJSON(w, http.StatusForbidden, map[string]string{"error": "target domain is not allowed"})
+	if s.isBlocked(r.Context(), req.Target) {
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": "target is not allowed"})
 		return
 	}
 
@@ -138,16 +139,20 @@ func writeJSON(w http.ResponseWriter, status int, payload any) {
 	}
 }
 
-func (s *Server) isBlocked(target string) bool {
+// isBlocked decides whether a scan target must be refused. It resolves
+// hostnames so that a name pointing at an internal address can't slip past the
+// IP checks (the core SSRF protection). Private/loopback/link-local/reserved
+// addresses are blocked unless allowPrivateTargets is set (for deliberate LAN
+// scanning). ctx bounds the DNS lookup.
+//
+// ponytail: residual DNS-rebinding TOCTOU remains — the target is re-resolved
+// by the scan engine after this check. Closing that needs the engine to scan
+// the exact IP resolved here; tracked in TODO.md.
+func (s *Server) isBlocked(ctx context.Context, target string) bool {
 	host := strings.ToLower(strings.TrimSpace(extractHost(target)))
 
 	if ip := net.ParseIP(host); ip != nil {
-		for _, cidr := range s.blockedCIDRs {
-			if cidr.Contains(ip) {
-				return true
-			}
-		}
-		return false
+		return s.ipBlocked(ip)
 	}
 
 	for _, entry := range s.blockedDomains {
@@ -155,7 +160,43 @@ func (s *Server) isBlocked(target string) bool {
 			return true
 		}
 	}
+
+	addrs, err := net.DefaultResolver.LookupIPAddr(ctx, host)
+	if err != nil {
+		// Let unresolvable targets through; the scan itself will fail cleanly.
+		return false
+	}
+	for _, addr := range addrs {
+		if s.ipBlocked(addr.IP) {
+			return true
+		}
+	}
 	return false
+}
+
+func (s *Server) ipBlocked(ip net.IP) bool {
+	if !s.allowPrivateTargets && isPrivateOrReserved(ip) {
+		return true
+	}
+	for _, cidr := range s.blockedCIDRs {
+		if cidr.Contains(ip) {
+			return true
+		}
+	}
+	return false
+}
+
+// cgnatRange is RFC6598 (100.64.0.0/10), not covered by net.IP.IsPrivate.
+var cgnatRange = &net.IPNet{IP: net.IPv4(100, 64, 0, 0), Mask: net.CIDRMask(10, 32)}
+
+func isPrivateOrReserved(ip net.IP) bool {
+	return ip.IsLoopback() ||
+		ip.IsPrivate() || // RFC1918 + RFC4193 ULA (fc00::/7)
+		ip.IsLinkLocalUnicast() || // 169.254.0.0/16 + fe80::/10 (covers 169.254.169.254)
+		ip.IsLinkLocalMulticast() ||
+		ip.IsUnspecified() ||
+		ip.IsMulticast() ||
+		cgnatRange.Contains(ip)
 }
 
 func extractHost(target string) string {
@@ -215,6 +256,10 @@ func (s *Server) scanPageHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) markdownScanHandler(w http.ResponseWriter, r *http.Request, target string, follow bool) {
+	if s.isBlocked(r.Context(), target) {
+		http.Error(w, "target is not allowed", http.StatusForbidden)
+		return
+	}
 	result, err := s.runInlineScan(r.Context(), target, follow)
 	if err != nil {
 		status := http.StatusInternalServerError
@@ -237,18 +282,25 @@ func stripANSI(s string) string {
 	return ansiEscapeRe.ReplaceAllString(s, "")
 }
 
+// getRemoteIP returns the client IP. X-Forwarded-For / X-Real-IP are only
+// trusted when the direct peer is a private/loopback address (i.e. a reverse
+// proxy on the same network); otherwise they are attacker-spoofable, so the
+// real peer address is used.
 func getRemoteIP(r *http.Request) string {
-	if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
-		parts := strings.Split(forwarded, ",")
-		return strings.TrimSpace(parts[0])
-	}
-	if realIP := strings.TrimSpace(r.Header.Get("X-Real-IP")); realIP != "" {
-		return realIP
+	peer := r.RemoteAddr
+	if host, _, err := net.SplitHostPort(peer); err == nil {
+		peer = host
 	}
 
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err == nil {
-		return host
+	peerIP := net.ParseIP(peer)
+	if peerIP != nil && isPrivateOrReserved(peerIP) {
+		if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
+			parts := strings.Split(forwarded, ",")
+			return strings.TrimSpace(parts[0])
+		}
+		if realIP := strings.TrimSpace(r.Header.Get("X-Real-IP")); realIP != "" {
+			return realIP
+		}
 	}
-	return r.RemoteAddr
+	return peer
 }

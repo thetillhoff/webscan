@@ -16,7 +16,11 @@ func (client Client) Get(url string) (*http.Response, []byte, error) {
 
 	slog.Debug("httpClient: HttpRequest requested", "url", url)
 
-	if cachedResponse, ok := client.responses[url]; ok { // If cached response exists
+	client.mu.Lock()
+	cachedResponse, ok := client.responses[url]
+	client.mu.Unlock()
+
+	if ok { // If cached response exists
 
 		slog.Debug("httpClient: Returning response for request from internal cache", "url", url)
 
@@ -36,7 +40,9 @@ func (client Client) Get(url string) (*http.Response, []byte, error) {
 			response = NewResponse(httpResponse, err)
 		}
 
+		client.mu.Lock()
 		client.responses[url] = response
+		client.mu.Unlock()
 
 		slog.Debug("httpClient: Request completed", "url", url)
 

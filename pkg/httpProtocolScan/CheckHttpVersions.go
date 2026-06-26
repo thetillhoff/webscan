@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/thetillhoff/webscan/v3/pkg/types"
+	"github.com/thetillhoff/webscan/v5/pkg/types"
 )
 
 func CheckHTTPVersions(target types.Target, timeout time.Duration) ([]string, error) {

@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"sync"
 
-	"github.com/thetillhoff/webscan/v3/pkg/status"
-	"github.com/thetillhoff/webscan/v3/pkg/types"
+	"github.com/thetillhoff/webscan/v5/pkg/status"
+	"github.com/thetillhoff/webscan/v5/pkg/types"
 )
 
 func scanEnabledTLSVersions(status *status.Status, target types.Target, ip string) []uint16 {

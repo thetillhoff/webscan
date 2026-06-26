@@ -28,6 +28,8 @@ ARG TARGETPLATFORM
 # Copy the pre-built binary directly from artifacts by name
 COPY --from=builder-cli --chmod=755 /artifacts/webscan /usr/local/bin/webscan
 
+RUN adduser -D -u 10001 app
+USER app
 WORKDIR /workspace
 ENTRYPOINT ["/usr/local/bin/webscan"]
 
@@ -35,5 +37,7 @@ ENTRYPOINT ["/usr/local/bin/webscan"]
 FROM alpine:3.24.1@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b AS web
 COPY --from=builder-web --chmod=755 /artifacts/webscan-web /usr/local/bin/webscan-web
 
+RUN adduser -D -u 10001 app
+USER app
 WORKDIR /workspace
 ENTRYPOINT ["/usr/local/bin/webscan-web"]

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/thetillhoff/webscan/v3/pkg/types"
+	"github.com/thetillhoff/webscan/v5/pkg/types"
 )
 
 func checkHTTP2(target types.Target, timeout time.Duration) (string, error) {

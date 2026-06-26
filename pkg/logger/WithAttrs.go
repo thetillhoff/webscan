@@ -3,5 +3,7 @@ package logger
 import "log/slog"
 
 func (handler Handler) WithAttrs(attrs []slog.Attr) slog.Handler {
-	return &Handler{slogHandler: handler.slogHandler.WithAttrs(attrs), buf: handler.buf, WriteMutex: handler.WriteMutex}
+	newHandler := handler
+	newHandler.slogHandler = handler.slogHandler.WithAttrs(attrs)
+	return &newHandler
 }

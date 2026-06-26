@@ -4,10 +4,15 @@ import (
 	"crypto/tls"
 	"errors"
 	"log/slog"
+	"net"
 	"os"
+	"time"
 
-	"github.com/thetillhoff/webscan/v3/pkg/types"
+	"github.com/thetillhoff/webscan/v5/pkg/types"
 )
+
+// dialer bounds TLS connection setup so an unresponsive host can't hang a scan.
+var dialer = &net.Dialer{Timeout: 5 * time.Second}
 
 // checks whether the certificate is valid
 func evaluateTLSCertificate(target types.Target, ip string) ([]certInfo, error, error) {
@@ -21,7 +26,7 @@ func evaluateTLSCertificate(target types.Target, ip string) ([]certInfo, error, 
 
 	slog.Debug("tlsScan: Evaluating TLS certificate started", "targetEndpoint", targetEndpoint, "ServerName", target.Hostname())
 
-	strictConn, tlsErr := tls.Dial("tcp", targetEndpoint, &tls.Config{
+	strictConn, tlsErr := tls.DialWithDialer(dialer, "tcp", targetEndpoint, &tls.Config{
 		MinVersion: tls.VersionTLS10,
 		MaxVersion: tls.VersionTLS13,
 		ServerName: target.Hostname(),
@@ -36,7 +41,7 @@ func evaluateTLSCertificate(target types.Target, ip string) ([]certInfo, error, 
 		return certInfos, errors.New("http call exceeded 5s timeout"), nil
 	}
 
-	conn, err := tls.Dial("tcp", targetEndpoint, &tls.Config{
+	conn, err := tls.DialWithDialer(dialer, "tcp", targetEndpoint, &tls.Config{
 		MinVersion:         tls.VersionTLS10,
 		MaxVersion:         tls.VersionTLS13,
 		ServerName:         target.Hostname(),

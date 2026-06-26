@@ -4,19 +4,20 @@ import (
 	"log/slog"
 	"net"
 	"strconv"
+	"sync"
 	"time"
 
-	"github.com/thetillhoff/webscan/v3/pkg/status"
+	"github.com/thetillhoff/webscan/v5/pkg/status"
 )
 
 // Checks whether a tcp connection can be established to the specified <ip>:<port> combo.
-func isOpenTcpPort(status *status.Status, ipPortTuple IpPortTuple, portChannel chan IpPortTuple, timeout time.Duration) {
+func isOpenTcpPort(wg *sync.WaitGroup, status *status.Status, ipPortTuple IpPortTuple, portChannel chan IpPortTuple, timeout time.Duration) {
 	var (
 		err error
 	)
 
 	defer status.SpinningXOfUpdate()
-	defer wgPortScan.Done()
+	defer wg.Done()
 
 	slog.Debug("portScan: Checking tcp port started", "ip", ipPortTuple.Ip, "port", ipPortTuple.Port)
 

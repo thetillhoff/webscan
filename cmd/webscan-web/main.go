@@ -16,8 +16,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/thetillhoff/webscan/v3/pkg/logger"
-	"github.com/thetillhoff/webscan/v3/pkg/webserver"
+	"github.com/thetillhoff/webscan/v5/pkg/logger"
+	"github.com/thetillhoff/webscan/v5/pkg/webserver"
 )
 
 var version = "dev" // This is just the default. The actual value is injected at buildtime
@@ -75,6 +75,9 @@ func main() {
 	// Parse blocklists from env vars (one entry per line)
 	domainBlocklist := parseBlocklist(os.Getenv("DOMAIN_BLOCKLIST"))
 	ipBlocklist := parseBlocklist(os.Getenv("IP_BLOCKLIST"))
+	// Private/loopback/link-local targets are blocked by default (SSRF guard).
+	// Set ALLOW_PRIVATE_TARGETS=1 to scan internal networks deliberately.
+	allowPrivateTargets := os.Getenv("ALLOW_PRIVATE_TARGETS") == "1"
 
 	// Create and run server
 	server, err := webserver.NewServer(
@@ -94,6 +97,7 @@ func main() {
 		*maxQueueSize,
 		domainBlocklist,
 		ipBlocklist,
+		allowPrivateTargets,
 	)
 	if err != nil {
 		slog.Error("Could not create webscan web server", "error", err)

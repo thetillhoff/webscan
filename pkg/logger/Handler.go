@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"log/slog"
@@ -28,8 +27,8 @@ var _ slog.Handler = (*Handler)(nil)
 
 type Handler struct {
 	slogHandler slog.Handler
-	buf         *bytes.Buffer
 	WriteMutex  *sync.Mutex
+	w           io.Writer
 	opts        *slog.HandlerOptions
 
 	isTTY   bool
@@ -47,6 +46,7 @@ func NewHandler(w io.Writer, writeMutex *sync.Mutex, opts *slog.HandlerOptions, 
 	var handler = Handler{
 		slogHandler:    slog.NewTextHandler(w, opts),
 		WriteMutex:     writeMutex,
+		w:              w,
 		opts:           opts,
 		timeFormatter:  func(s string) string { return s },
 		ErrorFormatter: func(s string) string { return s },
@@ -69,12 +69,10 @@ func NewHandler(w io.Writer, writeMutex *sync.Mutex, opts *slog.HandlerOptions, 
 		}
 	}
 
-	if isatty.IsTerminal(os.Stdout.Fd()) {
-		handler.isTTY = true
-	} else if isatty.IsCygwinTerminal(os.Stdout.Fd()) {
-		handler.isTTY = true
-	} else {
-		handler.isTTY = false
+	if f, ok := w.(*os.File); ok {
+		if isatty.IsTerminal(f.Fd()) || isatty.IsCygwinTerminal(f.Fd()) {
+			handler.isTTY = true
+		}
 	}
 
 	if value, ok := os.LookupEnv("TERM"); ok && value == "dumb" { // Check for env var "$TERM"

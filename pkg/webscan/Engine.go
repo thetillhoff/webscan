@@ -8,18 +8,18 @@ import (
 	"sync"
 	"time"
 
-	"github.com/thetillhoff/webscan/v3/pkg/cachedHttpGetClient"
-	"github.com/thetillhoff/webscan/v3/pkg/dnsScan"
-	"github.com/thetillhoff/webscan/v3/pkg/htmlContentScan"
-	"github.com/thetillhoff/webscan/v3/pkg/httpHeaderScan"
-	"github.com/thetillhoff/webscan/v3/pkg/httpProtocolScan"
-	"github.com/thetillhoff/webscan/v3/pkg/ipScan"
-	"github.com/thetillhoff/webscan/v3/pkg/knownFilesScan"
-	"github.com/thetillhoff/webscan/v3/pkg/portScan"
-	"github.com/thetillhoff/webscan/v3/pkg/status"
-	"github.com/thetillhoff/webscan/v3/pkg/subDomainScan"
-	"github.com/thetillhoff/webscan/v3/pkg/tlsScan"
-	"github.com/thetillhoff/webscan/v3/pkg/types"
+	"github.com/thetillhoff/webscan/v5/pkg/cachedHttpGetClient"
+	"github.com/thetillhoff/webscan/v5/pkg/dnsScan"
+	"github.com/thetillhoff/webscan/v5/pkg/htmlContentScan"
+	"github.com/thetillhoff/webscan/v5/pkg/httpHeaderScan"
+	"github.com/thetillhoff/webscan/v5/pkg/httpProtocolScan"
+	"github.com/thetillhoff/webscan/v5/pkg/ipScan"
+	"github.com/thetillhoff/webscan/v5/pkg/knownFilesScan"
+	"github.com/thetillhoff/webscan/v5/pkg/portScan"
+	"github.com/thetillhoff/webscan/v5/pkg/status"
+	"github.com/thetillhoff/webscan/v5/pkg/subDomainScan"
+	"github.com/thetillhoff/webscan/v5/pkg/tlsScan"
+	"github.com/thetillhoff/webscan/v5/pkg/types"
 )
 
 // TODO add proper logger implementation, with info statements on -v, and debug statements on -vvv
@@ -76,15 +76,7 @@ func NewEngine(
 	dnsServer string,
 	followRedirects bool,
 	timeout time.Duration,
-	advancedDnsScan bool,
-	ipScan bool,
-	advancedPortScan bool,
-	tlsScan bool,
-	httpProtocolScan bool,
-	httpHeaderScan bool,
-	htmlContentScan bool,
-	mailConfigScan bool,
-	subDomainScan bool,
+	opts ScanOptions,
 	writeMutex *sync.Mutex,
 ) (Engine, error) {
 
@@ -127,15 +119,16 @@ func NewEngine(
 		client:           client,
 		followRedirects:  followRedirects,
 		timeout:          timeout,
-		advancedDnsScan:  advancedDnsScan,
-		ipScan:           ipScan,
-		advancedPortScan: advancedPortScan,
-		tlsScan:          tlsScan,
-		httpProtocolScan: httpProtocolScan,
-		httpHeaderScan:   httpHeaderScan,
-		htmlContentScan:  htmlContentScan,
-		mailConfigScan:   mailConfigScan,
-		subDomainScan:    subDomainScan,
+		advancedDnsScan:  opts.AdvancedDNS,
+		ipScan:           opts.IP,
+		advancedPortScan: opts.AdvancedPort,
+		tlsScan:          opts.TLS,
+		httpProtocolScan: opts.HTTPProtocol,
+		httpHeaderScan:   opts.HTTPHeader,
+		htmlContentScan:  opts.HTMLContent,
+		knownFilesScan:   opts.KnownFiles,
+		mailConfigScan:   opts.MailConfig,
+		subDomainScan:    opts.Subdomain,
 	}
 
 	return engine, nil

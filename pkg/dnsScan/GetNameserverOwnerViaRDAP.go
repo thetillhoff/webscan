@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/miekg/dns"
-	"github.com/thetillhoff/webscan/v3/pkg/ipScan"
+	"github.com/thetillhoff/webscan/v5/pkg/ipScan"
 )
 
 func GetNameserverOwnerViaRDAP(dnsClient *dns.Client, nameserver string, nsRecords []string, timeout time.Duration) ([]string, error) {

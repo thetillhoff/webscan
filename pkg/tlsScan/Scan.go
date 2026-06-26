@@ -4,9 +4,9 @@ import (
 	"errors"
 	"log/slog"
 
-	"github.com/thetillhoff/webscan/v3/pkg/portScan"
-	"github.com/thetillhoff/webscan/v3/pkg/status"
-	"github.com/thetillhoff/webscan/v3/pkg/types"
+	"github.com/thetillhoff/webscan/v5/pkg/portScan"
+	"github.com/thetillhoff/webscan/v5/pkg/status"
+	"github.com/thetillhoff/webscan/v5/pkg/types"
 )
 
 func Scan(target types.Target, status *status.Status, aRecords []string, aaaaRecords []string, portScanResult portScan.Result) (Result, error) {

@@ -1,4 +1,4 @@
-module github.com/thetillhoff/webscan/v3
+module github.com/thetillhoff/webscan/v5
 
 go 1.26.4
 

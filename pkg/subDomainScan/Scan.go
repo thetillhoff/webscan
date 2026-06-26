@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/thetillhoff/webscan/v3/pkg/status"
-	"github.com/thetillhoff/webscan/v3/pkg/types"
+	"github.com/thetillhoff/webscan/v5/pkg/status"
+	"github.com/thetillhoff/webscan/v5/pkg/types"
 )
 
 type scanConfig struct {
@@ -63,11 +63,11 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) R
 		case net.ParseIP(subdomain) != nil: // If subdomain candidate is an ip address
 			slog.Debug("subDomainScan: Skipping ip address", "ip", subdomain)
 			continue
-		case !strings.HasSuffix(subdomain, target.Hostname()): // If subdomain candidate is a completely different domain
-			slog.Debug("subDomainScan: Skipping subdomain that is not a subdomain of the target domain", "subdomain", subdomain)
-			continue
 		case subdomain == target.Hostname(): // If subdomain candidate is the same as the target domain
 			slog.Debug("subDomainScan: Skipping subdomain that is the same as the target domain", "subdomain", subdomain)
+			continue
+		case !strings.HasSuffix(subdomain, "."+target.Hostname()): // If subdomain candidate is a completely different domain (e.g. notexample.com vs example.com)
+			slog.Debug("subDomainScan: Skipping subdomain that is not a subdomain of the target domain", "subdomain", subdomain)
 			continue
 		}
 

@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"sort"
 
-	"github.com/thetillhoff/webscan/v3/pkg/types"
+	"github.com/thetillhoff/webscan/v5/pkg/types"
 )
 
 type FileResult struct {

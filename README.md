@@ -28,7 +28,7 @@ go build -o webscan-web ./cmd/webscan-web/
 # Open http://localhost:8080 in your browser
 ```
 
-Open http://localhost:8080, enter any domain, IP, or URL and click "Scan" — or jump straight to a result:
+Open <http://localhost:8080>, enter any domain, IP, or URL and click "Scan" — or jump straight to a result:
 
 ```bash
 # Open scan directly in browser
@@ -54,7 +54,7 @@ If you have `brew` installed:
 brew install thetillhoff/homebrew-tap/webscan
 ```
 
-or manually from [releases](https://github.com/thetillhoff/webscan/v3/releases/latest).
+or manually from [releases](https://github.com/thetillhoff/webscan/releases/latest).
 
 ### Web Installation
 
@@ -104,14 +104,14 @@ The web interface provides a Google-like search experience across two pages:
 **URL parameters:**
 
 | Parameter | Description |
-|---|---|
+| --- | --- |
 | `q=<target>` | Domain, IP, or URL to scan |
 | `follow=1` | Follow CNAMEs and HTTP redirects |
 | `md=1` | Return plain-text output instead of the HTML page |
 
 Share or bookmark any scan directly:
 
-```
+```text
 https://your-instance/scan?q=example.com
 https://your-instance/scan?q=example.com&follow=1
 ```
@@ -124,6 +124,14 @@ curl "https://your-instance/scan?q=example.com&follow=1&md=1"
 ```
 
 All scan features are automatically enabled — no flags needed.
+
+**Environment variables (web server):**
+
+| Variable | Description |
+| --- | --- |
+| `ALLOW_PRIVATE_TARGETS=1` | Allow scanning private/loopback/link-local targets. Off by default - the server refuses them (SSRF guard) so it can't be tricked into probing internal hosts. Enable only for deliberate LAN scanning. |
+| `DOMAIN_BLOCKLIST` | Newline-separated domains to refuse (matches the domain and its subdomains). |
+| `IP_BLOCKLIST` | Newline-separated CIDRs to refuse, in addition to the always-blocked private ranges. |
 
 ## Project Structure
 
@@ -259,7 +267,7 @@ MIT License - See [LICENSE](LICENSE) for details.
 Questions, issues, or contributions welcome:
 
 - GitHub: <https://github.com/thetillhoff/webscan>
-- Issues: <https://github.com/thetillhoff/webscan/v3/issues>
+- Issues: <https://github.com/thetillhoff/webscan/issues>
 
 ## Roadmap
 

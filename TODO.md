@@ -109,6 +109,7 @@
 
 ## Web Interface
 
+- SSRF: close residual DNS-rebinding TOCTOU — the guard resolves+checks the target, but the scan engine re-resolves it; pin the resolved IP into the scan so a flipped A-record can't redirect it to an internal host
 - Rate limiting (IP-based)
 - Proper CORS configuration
 - CSRF protection

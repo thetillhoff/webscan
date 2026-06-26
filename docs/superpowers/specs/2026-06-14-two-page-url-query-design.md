@@ -7,7 +7,7 @@ Split the single-page web UI into two distinct pages with clean URL semantics. T
 ## URL Parameters
 
 | Parameter | Values | Meaning |
-|---|---|---|
+| --- | --- | --- |
 | `q` | any non-empty string | Scan target (domain, IP, or URL) |
 | `follow` | `1` | Follow CNAMEs and HTTP redirects |
 | `md` | `1` | Return raw markdown output instead of the HTML page |
@@ -15,7 +15,7 @@ Split the single-page web UI into two distinct pages with clean URL semantics. T
 ## Routes
 
 | Route | Condition | Behaviour |
-|---|---|---|
+| --- | --- | --- |
 | `GET /` | `?q=` absent or empty | Render landing page |
 | `GET /` | `?q=` present and non-empty | Redirect 302 → `/scan?q=<value>[&follow=1]` |
 | `GET /scan` | `?q=` absent or empty | Redirect 302 → `/` |
@@ -29,6 +29,7 @@ Split the single-page web UI into two distinct pages with clean URL semantics. T
 Minimal centered layout — search bar vertically and horizontally centered in the viewport, similar to a standard search engine home page.
 
 **Elements:**
+
 - Product name / logo above the input
 - Text input for the target (domain, IP, or URL), `name="q"`
 - "Follow redirects" checkbox, `name="follow"` `value="1"`
@@ -36,6 +37,7 @@ Minimal centered layout — search bar vertically and horizontally centered in t
 - Footer with version and GitHub link (same as today)
 
 **Behaviour:**
+
 - Form `action="/scan"` `method="GET"` — no JavaScript required for the basic submit; the browser navigates to `/scan?q=<value>[&follow=1]`.
 - If `?q=` is non-empty when the page loads, JavaScript immediately redirects to `/scan?q=<value>[&follow=1]` (handles the case where someone pastes a query-bearing `/` URL).
 - `follow` checkbox initial state loaded from `localStorage` (same as today); on change, state saved back to `localStorage`.
@@ -45,6 +47,7 @@ Minimal centered layout — search bar vertically and horizontally centered in t
 Functionally identical to today's single page after a scan is submitted.
 
 **Elements:**
+
 - Search bar at the top (compact, not centered)
 - Input pre-filled with the current `?q=` value
 - "Follow redirects" checkbox, pre-checked if `?follow=1` is in the URL
@@ -52,6 +55,7 @@ Functionally identical to today's single page after a scan is submitted.
 - Footer — unchanged
 
 **Behaviour:**
+
 - On page load, JavaScript reads `q` and `follow` from `window.location.search` and immediately fires the scan (POST `/api/scan` with `{ target, follow }`, then polls — same flow as today).
 - If the user edits the input or toggles the checkbox and clicks Scan, the page navigates to `/scan?q=<new-value>[&follow=1]`, triggering a fresh page load and a new auto-scan.
 - No in-page history manipulation (`pushState`) — navigation is always a full page load so the browser back button reliably returns to `/`.
@@ -62,6 +66,7 @@ Functionally identical to today's single page after a scan is submitted.
 Returns the scan output as `text/plain` with no HTML wrapper. Intended for CLI use (`curl`) or scripting.
 
 **Behaviour:**
+
 - Handler reads `q` and `follow`, runs the scan synchronously (blocking until complete or timeout), and writes the raw output directly to the response.
 - No polling, no Redis job — the scan runs inline in the request goroutine.
 - Response `Content-Type: text/plain; charset=utf-8`.
@@ -81,10 +86,12 @@ Returns the scan output as `text/plain` with no HTML wrapper. Intended for CLI u
 `style.css` and `script.js` are shared between both pages, served from `/static/` as today.
 
 CSS additions:
+
 - Landing page: `.landing-container` — full-viewport flex column, `justify-content: center`, `align-items: center`.
 - Scan page: existing `.scan-container` layout unchanged.
 
 JS changes:
+
 - On `/` load: if `?q=` non-empty, redirect to `/scan?q=...`.
 - On `/scan` load: read `q` and `follow` from URL, pre-fill inputs, auto-fire scan.
 - Form submit on scan page: navigate to `/scan?q=<value>[&follow=1]`.

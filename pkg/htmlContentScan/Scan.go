@@ -4,16 +4,15 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"log"
 	"log/slog"
 	"net/http"
 	"net/url"
 	"path"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/thetillhoff/webscan/v3/pkg/cachedHttpGetClient"
-	"github.com/thetillhoff/webscan/v3/pkg/status"
-	"github.com/thetillhoff/webscan/v3/pkg/types"
+	"github.com/thetillhoff/webscan/v5/pkg/cachedHttpGetClient"
+	"github.com/thetillhoff/webscan/v5/pkg/status"
+	"github.com/thetillhoff/webscan/v5/pkg/types"
 )
 
 // TODO return image / media / video / audio / svgs / ... as well
@@ -130,15 +129,15 @@ func Scan(status *status.Status, target types.Target, options ...ConfigOption) (
 			}
 			if parsedUrl.IsAbs() { // Includes a scheme
 				if parsedUrl.Scheme != "https" {
-					log.Println(parsedUrl.Scheme)
+					slog.Warn("htmlContentScan: external stylesheet not HTTPS", "scheme", parsedUrl.Scheme, "url", stylesheetSource)
 					messages = append(messages, "External stylesheets should only be referenced via HTTPS. Got "+stylesheetSource)
 				}
 			} else { // Doesn't include a scheme
 				parsedUrl.Scheme = "https" // Add scheme
 			}
 
-			if parsedUrl.Host == "" { // Doesn't include hostname
-				parsedUrl.Host = target.Hostname()                        // Add hostname
+			if parsedUrl.Host == "" { // Doesn't include host
+				parsedUrl.Host = target.Host()                            // Add host (with port if any)
 				parsedUrl.Path = path.Join(target.Path(), parsedUrl.Path) // Add path prefix
 			}
 
@@ -172,15 +171,15 @@ func Scan(status *status.Status, target types.Target, options ...ConfigOption) (
 			}
 			if parsedUrl.IsAbs() { // Includes a scheme
 				if parsedUrl.Scheme != "https" {
-					log.Println(parsedUrl.Scheme)
+					slog.Warn("htmlContentScan: external script not HTTPS", "scheme", parsedUrl.Scheme, "url", scriptSource)
 					messages = append(messages, "External scripts should only be referenced via HTTPS. Got "+scriptSource)
 				}
 			} else { // Doesn't include a scheme
 				parsedUrl.Scheme = "https" // Add scheme
 			}
 
-			if parsedUrl.Host == "" { // Doesn't include hostname
-				parsedUrl.Host = target.Hostname()                        // Add hostname
+			if parsedUrl.Host == "" { // Doesn't include host
+				parsedUrl.Host = target.Host()                            // Add host (with port if any)
 				parsedUrl.Path = path.Join(target.Path(), parsedUrl.Path) // Add path prefix
 			}
 

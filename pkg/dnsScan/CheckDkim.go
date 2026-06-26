@@ -30,7 +30,8 @@ func CheckDKIM(selectorUrl string, dnsClient *dns.Client, nameserver string) str
 
 	dkimRecord := ""
 	for _, txtRecord := range txtRecords {
-		if strings.HasPrefix(txtRecord, "v=DKIM1;") {
+		trimmedRecord := strings.TrimSpace(txtRecord)
+		if strings.HasPrefix(trimmedRecord, "v=DKIM1;") || strings.HasPrefix(trimmedRecord, "v=DKIM1 ;") {
 			if dkimRecord == "" { // Check if there was a dkim record detected before
 				dkimRecord = txtRecord
 			} else {

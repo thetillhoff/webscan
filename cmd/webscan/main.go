@@ -13,8 +13,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/thetillhoff/webscan/v3/pkg/logger"
-	"github.com/thetillhoff/webscan/v3/pkg/webscan"
+	"github.com/thetillhoff/webscan/v5/pkg/logger"
+	"github.com/thetillhoff/webscan/v5/pkg/webscan"
 	"github.com/urfave/cli/v3"
 )
 
@@ -189,30 +189,7 @@ GLOBAL OPTIONS:{{range .VisibleFlags}}
 				statusOut = io.Discard
 			}
 
-			engine, err = webscan.NewEngine(
-				stdout,
-				statusOut,
-				cmd.Bool("no-color"),
-				cmd.String("ns"),
-				cmd.Bool("follow"),
-				cmd.Duration("timeout"),
-				cmd.Bool("dns"),
-				cmd.Bool("ip"),
-				cmd.Bool("port"),
-				cmd.Bool("tls"),
-				cmd.Bool("protocol") || cmd.Bool("web"),
-				cmd.Bool("header") || cmd.Bool("web"),
-				cmd.Bool("content") || cmd.Bool("web"),
-				cmd.Bool("mail"),
-				cmd.Bool("subdomains"),
-				&writeMutex,
-			)
-			if err != nil {
-				slog.Error("could not create webscan engine with provided parameters", "error", err)
-				os.Exit(1)
-			}
-
-			webscan.NewScanOptions(
+			opts := webscan.NewScanOptions(
 				cmd.Bool("dns"),
 				cmd.Bool("ip"),
 				cmd.Bool("port"),
@@ -223,15 +200,30 @@ GLOBAL OPTIONS:{{range .VisibleFlags}}
 				cmd.Bool("files"),
 				cmd.Bool("mail"),
 				cmd.Bool("subdomains"),
-			).Apply(&engine)
-
+			)
 			if cmd.Bool("web") { // Enable webscans only
-				engine.EnableWebScans()
+				opts.EnableWeb()
+			}
+			if opts.IsEmpty() { // If no scans are explicitly selected, enable all
+				opts = webscan.AllScanOptions()
 			}
 
-			engine.EnableAllScansIfNoneAreExplicitlySet()
+			engine, err = webscan.NewEngine(
+				stdout,
+				statusOut,
+				cmd.Bool("no-color"),
+				cmd.String("ns"),
+				cmd.Bool("follow"),
+				cmd.Duration("timeout"),
+				opts,
+				&writeMutex,
+			)
+			if err != nil {
+				slog.Error("could not create webscan engine with provided parameters", "error", err)
+				os.Exit(1)
+			}
 
-			err = engine.Scan(cmd.Args().First())
+			err = engine.Scan(ctx, cmd.Args().First())
 			if err != nil {
 				slog.Error("could not scan selected target", "error", err.Error())
 				os.Exit(2)

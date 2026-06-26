@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/thetillhoff/webscan/v3/pkg/types"
+	"github.com/thetillhoff/webscan/v5/pkg/types"
 )
 
 var spamhausListingCodes = map[string]string{
@@ -66,7 +66,10 @@ func IsIPBlacklisted(ip string, timeout time.Duration) ([]string, error) {
 	} else {
 		network = "ip6"
 
-		addr, _ := netip.ParseAddr(ip)
+		addr, parseErr := netip.ParseAddr(ip)
+		if parseErr != nil {
+			return blacklistsWithMatches, parseErr
+		}
 		ip = addr.StringExpanded()
 		ip = strings.ReplaceAll(ip, ":", "")
 		for _, snippet := range strings.Split(ip, "") {
@@ -88,7 +91,9 @@ func IsIPBlacklisted(ip string, timeout time.Duration) ([]string, error) {
 
 		slog.Debug("ipScan: Checking for ip blacklisting", "blacklist", searchPrefix+blacklist)
 
-		response, err = resolver.LookupIP(context.Background(), network, searchPrefix+blacklist)
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		response, err = resolver.LookupIP(ctx, network, searchPrefix+blacklist)
+		cancel()
 		if dnsErr, ok := err.(*net.DNSError); ok && dnsErr.IsNotFound {
 			continue
 		} else if err != nil {

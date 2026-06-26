@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -11,6 +12,9 @@ import (
 
 	"github.com/miekg/dns"
 )
+
+// schemeRe matches a genuine leading URL scheme (e.g. "https://", "ftp://").
+var schemeRe = regexp.MustCompile(`^([a-zA-Z][a-zA-Z0-9+.-]*)://`)
 
 type TargetType int
 
@@ -39,31 +43,26 @@ func NewTarget(targetString string) (Target, error) {
 		parsedUrlPointer *url.URL
 	)
 
-	// Cleaning targetString
+	// Cleaning targetString. Don't lowercase the whole string — only the host is
+	// case-insensitive; paths and query strings must keep their original case.
 	targetString = strings.TrimSpace(targetString)
-	targetString = strings.ToLower(targetString)
 
 	if targetString == "" {
 		return target, errors.New("no target provided")
 	}
 
-	target.schema = ParseSchema(strings.Split(targetString, "://")[0])
-
-	switch target.schema {
-	case HTTP, HTTPS:
+	// Only treat a genuine leading "scheme://" as a scheme, so inputs like
+	// "example.com/r?to=http://x" or "ftp://host" aren't misclassified.
+	if match := schemeRe.FindStringSubmatch(targetString); match != nil {
+		target.schema = ParseSchema(match[1])
+		if target.schema == NONE { // scheme is present but not http/https
+			return target, errors.New("unsupported target schema: " + match[1])
+		}
 		slog.Debug("target url contains schema", "schema", target.schema.String())
 		parsedUrlPointer, err = url.Parse(targetString)
-		if err != nil {
-			break
-		}
-	case NONE:
+	} else {
 		slog.Debug("No scheme provided in target, assuming 'https://' for the sake of parsing it")
 		parsedUrlPointer, err = url.Parse(HTTPS.ToSchemaString() + targetString)
-		if err != nil {
-			break
-		}
-	default:
-		return target, errors.New("unknown target schema")
 	}
 
 	if err != nil {
@@ -72,6 +71,7 @@ func NewTarget(targetString string) (Target, error) {
 	}
 
 	target.parsedUrl = *parsedUrlPointer
+	target.parsedUrl.Host = strings.ToLower(target.parsedUrl.Host) // DNS hostnames are case-insensitive
 
 	slog.Debug("target url parsed", "url", target.parsedUrl.String())
 
@@ -135,7 +135,7 @@ func (target *Target) Hostname() string {
 
 // Overrides the hostname of the target (no port)
 func (target *Target) OverrideHostname(hostname string) {
-	target.parsedUrl.Host = hostname + ":" + target.parsedUrl.Port()
+	target.parsedUrl.Host = net.JoinHostPort(hostname, target.parsedUrl.Port())
 }
 
 // Hostname with port
@@ -159,7 +159,7 @@ func (target *Target) PortAsUint16() uint16 {
 }
 
 func (target *Target) OverridePort(port string) {
-	target.parsedUrl.Host = target.parsedUrl.Hostname() + ":" + port
+	target.parsedUrl.Host = net.JoinHostPort(target.parsedUrl.Hostname(), port)
 }
 
 func (target *Target) Path() string {

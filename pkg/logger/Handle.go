@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"os"
 	"time"
 )
 
@@ -67,7 +66,9 @@ func (handler Handler) Handle(ctx context.Context, r slog.Record) error {
 	handler.WriteMutex.Lock()         // Begin atomic write
 	defer handler.WriteMutex.Unlock() // Make sure atomic write ends
 
-	fmt.Fprint(os.Stderr, buf.String()) // Write
+	if _, err := fmt.Fprint(handler.w, buf.String()); err != nil { // Write
+		slog.Debug(fmt.Sprintf("failed to write log line: %v", err))
+	}
 
 	return nil
 }

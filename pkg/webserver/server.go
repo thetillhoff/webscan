@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/thetillhoff/webscan/v3/pkg/webscan"
+	"github.com/thetillhoff/webscan/v5/pkg/webscan"
 )
 
 const (
@@ -58,6 +58,7 @@ type Server struct {
 	jobIDKey            string
 	blockedDomains      []string
 	blockedCIDRs        []*net.IPNet
+	allowPrivateTargets bool
 }
 
 func NewServer(
@@ -77,6 +78,7 @@ func NewServer(
 	maxQueueSize int,
 	domainBlocklist []string,
 	ipBlocklist []string,
+	allowPrivateTargets bool,
 ) (*Server, error) {
 	if writeMutex == nil {
 		writeMutex = &sync.Mutex{}
@@ -146,6 +148,7 @@ func NewServer(
 		jobIDKey:            "webscan:jobs:next_id",
 		blockedDomains:      domainBlocklist,
 		blockedCIDRs:        blockedCIDRs,
+		allowPrivateTargets: allowPrivateTargets,
 	}
 
 	server.setupRouter()
@@ -172,8 +175,20 @@ func (s *Server) setupRouter() {
 
 func (s *Server) withRequestLogging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		setSecurityHeaders(w)
 		next.ServeHTTP(w, r)
 	})
+}
+
+// setSecurityHeaders applies baseline hardening to every response. The CSP
+// allows 'self' scripts/styles plus inline style attributes used by the
+// templates, and forbids framing.
+func setSecurityHeaders(w http.ResponseWriter) {
+	h := w.Header()
+	h.Set("X-Content-Type-Options", "nosniff")
+	h.Set("X-Frame-Options", "DENY")
+	h.Set("Referrer-Policy", "no-referrer")
+	h.Set("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'")
 }
 
 func (s *Server) healthHandler(w http.ResponseWriter, _ *http.Request) {
