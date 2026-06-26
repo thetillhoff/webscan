@@ -82,6 +82,9 @@
 
 ## Output and UX
 
+- Overall website security rating at top of result (website target only) — plain-language verdict for non-tech users: scam risk, safe-to-buy-from, bank-level secure. One-glance recommendation.
+- Categorize each output line by severity: informative / warning / critical (a.k.a. informative / light issue / medium issue / severe issue). Drives the overall rating.
+- Trust-signal detection: payment methods (PayPal, Wero), TrustedShops listing (verify real, not fake badge), other "serious setup" markers — feed into the rating. Combine with IP location/ownership (see IP Analysis) for trustworthiness assessment.
 - --json-output flag for structured JSON output
 - Merge HTTP/HTTPS header results when identical; skip if redirecting
 - Merge HTTP/HTTPS content results when identical; skip if redirecting
@@ -115,3 +118,4 @@
 - CSRF protection
 - Security headers (HSTS, XSS prevention, etc.)
 - Configuration file / env var support
+- Scroll-to-top button
