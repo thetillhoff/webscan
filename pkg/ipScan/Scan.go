@@ -93,11 +93,14 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) (
 		result.IpOwners = append(result.IpOwners, fmt.Sprintf("According to RDAP information, IP %-*s is registered at %s", maxIpAddressLength, aRecord, response))
 
 		if !types.IsPrivateIP(aRecord) {
-			blacklistMatches, err := IsIPBlacklisted(aRecord, config.timeout)
+			blacklistMatches, unavailable, err := IsIPBlacklisted(aRecord, config.timeout)
 			if err != nil {
 				slog.Warn("ipScan: Error on blacklist check of IPv4", "ipv4", aRecord, "error", err.Error())
 				status.SpinningXOfUpdate()
 				continue
+			}
+			if unavailable {
+				result.BlacklistCheckUnavailable = true
 			}
 
 			if len(blacklistMatches) > 0 { // If ip was listed on at least one blacklist
@@ -117,17 +120,13 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) (
 		}
 		result.IpOwners = append(result.IpOwners, fmt.Sprintf("According to RDAP information, IP %-*s is registered at %s", maxIpAddressLength, aaaaRecord, response))
 
+		// Spamhaus serves IPv6 blocklists only via the paid/registered Data Query
+		// Service (<key>.zen.dq.spamhaus.net), not the free zen.spamhaus.org zone.
+		// Querying the free zone for IPv6 always returns NXDOMAIN, which would be
+		// misread as "not blacklisted", so IPv6 checks are skipped instead.
+		// See https://www.spamhaus.org/faqs/dnsbl-usage/
 		if !types.IsPrivateIP(aaaaRecord) {
-			blacklistMatches, err := IsIPBlacklisted(aaaaRecord, config.timeout)
-			if err != nil {
-				slog.Warn("ipScan: Error on blacklist check of IPv6", "ipv6", aaaaRecord, "error", err.Error())
-				status.SpinningXOfUpdate()
-				continue
-			}
-
-			if len(blacklistMatches) > 0 { // If ip was listed on at least one blacklist
-				result.IpIsBlacklistedAt[aaaaRecord] = blacklistMatches
-			}
+			result.BlacklistCheckUnavailable = true
 		}
 
 		status.SpinningXOfUpdate()

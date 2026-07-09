@@ -32,14 +32,17 @@ var spamhausErrorCodes = map[string]string{
 	"127.255.255.255": "excessive number of queries (rate limited)",
 }
 
-func IsIPBlacklisted(ip string, timeout time.Duration) ([]string, error) {
+// IsIPBlacklisted checks the given IP against the configured DNS blacklists.
+// The second return value reports that the check could not be completed (e.g.
+// Spamhaus rejected the query because it arrived via a public resolver); in
+// that case the (empty) match list must NOT be read as "not blacklisted".
+func IsIPBlacklisted(ip string, timeout time.Duration) ([]string, bool, error) {
 	var (
 		err error
 
 		resolver *net.Resolver
 
 		searchPrefix = ""
-		network      string
 
 		blacklistWithNameservers = map[string][]string{
 			"zen.spamhaus.org": {
@@ -54,25 +57,25 @@ func IsIPBlacklisted(ip string, timeout time.Duration) ([]string, error) {
 		response []net.IP
 
 		blacklistsWithMatches = []string{}
+		checkUnavailable      = false
 	)
 
 	slog.Debug("ipScan: Checking for ip blacklisting started")
 
+	// Build the reversed lookup name. IPv4 reverses octets; IPv6 reverses
+	// expanded nibbles. The DNSBL answer is always an A record (127.0.0.x) in
+	// both cases, so the lookup family below is always "ip4".
 	if types.IsIPv4(ip) {
-		network = "ip4"
 		for _, snippet := range strings.Split(ip, ".") {
 			searchPrefix = snippet + "." + searchPrefix
 		}
 	} else {
-		network = "ip6"
-
 		addr, parseErr := netip.ParseAddr(ip)
 		if parseErr != nil {
-			return blacklistsWithMatches, parseErr
+			return blacklistsWithMatches, false, parseErr
 		}
-		ip = addr.StringExpanded()
-		ip = strings.ReplaceAll(ip, ":", "")
-		for _, snippet := range strings.Split(ip, "") {
+		expanded := strings.ReplaceAll(addr.StringExpanded(), ":", "")
+		for _, snippet := range strings.Split(expanded, "") {
 			searchPrefix = snippet + "." + searchPrefix
 		}
 	}
@@ -92,19 +95,21 @@ func IsIPBlacklisted(ip string, timeout time.Duration) ([]string, error) {
 		slog.Debug("ipScan: Checking for ip blacklisting", "blacklist", searchPrefix+blacklist)
 
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-		response, err = resolver.LookupIP(ctx, network, searchPrefix+blacklist)
+		response, err = resolver.LookupIP(ctx, "ip4", searchPrefix+blacklist)
 		cancel()
 		if dnsErr, ok := err.(*net.DNSError); ok && dnsErr.IsNotFound {
 			continue
 		} else if err != nil {
-			return blacklistsWithMatches, err
+			return blacklistsWithMatches, checkUnavailable, err
 		}
 
 		for _, responseIP := range response {
 			code := responseIP.String()
 
 			if errMsg, isError := spamhausErrorCodes[code]; isError {
-				slog.Warn("Blacklist check returned error code", "ip", ip, "blacklist", blacklist, "code", code, "meaning", errMsg)
+				// The blacklist declined to answer; the result is unknown, not clean.
+				checkUnavailable = true
+				slog.Debug("ipScan: blacklist check unavailable", "ip", ip, "blacklist", blacklist, "code", code, "meaning", errMsg)
 				continue
 			}
 
@@ -118,5 +123,5 @@ func IsIPBlacklisted(ip string, timeout time.Duration) ([]string, error) {
 
 	slog.Debug("ipScan: Checking for ip blacklisting completed")
 
-	return blacklistsWithMatches, nil
+	return blacklistsWithMatches, checkUnavailable, nil
 }

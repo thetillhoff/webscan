@@ -2,6 +2,10 @@
 
 ## v5.4.3
 
+### Fixes
+
+- **IP blacklist check noise**: Stopped the `WRN` spam during IP scans. IPv6 lookups are skipped (Spamhaus' free zone is IPv4-only; IPv6 needs the paid DQS) and unresolvable checks print one honest note instead of implying the IP is clean
+
 ### Improvements
 
 - **Scan orchestration**: Simplified the scan engine's control flow. Hidden scan dependencies are now named once (`needTLS`, `needProtocol`) instead of repeated inline; the copy-pasted HTTP/HTTPS "scan both, merge-if-equal" logic is a single `emitDualSchema` helper; and the redirect loop reuses a shared `scanWebTarget` instead of reimplementing the per-target web scan pipeline. No behavior change

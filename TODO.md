@@ -76,6 +76,7 @@
 
 ## IP Analysis
 
+- Spamhaus Data Query Service (DQS) support: optional `<key>` config (CLI flag + env var) to query `<key>.zen.dq.spamhaus.net`. This is the only reliable free path — it fixes IPv4 (free public zone rejects public-resolver/direct-authoritative queries with 127.255.255.254) and is the only way to check IPv6 (DQS-only, listed per /64). Without a key the blacklist check stays best-effort IPv4 and skips IPv6.
 - Add estimated geolocation and ASN info to IPs
 - Reverse DNS lookup for IP addresses
 - Check if QUIC uses UDP on port 443 and incorporate into scans

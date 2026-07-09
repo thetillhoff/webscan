@@ -24,6 +24,10 @@ func PrintResult(result Result, aRecords []string, aaaaRecords []string, out io.
 		messages = append(messages, result.IpOwners...)
 	}
 
+	if result.BlacklistCheckUnavailable {
+		messages = append(messages, "Note: blacklist check incomplete on Spamhaus' free zone (public-resolver queries are rejected; IPv6 requires the Data Query Service). \"Not blacklisted\" cannot be concluded for the affected IPs.")
+	}
+
 	if len(messages) > 0 {
 		if _, err := fmt.Fprintf(out, "\n## IP scan results\n\n"); err != nil {
 			slog.Debug("ipScan: Error writing to output", "error", err)
