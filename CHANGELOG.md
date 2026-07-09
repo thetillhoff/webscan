@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## v5.4.3
+
+### Improvements
+
+- **Scan orchestration**: Simplified the scan engine's control flow. Hidden scan dependencies are now named once (`needTLS`, `needProtocol`) instead of repeated inline; the copy-pasted HTTP/HTTPS "scan both, merge-if-equal" logic is a single `emitDualSchema` helper; and the redirect loop reuses a shared `scanWebTarget` instead of reimplementing the per-target web scan pipeline. No behavior change
+
+### Chores
+
+- **Smoke test**: Added `make test-smoke` (`tests/smoke.sh`), a live happy-path check that scans real targets and asserts every phase renders and the dual-schema output behaves correctly
+
 ## v5.4.2
 
 ### Fixes
