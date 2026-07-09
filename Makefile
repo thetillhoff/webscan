@@ -1,4 +1,4 @@
-.PHONY: list install run run-web test test-e2e test-api build build-web format vet tidy lint upgrade compose-start compose-stop compose-restart
+.PHONY: list install run run-web test test-e2e test-api test-smoke build build-web format vet tidy lint upgrade compose-start compose-stop compose-restart
 help:
 	@grep -E '^[[:alpha:]].*:' Makefile | cat # Get all targets in this file, without color-coding the matching letters
 
@@ -23,6 +23,9 @@ test-e2e:
 
 test-api:
 	cd tests && npm run test:api
+
+test-smoke:
+	bash tests/smoke.sh
 
 compose-start:
 	docker compose up -d --build
