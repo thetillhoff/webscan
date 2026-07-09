@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## v5.4.2
+
+### Fixes
+
+- **No-IP domains (port/HTTP phases)**: Domains with no A/AAAA records no longer run the port scan or HTTP protocol scan (and no longer print "No relevant open ports found"). All IP-dependent phases are now skipped, since there is nothing to connect to
+
 ## v5.4.1
 
 ### Fixes

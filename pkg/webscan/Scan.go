@@ -69,6 +69,10 @@ func (engine *Engine) Scan(ctx context.Context, input string) error {
 
 	dnsScan.PrintResult(engine.dnsScanResult, engine.stdout)
 
+	// Without A/AAAA records there is nothing to connect to, so all
+	// IP-dependent phases (port, TLS, HTTP) are skipped.
+	hasIPs := len(engine.dnsScanResult.ARecords) > 0 || len(engine.dnsScanResult.AAAARecords) > 0
+
 	// IP scan
 
 	if engine.ipScan {
@@ -98,26 +102,28 @@ func (engine *Engine) Scan(ctx context.Context, input string) error {
 		return err
 	}
 
-	engine.portScanResult, err = portScan.Scan(
-		engine.target,
-		&engine.status,
-		portScan.WithARecords(engine.dnsScanResult.ARecords),
-		portScan.WithAAAARecords(engine.dnsScanResult.AAAARecords),
-		portScan.WithAdvanced(engine.advancedPortScan),
-		portScan.WithTimeout(engine.timeout),
-	)
-	if err != nil {
-		return err
-	}
+	if hasIPs {
+		engine.portScanResult, err = portScan.Scan(
+			engine.target,
+			&engine.status,
+			portScan.WithARecords(engine.dnsScanResult.ARecords),
+			portScan.WithAAAARecords(engine.dnsScanResult.AAAARecords),
+			portScan.WithAdvanced(engine.advancedPortScan),
+			portScan.WithTimeout(engine.timeout),
+		)
+		if err != nil {
+			return err
+		}
 
-	portScan.PrintResult(engine.portScanResult, engine.stdout)
+		portScan.PrintResult(engine.portScanResult, engine.stdout)
+	}
 
 	// TLS scan
 
 	// TODO only run tls scan if protocol is tls, https or not specified.
 	// In cast of tls or https, run it either on 443 or another port if one is specified.
 
-	if len(engine.dnsScanResult.ARecords) > 0 || len(engine.dnsScanResult.AAAARecords) > 0 {
+	if hasIPs {
 
 		if engine.tlsScan || engine.subDomainScan {
 
@@ -144,7 +150,7 @@ func (engine *Engine) Scan(ctx context.Context, input string) error {
 		return err
 	}
 
-	if engine.httpProtocolScan || engine.httpHeaderScan || engine.htmlContentScan || engine.knownFilesScan {
+	if hasIPs && (engine.httpProtocolScan || engine.httpHeaderScan || engine.htmlContentScan || engine.knownFilesScan) {
 		engine.httpProtocolScanResult, err = httpProtocolScan.Scan(
 			engine.target,
 			&engine.status,
