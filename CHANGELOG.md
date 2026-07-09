@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## v5.4.1
+
+### Fixes
+
+- **No-IP domains**: Domains with no A/AAAA/CNAME records (e.g. mail-only domains) no longer abort with "no ips to scan". DNS results (MX, TXT, NS, etc.) are now printed and the scan continues, skipping only the IP-dependent phases
+
 ## v5.4.0
 
 ### Fixes

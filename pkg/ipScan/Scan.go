@@ -1,7 +1,6 @@
 package ipScan
 
 import (
-	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -72,7 +71,10 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) (
 
 	switch {
 	case totalIPs == 0:
-		return result, errors.New("no ips to scan")
+		// No A/AAAA records is a valid state (e.g. mail-only domains); skip the
+		// IP scan instead of aborting so DNS results still get printed.
+		slog.Debug("ipScan: No IPs to scan, skipping")
+		return result, nil
 	case totalIPs == 1:
 		slog.Debug("ipScan: Scanning one IP")
 		status.SpinningUpdate("Scanning IP...") // Singular
