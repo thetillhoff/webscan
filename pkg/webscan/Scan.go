@@ -17,6 +17,92 @@ import (
 	"github.com/thetillhoff/webscan/v5/pkg/types"
 )
 
+// emitDualSchema runs a web scan over the HTTP and/or HTTPS schema (whichever is
+// available), then prints the results. When equal != nil and both schemas are
+// available and produce equal results, a single combined result is printed;
+// otherwise each available schema is printed separately.
+func emitDualSchema[R any](
+	httpAvail, httpsAvail bool,
+	scan func(schema types.Schema) (R, error),
+	equal func(a, b R) bool,
+	print func(r R, label string),
+) error {
+	var httpRes, httpsRes R
+
+	if httpAvail {
+		r, err := scan(types.HTTP)
+		if err != nil {
+			return err
+		}
+		httpRes = r
+	}
+
+	if httpsAvail {
+		r, err := scan(types.HTTPS)
+		if err != nil {
+			return err
+		}
+		httpsRes = r
+	}
+
+	if equal != nil && httpAvail && httpsAvail && equal(httpRes, httpsRes) {
+		print(httpRes, "HTTP & HTTPS")
+		return nil
+	}
+
+	if httpAvail {
+		print(httpRes, "http")
+	}
+	if httpsAvail {
+		print(httpsRes, "https")
+	}
+
+	return nil
+}
+
+// scanWebTarget runs the enabled per-target web scans (header, content, known
+// files) for the given available schemas and prints their results. Used both
+// for the primary target and for redirect targets.
+func (engine *Engine) scanWebTarget(target types.Target, httpAvail, httpsAvail bool) error {
+	if engine.httpHeaderScan {
+		if err := emitDualSchema(httpAvail, httpsAvail,
+			func(s types.Schema) (httpHeaderScan.Result, error) {
+				return httpHeaderScan.Scan(&engine.status, target, httpHeaderScan.WithClient(engine.client), httpHeaderScan.WithSchemaOverride(s))
+			},
+			nil, // header results are never merged
+			func(r httpHeaderScan.Result, label string) { httpHeaderScan.PrintResult(r, label, engine.stdout) },
+		); err != nil {
+			return err
+		}
+	}
+
+	if engine.htmlContentScan {
+		if err := emitDualSchema(httpAvail, httpsAvail,
+			func(s types.Schema) (htmlContentScan.Result, error) {
+				return htmlContentScan.Scan(&engine.status, target, htmlContentScan.WithClient(engine.client), htmlContentScan.WithSchemaOverride(s))
+			},
+			func(a, b htmlContentScan.Result) bool { return a.Equal(b) },
+			func(r htmlContentScan.Result, label string) { htmlContentScan.PrintResult(r, label, engine.stdout) },
+		); err != nil {
+			return err
+		}
+	}
+
+	if engine.knownFilesScan {
+		if err := emitDualSchema(httpAvail, httpsAvail,
+			func(s types.Schema) (knownFilesScan.Result, error) {
+				return knownFilesScan.Scan(target, &engine.status, s, knownFilesScan.WithTimeout(engine.timeout)), nil
+			},
+			func(a, b knownFilesScan.Result) bool { return a.EqualContent(b) },
+			func(r knownFilesScan.Result, label string) { knownFilesScan.PrintResult(r, label, engine.stdout) },
+		); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (engine *Engine) Scan(ctx context.Context, input string) error {
 	var (
 		err error
@@ -36,6 +122,13 @@ func (engine *Engine) Scan(ctx context.Context, input string) error {
 		"knownFilesScan", engine.knownFilesScan,
 		"mailConfigScan", engine.mailConfigScan,
 		"subDomainScan", engine.subDomainScan)
+
+	// Derived scan requirements: some scans must run to feed others even when the
+	// user didn't request their output. Naming them once documents the hidden
+	// dependencies (TLS feeds subdomain cert names; protocol feeds header/content/
+	// known-files availability).
+	needTLS := engine.tlsScan || engine.subDomainScan
+	needProtocol := engine.httpProtocolScan || engine.httpHeaderScan || engine.htmlContentScan || engine.knownFilesScan
 
 	// Input
 
@@ -123,20 +216,16 @@ func (engine *Engine) Scan(ctx context.Context, input string) error {
 	// TODO only run tls scan if protocol is tls, https or not specified.
 	// In cast of tls or https, run it either on 443 or another port if one is specified.
 
-	if hasIPs {
-
-		if engine.tlsScan || engine.subDomainScan {
-
-			engine.tlsScanResult, err = tlsScan.Scan(
-				engine.target,
-				&engine.status,
-				engine.dnsScanResult.ARecords,
-				engine.dnsScanResult.AAAARecords,
-				engine.portScanResult,
-			)
-			if err != nil {
-				return err
-			}
+	if hasIPs && needTLS {
+		engine.tlsScanResult, err = tlsScan.Scan(
+			engine.target,
+			&engine.status,
+			engine.dnsScanResult.ARecords,
+			engine.dnsScanResult.AAAARecords,
+			engine.portScanResult,
+		)
+		if err != nil {
+			return err
 		}
 
 		if engine.tlsScan {
@@ -150,7 +239,7 @@ func (engine *Engine) Scan(ctx context.Context, input string) error {
 		return err
 	}
 
-	if hasIPs && (engine.httpProtocolScan || engine.httpHeaderScan || engine.htmlContentScan || engine.knownFilesScan) {
+	if hasIPs && needProtocol {
 		engine.httpProtocolScanResult, err = httpProtocolScan.Scan(
 			engine.target,
 			&engine.status,
@@ -167,93 +256,12 @@ func (engine *Engine) Scan(ctx context.Context, input string) error {
 		httpProtocolScan.PrintResult(engine.httpProtocolScanResult, engine.stdout)
 	}
 
-	// HTTP header scan
+	// HTTP web scans (header, content, known files) on the primary target.
+	httpAvail := hasIPs && engine.portScanResult.IsPortOpen(80) && engine.httpProtocolScanResult.IsAvailableViaHttp()
+	httpsAvail := hasIPs && engine.portScanResult.IsPortOpen(443) && engine.httpProtocolScanResult.IsAvailableViaHttps()
 
-	if engine.httpHeaderScan {
-
-		if engine.portScanResult.IsPortOpen(80) && engine.httpProtocolScanResult.IsAvailableViaHttp() {
-			engine.httpHeaderScanResult, err = httpHeaderScan.Scan(&engine.status, engine.target, httpHeaderScan.WithClient(engine.client), httpHeaderScan.WithSchemaOverride(types.HTTP))
-			if err != nil {
-				return err
-			}
-
-			httpHeaderScan.PrintResult(engine.httpHeaderScanResult, "http", engine.stdout)
-		}
-
-		if engine.portScanResult.IsPortOpen(443) && engine.httpProtocolScanResult.IsAvailableViaHttps() {
-			engine.httpsHeaderScanResult, err = httpHeaderScan.Scan(&engine.status, engine.target, httpHeaderScan.WithClient(engine.client), httpHeaderScan.WithSchemaOverride(types.HTTPS))
-			if err != nil {
-				return err
-			}
-
-			httpHeaderScan.PrintResult(engine.httpsHeaderScanResult, "https", engine.stdout)
-		}
-	}
-
-	if engine.htmlContentScan {
-		httpAvail := engine.portScanResult.IsPortOpen(80) && engine.httpProtocolScanResult.IsAvailableViaHttp()
-		httpsAvail := engine.portScanResult.IsPortOpen(443) && engine.httpProtocolScanResult.IsAvailableViaHttps()
-
-		if httpAvail {
-			engine.httpHtmlContentScanResult, err = htmlContentScan.Scan(&engine.status, engine.target, htmlContentScan.WithClient(engine.client), htmlContentScan.WithSchemaOverride(types.HTTP))
-			if err != nil {
-				return err
-			}
-		}
-
-		if httpsAvail {
-			engine.httpsHtmlContentScanResult, err = htmlContentScan.Scan(&engine.status, engine.target, htmlContentScan.WithClient(engine.client), htmlContentScan.WithSchemaOverride(types.HTTPS))
-			if err != nil {
-				return err
-			}
-		}
-
-		if httpAvail && httpsAvail && engine.httpHtmlContentScanResult.Equal(engine.httpsHtmlContentScanResult) {
-			htmlContentScan.PrintResult(engine.httpHtmlContentScanResult, "HTTP & HTTPS", engine.stdout)
-		} else {
-			if httpAvail {
-				htmlContentScan.PrintResult(engine.httpHtmlContentScanResult, "http", engine.stdout)
-			}
-			if httpsAvail {
-				htmlContentScan.PrintResult(engine.httpsHtmlContentScanResult, "https", engine.stdout)
-			}
-		}
-	}
-
-	// Known files scan
-
-	if engine.knownFilesScan {
-		httpAvail := engine.portScanResult.IsPortOpen(80) && engine.httpProtocolScanResult.IsAvailableViaHttp()
-		httpsAvail := engine.portScanResult.IsPortOpen(443) && engine.httpProtocolScanResult.IsAvailableViaHttps()
-
-		if httpAvail {
-			engine.httpKnownFilesScanResult = knownFilesScan.Scan(
-				engine.target,
-				&engine.status,
-				types.HTTP,
-				knownFilesScan.WithTimeout(engine.timeout),
-			)
-		}
-
-		if httpsAvail {
-			engine.httpsKnownFilesScanResult = knownFilesScan.Scan(
-				engine.target,
-				&engine.status,
-				types.HTTPS,
-				knownFilesScan.WithTimeout(engine.timeout),
-			)
-		}
-
-		if httpAvail && httpsAvail && engine.httpKnownFilesScanResult.EqualContent(engine.httpsKnownFilesScanResult) {
-			knownFilesScan.PrintResult(engine.httpKnownFilesScanResult, "HTTP & HTTPS", engine.stdout)
-		} else {
-			if httpAvail {
-				knownFilesScan.PrintResult(engine.httpKnownFilesScanResult, "http", engine.stdout)
-			}
-			if httpsAvail {
-				knownFilesScan.PrintResult(engine.httpsKnownFilesScanResult, "https", engine.stdout)
-			}
-		}
+	if err := engine.scanWebTarget(engine.target, httpAvail, httpsAvail); err != nil {
+		return err
 	}
 
 	// if engine.MailConfigScan {
@@ -337,31 +345,10 @@ func (engine *Engine) Scan(ctx context.Context, input string) error {
 
 			httpProtocolScan.PrintResult(redirectProtocolResult, engine.stdout)
 
-			// Header scan on redirect target
-			if engine.httpHeaderScan {
-				headerResult, headerErr := httpHeaderScan.Scan(&engine.status, redirectTarget, httpHeaderScan.WithClient(engine.client), httpHeaderScan.WithSchemaOverride(schema))
-				if headerErr == nil {
-					httpHeaderScan.PrintResult(headerResult, schema.String(), engine.stdout)
-				}
-			}
-
-			// Content scan on redirect target
-			if engine.htmlContentScan {
-				contentResult, contentErr := htmlContentScan.Scan(&engine.status, redirectTarget, htmlContentScan.WithClient(engine.client), htmlContentScan.WithSchemaOverride(schema))
-				if contentErr == nil {
-					htmlContentScan.PrintResult(contentResult, schema.String(), engine.stdout)
-				}
-			}
-
-			// Known files scan on redirect target
-			if engine.knownFilesScan {
-				filesResult := knownFilesScan.Scan(
-					redirectTarget,
-					&engine.status,
-					schema,
-					knownFilesScan.WithTimeout(engine.timeout),
-				)
-				knownFilesScan.PrintResult(filesResult, schema.String(), engine.stdout)
+			// Web scans on redirect target (only the redirect's own schema is available).
+			if err := engine.scanWebTarget(redirectTarget, schema == types.HTTP, schema == types.HTTPS); err != nil {
+				slog.Debug("webscan: redirect web scan failed", "target", loc, "error", err)
+				continue
 			}
 
 			// Queue further redirects from this target
