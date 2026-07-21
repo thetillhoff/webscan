@@ -10,11 +10,8 @@ import (
 
 	"github.com/thetillhoff/webscan/v5/pkg/cachedHttpGetClient"
 	"github.com/thetillhoff/webscan/v5/pkg/dnsScan"
-	"github.com/thetillhoff/webscan/v5/pkg/htmlContentScan"
-	"github.com/thetillhoff/webscan/v5/pkg/httpHeaderScan"
 	"github.com/thetillhoff/webscan/v5/pkg/httpProtocolScan"
 	"github.com/thetillhoff/webscan/v5/pkg/ipScan"
-	"github.com/thetillhoff/webscan/v5/pkg/knownFilesScan"
 	"github.com/thetillhoff/webscan/v5/pkg/portScan"
 	"github.com/thetillhoff/webscan/v5/pkg/status"
 	"github.com/thetillhoff/webscan/v5/pkg/subDomainScan"
@@ -54,18 +51,12 @@ type Engine struct {
 	subDomainScan    bool
 
 	// Results
-	dnsScanResult              dnsScan.Result
-	ipScanResult               ipScan.Result
-	portScanResult             portScan.Result
-	tlsScanResult              tlsScan.Result
-	httpProtocolScanResult     httpProtocolScan.Result
-	httpHeaderScanResult       httpHeaderScan.Result
-	httpsHeaderScanResult      httpHeaderScan.Result
-	httpHtmlContentScanResult  htmlContentScan.Result
-	httpsHtmlContentScanResult htmlContentScan.Result
-	httpKnownFilesScanResult   knownFilesScan.Result
-	httpsKnownFilesScanResult  knownFilesScan.Result
-	subDomainScanResult        subDomainScan.Result
+	dnsScanResult          dnsScan.Result
+	ipScanResult           ipScan.Result
+	portScanResult         portScan.Result
+	tlsScanResult          tlsScan.Result
+	httpProtocolScanResult httpProtocolScan.Result
+	subDomainScanResult    subDomainScan.Result
 	// mailConfigScanResults []string // TODO find better type
 }
 

@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## v5.4.4
+
+### Fixes
+
+- **No-DNS domains**: A domain with no DNS records (e.g. NXDOMAIN / typo) now prints "No DNS records found - the domain may not resolve." instead of a bare, empty "DNS records:" header that read as a silent failure
+
+### Improvements
+
+- **Results header**: Dropped the redundant target from the `# webscan results for <target>` header - the scanned target is already shown by the caller
+- **Dead code**: Removed six unused `Engine` result fields (and their imports) orphaned by the v5.4.3 scan-orchestration refactor
+
 ## v5.4.3
 
 ### Fixes
