@@ -138,7 +138,7 @@ func (engine *Engine) Scan(ctx context.Context, input string) error {
 		return err
 	}
 
-	if _, err := fmt.Fprintf(engine.stdout, "# webscan results for %s\n\n", engine.target.RawTarget()); err != nil {
+	if _, err := fmt.Fprintf(engine.stdout, "# webscan results\n\n"); err != nil {
 		slog.Debug("webscan: Error writing to output", "error", err)
 	}
 

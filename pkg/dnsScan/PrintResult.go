@@ -44,10 +44,16 @@ func PrintResult(result Result, out io.Writer) {
 		slog.Debug("dnsScan: No blacklist entries found")
 	}
 
-	if _, err := fmt.Fprintf(out, "DNS records:\n"); err != nil {
-		slog.Debug("dnsScan: Error writing to output", "error", err)
+	if result.hasPrintableRecords() {
+		if _, err := fmt.Fprintf(out, "DNS records:\n"); err != nil {
+			slog.Debug("dnsScan: Error writing to output", "error", err)
+		}
+		result.PrintAllDnsRecords(out)
+	} else {
+		if _, err := fmt.Fprintf(out, "No DNS records found - the domain may not resolve.\n"); err != nil {
+			slog.Debug("dnsScan: Error writing to output", "error", err)
+		}
 	}
-	result.PrintAllDnsRecords(out)
 
 	// Domain Accessibility
 	if len(result.OpinionatedHints) > 0 {
