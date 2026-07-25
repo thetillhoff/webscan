@@ -8,7 +8,7 @@ require (
 	github.com/mattn/go-isatty v0.0.24
 	github.com/miekg/dns v1.1.72
 	github.com/openrdap/rdap v0.10.1
-	github.com/quic-go/quic-go v0.60.0
+	github.com/quic-go/quic-go v0.61.0
 	github.com/redis/go-redis/v9 v9.21.0
 	github.com/urfave/cli/v3 v3.10.1
 	golang.org/x/net v0.57.0
