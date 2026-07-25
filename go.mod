@@ -5,7 +5,7 @@ go 1.26.5
 require (
 	github.com/PuerkitoBio/goquery v1.12.0
 	github.com/jwalton/gchalk v1.3.0
-	github.com/mattn/go-isatty v0.0.23
+	github.com/mattn/go-isatty v0.0.24
 	github.com/miekg/dns v1.1.72
 	github.com/openrdap/rdap v0.10.1
 	github.com/quic-go/quic-go v0.60.0
