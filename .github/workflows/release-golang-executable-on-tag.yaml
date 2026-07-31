@@ -20,7 +20,7 @@ jobs:
       RELEASE_BODY: ${{ steps.release-prerequisites.outputs.RELEASE_BODY }}
     steps:
       - id: release-prerequisites
-        uses: thetillhoff/action-release-prerequisites@dcb761b14096c085a2a3794f1b1d69e6e469fed6 # v0.3.2
+        uses: thetillhoff/action-release-prerequisites@2c4e295d06d4b8ce6fe2bdf6a1b7e806d7c1687c # v0.4.1
         with:
           RELEASE_TAG: ${{ env.TAG }}
 
