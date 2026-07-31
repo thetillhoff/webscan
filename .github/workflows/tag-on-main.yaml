@@ -10,7 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.actor == 'renovate[bot]' }}
     outputs:
-      CURRENT_VERSION: ${{ steps.versions.outputs.CURRENT_VERSION }}
       NEW_VERSION: ${{ steps.versions.outputs.NEW_VERSION }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -22,36 +21,7 @@ jobs:
           CURRENT_VERSION=$(git describe --tags --abbrev=0)
           NEW_VERSION=v$(npx semver "$CURRENT_VERSION" -i patch)
 
-          echo "CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_OUTPUT
           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
-
-  update-changelog:
-    needs: determine-version
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-
-      - name: Update CHANGELOG
-        run: |
-          NEW_VERSION="${{ needs.determine-version.outputs.NEW_VERSION }}"
-          CURRENT_VERSION="${{ needs.determine-version.outputs.CURRENT_VERSION }}"
-
-          # Verify the current version exists in CHANGELOG
-          grep -q "^## ${CURRENT_VERSION}" CHANGELOG.md
-          FIRST_VERSION_LINE_NUMBER=$(grep -n "^## ${{ needs.determine-version.outputs.CURRENT_VERSION }}" CHANGELOG.md | head -1 | cut -d: -f1)
-
-          # Use gsed instead on macOS (installed via brew) to test sed commands
-          sed -i "${FIRST_VERSION_LINE_NUMBER}i\## ${NEW_VERSION}\n\nUpdated dependencies.\n" CHANGELOG.md
-
-      - name: Commit and push CHANGELOG
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add CHANGELOG.md
-          git commit -m "Add CHANGELOG entry for ${NEW_VERSION}"
-          git push
 
   verify-build:
     needs: determine-version
@@ -92,16 +62,14 @@ jobs:
   git-tag:
     needs:
       - determine-version
-      - update-changelog
       - verify-build
     runs-on: ubuntu-latest
     permissions:
       contents: write # Needed to push the tag
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-      - name: Pull latest changes and create tag
+      - name: Create tag
         run: |
-          git pull origin main
           git tag "${{ needs.determine-version.outputs.NEW_VERSION }}"
           git push origin "${{ needs.determine-version.outputs.NEW_VERSION }}"
 
@@ -119,3 +87,8 @@ jobs:
     uses: ./.github/workflows/release-golang-executable-on-tag.yaml
     with:
       tag: ${{ needs.determine-version.outputs.NEW_VERSION }}
+      # These releases get no CHANGELOG entry: the commit adding it could not
+      # land on protected main, since a GITHUB_TOKEN commit gets no CI run and
+      # so can never satisfy the required check. The body carries what the entry
+      # would have said.
+      release_body: "Updated dependencies."
