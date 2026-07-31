@@ -121,9 +121,13 @@ jobs:
         with:
           merge-multiple: true
 
+      # tag_name is mandatory here: the action falls back to github.ref, which is
+      # refs/heads/main when tag-on-main calls this workflow, and it refuses to
+      # release without a tag ref ("GitHub Releases requires a tag").
       - name: Release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
+          tag_name: ${{ env.TAG }}
           body: "${{ needs.release-prerequisites.outputs.RELEASE_BODY }}"
           prerelease: false
           fail_on_unmatched_files: true
@@ -165,10 +169,14 @@ jobs:
         uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
         with:
           images: ghcr.io/${{ github.repository }}
+          # value= for the same reason as tag_name above: semver parsing defaults
+          # to github.ref, which on the workflow_call path is a branch. Without
+          # it the image gets nothing but :latest, and Flux image-automation on
+          # hydra - which scans the X.Y.Z tags - would never see the release.
           tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
+            type=semver,pattern={{version}},value=${{ env.TAG }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ env.TAG }}
+            type=semver,pattern={{major}},value=${{ env.TAG }}
             type=raw,value=latest
 
       - name: Build and push Docker image
