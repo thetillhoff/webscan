@@ -5,6 +5,14 @@ on:
     branches:
       - main
 
+# Two merges in quick succession would otherwise run in parallel, both read the
+# same `git describe` tag, and compute the same next version - one tag push wins
+# and the other fails. Serialize instead, and never cancel: a cancelled run
+# leaves a tag whose release never happened.
+concurrency:
+  group: tag-on-main
+  cancel-in-progress: false
+
 jobs:
   determine-version:
     runs-on: ubuntu-latest
@@ -85,6 +93,10 @@ jobs:
       contents: write
       packages: write
     uses: ./.github/workflows/release-golang-executable-on-tag.yaml
+    # A called workflow receives no secrets unless they are passed. Without this
+    # HOMEBREW_TAP_ACCESS_TOKEN is empty and the tap update fails after a
+    # successful release - observed on temingo v3.0.5.
+    secrets: inherit
     with:
       tag: ${{ needs.determine-version.outputs.NEW_VERSION }}
       # These releases get no CHANGELOG entry: the commit adding it could not
