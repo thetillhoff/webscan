@@ -1,6 +1,6 @@
 module github.com/thetillhoff/webscan/v5
 
-go 1.27.0
+go 1.27.1
 
 require (
 	github.com/PuerkitoBio/goquery v1.13.0
