@@ -7,7 +7,7 @@ require (
 	github.com/jwalton/gchalk v1.3.0
 	github.com/mattn/go-isatty v0.0.24
 	github.com/miekg/dns v1.1.73
-	github.com/openrdap/rdap v0.10.1
+	github.com/openrdap/rdap v0.10.2
 	github.com/quic-go/quic-go v0.62.0
 	github.com/redis/go-redis/v9 v9.22.0
 	github.com/urfave/cli/v3 v3.11.0
@@ -25,7 +25,7 @@ require (
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
-	golang.org/x/crypto v0.55.0 // indirect
+	golang.org/x/crypto v0.56.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/term v0.45.0 // indirect
 	golang.org/x/text v0.41.0 // indirect
