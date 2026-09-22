@@ -33,9 +33,6 @@ Open <http://localhost:8080>, enter any domain, IP, or URL and click "Scan" — 
 ```bash
 # Open scan directly in browser
 open "http://localhost:8080/scan?q=example.com"
-
-# Get plain-text output (great for scripts)
-curl "http://localhost:8080/scan?q=example.com&md=1"
 ```
 
 ## Installation
@@ -108,20 +105,12 @@ The web interface provides a Google-like search experience across two pages. It 
 | `q=<target>` | Domain, IP, or URL to scan |
 | `follow=1` | Follow CNAMEs and HTTP redirects |
 | `fullport=1` | Scan all 65535 ports instead of common ones (slow) |
-| `md=1` | Return plain-text output instead of the HTML page |
 
 Share or bookmark any scan directly:
 
 ```text
 https://your-instance/scan?q=example.com
 https://your-instance/scan?q=example.com&follow=1
-```
-
-**Scripting / curl** — `?md=1` returns raw scan output as `text/plain`:
-
-```bash
-curl "https://your-instance/scan?q=example.com&md=1"
-curl "https://your-instance/scan?q=example.com&follow=1&md=1"
 ```
 
 All scan features are automatically enabled — no flags needed.
@@ -159,7 +148,7 @@ The web interface uses a hybrid approach:
 
 - **Backend**: Go web server performing all scans
 - **Frontend**: Two-page HTML/JS/CSS app served by the Go backend (`/` landing, `/scan` results)
-- **API**: `/api/scan` (async, Redis-backed) to enqueue a job, `/api/scan/<id>/events` (Server-Sent Events) to stream its status; `/scan?md=1` for synchronous plain-text output
+- **API**: `/api/scan` (async, Redis-backed) to enqueue a job, `/api/scan/<id>/events` (Server-Sent Events) to stream its status
 
 This approach ensures maximum compatibility and feature parity with the CLI while providing a user-friendly web interface.
 

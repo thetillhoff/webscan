@@ -17,24 +17,6 @@ func testServer(t *testing.T) *Server {
 	return &Server{templates: tmpl, version: "test"}
 }
 
-func TestStripANSI(t *testing.T) {
-	tests := []struct {
-		in   string
-		want string
-	}{
-		{"plain text", "plain text"},
-		{"\x1b[32mgreen\x1b[0m", "green"},
-		{"\x1b[1;31mbold red\x1b[0m text", "bold red text"},
-		{"no escapes", "no escapes"},
-	}
-	for _, tt := range tests {
-		got := stripANSI(tt.in)
-		if got != tt.want {
-			t.Errorf("stripANSI(%q) = %q, want %q", tt.in, got, tt.want)
-		}
-	}
-}
-
 func TestIndexHandler_NoQ_RendersLandingPage(t *testing.T) {
 	s := testServer(t)
 	req := httptest.NewRequest(http.MethodGet, "/", nil)

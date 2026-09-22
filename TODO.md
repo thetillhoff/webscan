@@ -113,8 +113,7 @@
 
 ## Web Interface
 
-- `fullport=1` is not wired into `?md=1` (plain-text/inline scan path) — only the async job path (`/api/scan`) supports it. Add if the plain-text endpoint needs it.
-- Full port scan against a real remote host (not localhost) can run long on filtered/dropped ports; the hydra deployment's `--scan-timeout` may need raising for full scans to reliably finish instead of hitting the job timeout.
+- Job duration has no fixed cap since `--stale-timeout` replaced `--scan-timeout` (a job only aborts after producing no status update for that long). A target crafted to keep status trickling in just under the threshold forever could occupy a worker slot indefinitely — `--max-concurrent-scans` and the queue size cap the blast radius today, but there's no per-job absolute ceiling. Add one if this proves exploitable.
 - SSRF: close residual DNS-rebinding TOCTOU — the guard resolves+checks the target, but the scan engine re-resolves it; pin the resolved IP into the scan so a flipped A-record can't redirect it to an internal host
 - Rate limiting (IP-based)
 - Proper CORS configuration

@@ -25,7 +25,7 @@ services:
       - "--dns=1.1.1.1"
       - "--timeout=5s"
       - "--redis-addr=redis:6379"
-      - "--scan-timeout=30s"
+      - "--stale-timeout=30s"
       - "--max-concurrent-scans=1"
       - "--max-request-bytes=4096"
       - "--max-queue-size=1000"

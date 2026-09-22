@@ -8,7 +8,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -250,10 +249,6 @@ func (s *Server) scanPageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	follow := r.URL.Query().Get("follow") == "1"
 	fullPort := r.URL.Query().Get("fullport") == "1"
-	if r.URL.Query().Get("md") == "1" {
-		s.markdownScanHandler(w, r, q, follow)
-		return
-	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := s.templates.ExecuteTemplate(w, "scan.html", map[string]any{
 		"title":    "webscan — " + q,
@@ -265,33 +260,6 @@ func (s *Server) scanPageHandler(w http.ResponseWriter, r *http.Request) {
 		slog.Error("failed to render scan template", "error", err)
 		http.Error(w, "template rendering failed", http.StatusInternalServerError)
 	}
-}
-
-func (s *Server) markdownScanHandler(w http.ResponseWriter, r *http.Request, target string, follow bool) {
-	if s.isBlocked(r.Context(), target) {
-		http.Error(w, "target is not allowed", http.StatusForbidden)
-		return
-	}
-	result, err := s.runInlineScan(r.Context(), target, follow)
-	if err != nil {
-		status := http.StatusInternalServerError
-		if strings.Contains(err.Error(), "timed out") {
-			status = http.StatusGatewayTimeout
-		}
-		http.Error(w, err.Error(), status)
-		return
-	}
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-	if _, err := fmt.Fprint(w, stripANSI(result)); err != nil {
-		slog.Debug("webserver: Error writing response", "error", err)
-	}
-}
-
-var ansiEscapeRe = regexp.MustCompile(`\x1b\[[0-9;?]*[ -/]*[@-~]`)
-
-func stripANSI(s string) string {
-	return ansiEscapeRe.ReplaceAllString(s, "")
 }
 
 // getRemoteIP returns the client IP. X-Forwarded-For / X-Real-IP are only
