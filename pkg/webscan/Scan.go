@@ -202,6 +202,7 @@ func (engine *Engine) Scan(ctx context.Context, input string) error {
 			portScan.WithARecords(engine.dnsScanResult.ARecords),
 			portScan.WithAAAARecords(engine.dnsScanResult.AAAARecords),
 			portScan.WithAdvanced(engine.advancedPortScan),
+			portScan.WithFullRange(engine.fullPortScan),
 			portScan.WithTimeout(engine.timeout),
 		)
 		if err != nil {

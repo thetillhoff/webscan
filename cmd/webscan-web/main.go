@@ -30,7 +30,7 @@ func main() {
 	requestTimeout := flag.Duration("timeout", 5*time.Second, "Timeout for individual network requests (DNS, port, HTTP, RDAP)")
 	noColor := flag.Bool("no-color", false, "Disable colored output")
 	verbose := flag.Bool("verbose", false, "Enable verbose logging")
-	scanTimeout := flag.Duration("scan-timeout", 30*time.Second, "Maximum duration per scan job")
+	staleTimeout := flag.Duration("stale-timeout", 30*time.Second, "Abort a scan job if it produces no status update for this long")
 	maxConcurrentScans := flag.Int("max-concurrent-scans", 1, "Maximum number of scan workers")
 	maxRequestBytes := flag.Int64("max-request-bytes", 4096, "Maximum request body size in bytes")
 	redisAddr := flag.String("redis-addr", "127.0.0.1:6379", "Redis server address")
@@ -88,7 +88,7 @@ func main() {
 		*requestTimeout,
 		*port,
 		&writeMutex,
-		*scanTimeout,
+		*staleTimeout,
 		*maxConcurrentScans,
 		*maxRequestBytes,
 		*redisAddr,

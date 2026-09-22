@@ -8,15 +8,15 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
 )
 
 type ScanRequest struct {
-	Target string `json:"target"`
-	Follow *bool  `json:"follow,omitempty"`
+	Target       string `json:"target"`
+	Follow       *bool  `json:"follow,omitempty"`
+	FullPortScan *bool  `json:"full_port_scan,omitempty"`
 }
 
 type ScanResponse struct {
@@ -85,14 +85,20 @@ func (s *Server) scanHandler(w http.ResponseWriter, r *http.Request) {
 		follow = *req.Follow
 	}
 
+	fullPortScan := false
+	if req.FullPortScan != nil {
+		fullPortScan = *req.FullPortScan
+	}
+
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 	jobKey := s.jobKey(jobID)
 	values := map[string]any{
-		"id":         jobID,
-		"target":     req.Target,
-		"follow":     strconv.FormatBool(follow),
-		"status":     statusQueued,
-		"created_at": now,
+		"id":             jobID,
+		"target":         req.Target,
+		"follow":         strconv.FormatBool(follow),
+		"full_port_scan": strconv.FormatBool(fullPortScan),
+		"status":         statusQueued,
+		"created_at":     now,
 	}
 	if err := s.redis.HSet(r.Context(), jobKey, values).Err(); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "could not persist job"})
@@ -219,6 +225,9 @@ func (s *Server) indexHandler(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Query().Get("follow") == "1" {
 			dest += "&follow=1"
 		}
+		if r.URL.Query().Get("fullport") == "1" {
+			dest += "&fullport=1"
+		}
 		http.Redirect(w, r, dest, http.StatusFound)
 		return
 	}
@@ -239,47 +248,18 @@ func (s *Server) scanPageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	follow := r.URL.Query().Get("follow") == "1"
-	if r.URL.Query().Get("md") == "1" {
-		s.markdownScanHandler(w, r, q, follow)
-		return
-	}
+	fullPort := r.URL.Query().Get("fullport") == "1"
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := s.templates.ExecuteTemplate(w, "scan.html", map[string]any{
-		"title":   "webscan — " + q,
-		"version": s.version,
-		"query":   q,
-		"follow":  follow,
+		"title":    "webscan — " + q,
+		"version":  s.version,
+		"query":    q,
+		"follow":   follow,
+		"fullPort": fullPort,
 	}); err != nil {
 		slog.Error("failed to render scan template", "error", err)
 		http.Error(w, "template rendering failed", http.StatusInternalServerError)
 	}
-}
-
-func (s *Server) markdownScanHandler(w http.ResponseWriter, r *http.Request, target string, follow bool) {
-	if s.isBlocked(r.Context(), target) {
-		http.Error(w, "target is not allowed", http.StatusForbidden)
-		return
-	}
-	result, err := s.runInlineScan(r.Context(), target, follow)
-	if err != nil {
-		status := http.StatusInternalServerError
-		if strings.Contains(err.Error(), "timed out") {
-			status = http.StatusGatewayTimeout
-		}
-		http.Error(w, err.Error(), status)
-		return
-	}
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-	if _, err := fmt.Fprint(w, stripANSI(result)); err != nil {
-		slog.Debug("webserver: Error writing response", "error", err)
-	}
-}
-
-var ansiEscapeRe = regexp.MustCompile(`\x1b\[[0-9;?]*[ -/]*[@-~]`)
-
-func stripANSI(s string) string {
-	return ansiEscapeRe.ReplaceAllString(s, "")
 }
 
 // getRemoteIP returns the client IP. X-Forwarded-For / X-Real-IP are only

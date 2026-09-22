@@ -22,6 +22,9 @@
                     <label>
                         <input type="checkbox" name="follow" value="1" id="followRedirects"{{if .follow}} checked{{end}}> Follow CNAMEs and HTTP redirects
                     </label>
+                    <label>
+                        <input type="checkbox" name="fullport" value="1" id="fullPortScan"{{if .fullPort}} checked{{end}}> Full port scan (all 65535 ports, slow)
+                    </label>
                 </div>
             </form>
 

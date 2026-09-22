@@ -3,9 +3,11 @@ package webserver
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
+	"net/http"
 	"strconv"
 	"strings"
 	"sync"
@@ -23,23 +25,59 @@ const (
 	statusTimeout   = "timeout"
 
 	jobStatusFlushInterval = 500 * time.Millisecond
+
+	// statusBufferMaxSize keeps only the most recent status text. Scan
+	// results (a separate, unbounded buffer) are never trimmed.
+	statusBufferMaxSize = 16 * 1024
+
+	// sseWriteTimeout bounds each individual SSE write. Without it, a client
+	// that stops reading (Slowloris) could block a write, and thus this
+	// handler's goroutine, forever.
+	sseWriteTimeout = 10 * time.Second
+
+	// maxScanDuration is an absolute backstop independent of staleTimeout: a
+	// target that keeps status trickling in just under staleTimeout would
+	// otherwise occupy a worker slot forever. Generous enough that no
+	// legitimate scan (a full 65535-port scan included) should ever hit it.
+	maxScanDuration = 30 * time.Minute
 )
 
 type synchronizedBuffer struct {
 	mu  sync.Mutex
 	buf bytes.Buffer
+	// maxSize caps retained bytes, keeping only the most recent ones once
+	// exceeded. 0 means unbounded. A full port scan writes one status line per
+	// port (up to 65535 lines); without a cap, every poll/SSE push resends the
+	// whole growing history, ballooning to multi-MB payloads.
+	maxSize int
+	// lastWrite is when Write was last called, used to detect a stalled scan
+	// (no progress for staleTimeout). Zero until the first write.
+	lastWrite time.Time
 }
 
 func (b *synchronizedBuffer) Write(p []byte) (int, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	return b.buf.Write(p)
+	n, err := b.buf.Write(p)
+	if b.maxSize > 0 && b.buf.Len() > b.maxSize {
+		kept := append([]byte(nil), b.buf.Bytes()[b.buf.Len()-b.maxSize:]...)
+		b.buf.Reset()
+		b.buf.Write(kept)
+	}
+	b.lastWrite = time.Now()
+	return n, err
 }
 
 func (b *synchronizedBuffer) String() string {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	return b.buf.String()
+}
+
+func (b *synchronizedBuffer) LastWrite() time.Time {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.lastWrite
 }
 
 func (s *Server) jobKey(jobID string) string {
@@ -127,6 +165,7 @@ func (s *Server) processJob(ctx context.Context, workerID int, jobID string) {
 
 	target := strings.TrimSpace(data["target"])
 	follow, _ := strconv.ParseBool(data["follow"])
+	fullPortScan, _ := strconv.ParseBool(data["full_port_scan"])
 
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 	if err := s.redis.HSet(ctx, jobKey, map[string]any{
@@ -138,20 +177,22 @@ func (s *Server) processJob(ctx context.Context, workerID int, jobID string) {
 	}
 
 	outputBuffer := &synchronizedBuffer{}
-	statusBuffer := &synchronizedBuffer{}
+	statusBuffer := &synchronizedBuffer{maxSize: statusBufferMaxSize, lastWrite: time.Now()}
 	stopStatusStreaming := s.startStatusStreaming(jobKey, statusBuffer)
 	defer stopStatusStreaming()
 
-	engine, err := s.newEngine(outputBuffer, statusBuffer, follow)
+	engine, err := s.newEngine(outputBuffer, statusBuffer, follow, fullPortScan)
 	if err != nil {
 		s.finishJob(ctx, jobKey, statusFailed, "", "", fmt.Sprintf("failed to initialize scan engine: %v", err), "")
 		return
 	}
 
 	started := time.Now()
-	// Cancel propagates to engine.Scan on timeout so the scan goroutine stops
-	// making outbound requests instead of leaking.
-	scanCtx, cancel := context.WithTimeout(ctx, s.scanTimeout)
+	// Cancel propagates to engine.Scan either when the watchdog below detects
+	// no status progress for staleTimeout, or when maxScanDuration elapses
+	// regardless of progress — a backstop so a target that keeps trickling
+	// status just under staleTimeout can't occupy a worker slot forever.
+	scanCtx, cancel := context.WithTimeout(ctx, maxScanDuration)
 	defer cancel()
 
 	done := make(chan struct{})
@@ -161,6 +202,9 @@ func (s *Server) processJob(ctx context.Context, workerID int, jobID string) {
 		defer close(done)
 		scanErr = engine.Scan(scanCtx, target)
 	}()
+
+	staleFired := make(chan struct{})
+	go s.watchForStale(scanCtx, cancel, statusBuffer, done, staleFired)
 
 	select {
 	case <-done:
@@ -172,7 +216,38 @@ func (s *Server) processJob(ctx context.Context, workerID int, jobID string) {
 		s.finishJob(ctx, jobKey, statusCompleted, outputBuffer.String(), statusBuffer.String(), "", duration)
 	case <-scanCtx.Done():
 		duration := time.Since(started).String()
-		s.finishJob(ctx, jobKey, statusTimeout, outputBuffer.String(), statusBuffer.String(), fmt.Sprintf("scan timed out after %s", s.scanTimeout), duration)
+		errMsg := fmt.Sprintf("scan exceeded the maximum duration of %s", maxScanDuration)
+		select {
+		case <-staleFired:
+			errMsg = fmt.Sprintf("scan produced no status update for %s, aborting", s.staleTimeout)
+		default:
+		}
+		s.finishJob(ctx, jobKey, statusTimeout, outputBuffer.String(), statusBuffer.String(), errMsg, duration)
+	}
+}
+
+// watchForStale cancels scanCtx once statusBuffer has gone staleTimeout
+// without a write, i.e. the scan has stopped making progress, closing
+// staleFired first so the caller can tell that apart from scanCtx ending for
+// another reason (maxScanDuration elapsed, parent ctx cancelled). Returns
+// once done closes (the scan finished on its own) or scanCtx is done.
+func (s *Server) watchForStale(scanCtx context.Context, cancel context.CancelFunc, statusBuffer *synchronizedBuffer, done <-chan struct{}, staleFired chan<- struct{}) {
+	ticker := time.NewTicker(jobStatusFlushInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-done:
+			return
+		case <-scanCtx.Done():
+			return
+		case <-ticker.C:
+			if time.Since(statusBuffer.LastWrite()) >= s.staleTimeout {
+				close(staleFired)
+				cancel()
+				return
+			}
+		}
 	}
 }
 
@@ -243,41 +318,75 @@ func (s *Server) finishJob(ctx context.Context, jobKey, status, result, statusOu
 	}
 }
 
-func (s *Server) runInlineScan(ctx context.Context, target string, follow bool) (string, error) {
-	outputBuffer := &synchronizedBuffer{}
-	statusBuffer := &synchronizedBuffer{}
-
-	engine, err := s.newEngine(outputBuffer, statusBuffer, follow)
-	if err != nil {
-		return "", fmt.Errorf("failed to initialize scan engine: %w", err)
+// scanEventsHandler streams job status over Server-Sent Events instead of
+// making the client poll — replaces one HTTP round trip per poll tick with a
+// single connection, pushed on the same cadence the worker persists updates.
+func (s *Server) scanEventsHandler(w http.ResponseWriter, r *http.Request) {
+	jobID := r.PathValue("id")
+	if jobID == "" {
+		http.Error(w, "invalid job id", http.StatusBadRequest)
+		return
 	}
 
-	scanCtx, cancel := context.WithTimeout(ctx, s.scanTimeout)
-	defer cancel()
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "streaming unsupported", http.StatusInternalServerError)
+		return
+	}
 
-	done := make(chan error, 1)
-	go func() {
-		done <- engine.Scan(scanCtx, target)
-	}()
+	// A scan (and thus this stream) may run longer than the server's default
+	// write timeout, so it's overridden here — but with a bounded per-write
+	// deadline, not cleared outright: a client that stops reading (Slowloris)
+	// would otherwise be able to hold this connection open forever.
+	rc := http.NewResponseController(w)
 
-	select {
-	case err := <-done:
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	w.Header().Set("Connection", "keep-alive")
+	w.WriteHeader(http.StatusOK)
+
+	ticker := time.NewTicker(jobStatusFlushInterval)
+	defer ticker.Stop()
+
+	var lastPayload string
+	for {
+		job, err := s.loadJob(r.Context(), jobID)
 		if err != nil {
-			return "", fmt.Errorf("scan failed: %w", err)
+			job = ScanResponse{JobID: jobID, Status: statusFailed, Error: "job not found"}
 		}
-		return outputBuffer.String(), nil
-	case <-scanCtx.Done():
-		return "", fmt.Errorf("scan timed out after %s", s.scanTimeout)
+
+		if payload, err := json.Marshal(job); err == nil && string(payload) != lastPayload {
+			if err := rc.SetWriteDeadline(time.Now().Add(sseWriteTimeout)); err != nil {
+				slog.Debug("webserver: could not set SSE write deadline", "error", err)
+			}
+			if _, err := fmt.Fprintf(w, "data: %s\n\n", payload); err != nil {
+				return
+			}
+			flusher.Flush()
+			lastPayload = string(payload)
+		}
+
+		switch strings.ToLower(job.Status) {
+		case statusCompleted, statusFailed, statusTimeout:
+			return
+		}
+
+		select {
+		case <-r.Context().Done():
+			return
+		case <-ticker.C:
+		}
 	}
 }
 
-func (s *Server) newEngine(stdout io.Writer, statusOut io.Writer, followRedirects bool) (*webscan.Engine, error) {
+func (s *Server) newEngine(stdout io.Writer, statusOut io.Writer, followRedirects bool, fullPortScan bool) (*webscan.Engine, error) {
 	engine, err := webscan.NewEngine(
 		stdout,
 		statusOut,
 		s.disableColor,
 		s.dnsServer,
 		followRedirects,
+		fullPortScan,
 		s.requestTimeout,
 		s.scanOptions,
 		s.writeMutex,

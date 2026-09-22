@@ -1,3 +1,41 @@
+:root {
+    --color-text: #333;
+    --color-bg: #fff;
+    --color-accent: #4285f4;
+    --color-accent-hover: #3367d6;
+    --color-border: #ddd;
+    --color-muted: #666;
+    --color-muted-border: #ccc;
+    --color-disabled-bg: #ccc;
+    --color-panel-bg: #f8f9fa;
+    --color-logs-bg: #f5f5f5;
+    --color-error-bg: #fef2f2;
+    --color-error-border: #fecaca;
+    --color-error-text: #dc2626;
+    --color-footer-text: #aaa;
+    --color-spinner-track: #e0e0e0;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-text: #e4e4e7;
+        --color-bg: #18181b;
+        --color-accent: #5b9dff;
+        --color-accent-hover: #7bb0ff;
+        --color-border: #3f3f46;
+        --color-muted: #a1a1aa;
+        --color-muted-border: #52525b;
+        --color-disabled-bg: #3f3f46;
+        --color-panel-bg: #27272a;
+        --color-logs-bg: #232326;
+        --color-error-bg: #2a1515;
+        --color-error-border: #5c2626;
+        --color-error-text: #f87171;
+        --color-footer-text: #71717a;
+        --color-spinner-track: #3f3f46;
+    }
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -7,8 +45,8 @@
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     line-height: 1.6;
-    color: #333;
-    background: #fff;
+    color: var(--color-text);
+    background: var(--color-bg);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -43,20 +81,20 @@ main {
     flex: 1;
     padding: 0.75rem 1rem;
     font-size: 1rem;
-    border: 2px solid #ddd;
+    border: 2px solid var(--color-border);
     border-radius: 6px;
 }
 
 #targetInput:focus {
     outline: none;
-    border-color: #4285f4;
+    border-color: var(--color-accent);
 }
 
 #scanButton {
     padding: 0.75rem 1.5rem;
     font-size: 1rem;
     font-weight: 600;
-    background: #4285f4;
+    background: var(--color-accent);
     color: #fff;
     border: none;
     border-radius: 6px;
@@ -64,11 +102,11 @@ main {
 }
 
 #scanButton:hover {
-    background: #3367d6;
+    background: var(--color-accent-hover);
 }
 
 #scanButton:disabled {
-    background: #ccc;
+    background: var(--color-disabled-bg);
     cursor: not-allowed;
 }
 
@@ -77,7 +115,7 @@ main {
     align-items: center;
     gap: 0.4rem;
     font-size: 0.85rem;
-    color: #666;
+    color: var(--color-muted);
     cursor: pointer;
 }
 
@@ -86,15 +124,15 @@ main {
     align-items: center;
     gap: 0.75rem;
     padding: 0.75rem 0;
-    color: #666;
+    color: var(--color-muted);
     font-size: 0.9rem;
 }
 
 .spinner-icon {
     width: 20px;
     height: 20px;
-    border: 3px solid #e0e0e0;
-    border-top-color: #4285f4;
+    border: 3px solid var(--color-spinner-track);
+    border-top-color: var(--color-accent);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
 }
@@ -112,8 +150,8 @@ main {
 .toggle-logs-btn {
     align-self: flex-start;
     background: none;
-    border: 1px solid #ccc;
-    color: #666;
+    border: 1px solid var(--color-muted-border);
+    color: var(--color-muted);
     padding: 0.3rem 0.75rem;
     border-radius: 4px;
     cursor: pointer;
@@ -121,12 +159,12 @@ main {
 }
 
 .toggle-logs-btn:hover {
-    border-color: #999;
-    color: #333;
+    border-color: var(--color-muted);
+    color: var(--color-text);
 }
 
 .logs-output {
-    background: #f5f5f5;
+    background: var(--color-logs-bg);
     padding: 0.75rem;
     border-radius: 4px;
     font-family: monospace;
@@ -138,7 +176,7 @@ main {
 }
 
 .results-section {
-    background: #f8f9fa;
+    background: var(--color-panel-bg);
     border-radius: 6px;
     padding: 1rem;
 }
@@ -152,11 +190,11 @@ main {
 }
 
 .error-section {
-    background: #fef2f2;
-    border: 1px solid #fecaca;
+    background: var(--color-error-bg);
+    border: 1px solid var(--color-error-border);
     border-radius: 6px;
     padding: 1rem;
-    color: #dc2626;
+    color: var(--color-error-text);
     font-size: 0.9rem;
 }
 
@@ -164,16 +202,16 @@ footer {
     text-align: center;
     padding: 2rem 1rem;
     font-size: 0.8rem;
-    color: #aaa;
+    color: var(--color-footer-text);
 }
 
 footer a {
-    color: #aaa;
+    color: var(--color-footer-text);
     text-decoration: none;
 }
 
 footer a:hover {
-    color: #666;
+    color: var(--color-muted);
     text-decoration: underline;
 }
 
@@ -207,7 +245,7 @@ footer a:hover {
 .landing-title {
     font-size: 3rem;
     font-weight: 700;
-    color: #4285f4;
+    color: var(--color-accent);
     letter-spacing: -1px;
 }
 

@@ -19,12 +19,18 @@ import (
 )
 
 const (
-	defaultScanTimeout        = 30 * time.Second
+	defaultStaleTimeout       = 30 * time.Second
 	defaultMaxRequestBytes    = int64(4096)
 	defaultMaxTargetLength    = 2048
 	defaultMaxConcurrentScans = 1
 	defaultMaxQueueSize       = 1000
 	defaultJobTTL             = 24 * time.Hour
+
+	// serverWriteTimeout bounds ordinary (non-streaming) handlers. The SSE
+	// status stream overrides this per-connection since a scan (and thus its
+	// stream) may legitimately run far longer, bounded by staleTimeout
+	// instead.
+	serverWriteTimeout = 60 * time.Second
 )
 
 var (
@@ -46,7 +52,7 @@ type Server struct {
 	port                string
 	router              http.Handler
 	templates           *template.Template
-	scanTimeout         time.Duration
+	staleTimeout        time.Duration
 	maxRequestBodyBytes int64
 	maxTargetLength     int
 	workerCount         int
@@ -69,7 +75,7 @@ func NewServer(
 	requestTimeout time.Duration,
 	port string,
 	writeMutex *sync.Mutex,
-	scanTimeout time.Duration,
+	staleTimeout time.Duration,
 	maxConcurrentScans int,
 	maxRequestBodyBytes int64,
 	redisAddr string,
@@ -83,8 +89,8 @@ func NewServer(
 	if writeMutex == nil {
 		writeMutex = &sync.Mutex{}
 	}
-	if scanTimeout <= 0 {
-		scanTimeout = defaultScanTimeout
+	if staleTimeout <= 0 {
+		staleTimeout = defaultStaleTimeout
 	}
 	if maxConcurrentScans <= 0 {
 		maxConcurrentScans = defaultMaxConcurrentScans
@@ -136,7 +142,7 @@ func NewServer(
 		port:                port,
 		disableColor:        noColor,
 		templates:           tmpl,
-		scanTimeout:         scanTimeout,
+		staleTimeout:        staleTimeout,
 		maxRequestBodyBytes: maxRequestBodyBytes,
 		maxTargetLength:     defaultMaxTargetLength,
 		workerCount:         maxConcurrentScans,
@@ -168,6 +174,7 @@ func (s *Server) setupRouter() {
 	mux.HandleFunc("GET /scan", s.scanPageHandler)
 	mux.HandleFunc("GET /api/health", s.healthHandler)
 	mux.HandleFunc("POST /api/scan", s.scanHandler)
+	mux.HandleFunc("GET /api/scan/{id}/events", s.scanEventsHandler)
 	mux.HandleFunc("GET /api/scan/", s.scanStatusHandler)
 
 	s.router = s.withRequestLogging(mux)
@@ -207,7 +214,7 @@ func (s *Server) Run() error {
 		Addr:         ":" + s.port,
 		Handler:      s.router,
 		ReadTimeout:  10 * time.Second,
-		WriteTimeout: s.scanTimeout + 30*time.Second,
+		WriteTimeout: serverWriteTimeout,
 		IdleTimeout:  120 * time.Second,
 	}
 
