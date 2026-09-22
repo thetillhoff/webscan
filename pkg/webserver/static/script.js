@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 function initLandingPage() {
     const followCheckbox = document.getElementById('followRedirects');
+    const fullPortCheckbox = document.getElementById('fullPortScan');
 
     if (localStorage.getItem('followRedirects') === 'true') {
         followCheckbox.checked = true;
@@ -17,11 +18,19 @@ function initLandingPage() {
         localStorage.setItem('followRedirects', String(followCheckbox.checked));
     });
 
+    if (localStorage.getItem('fullPortScan') === 'true') {
+        fullPortCheckbox.checked = true;
+    }
+    fullPortCheckbox.addEventListener('change', function () {
+        localStorage.setItem('fullPortScan', String(fullPortCheckbox.checked));
+    });
+
     // Redirect if someone pastes a /?q=... URL
     const q = (new URLSearchParams(window.location.search).get('q') || '').trim();
     if (q) {
         const dest = new URLSearchParams({ q });
         if (followCheckbox.checked) dest.set('follow', '1');
+        if (fullPortCheckbox.checked) dest.set('fullport', '1');
         window.location.replace('/scan?' + dest.toString());
     }
 }
@@ -30,11 +39,13 @@ function initScanPage() {
     const params = new URLSearchParams(window.location.search);
     const q = (params.get('q') || '').trim();
     const follow = params.get('follow') === '1';
+    const fullPort = params.get('fullport') === '1';
 
     const form = document.getElementById('scanForm');
     const input = document.getElementById('targetInput');
     const button = document.getElementById('scanButton');
     const followCheckbox = document.getElementById('followRedirects');
+    const fullPortCheckbox = document.getElementById('fullPortScan');
     const spinner = document.getElementById('spinner');
     const spinnerText = document.getElementById('spinnerText');
     const logsSection = document.getElementById('logsSection');
@@ -61,12 +72,13 @@ function initScanPage() {
         if (!newQ) return;
         const dest = new URLSearchParams({ q: newQ });
         if (followCheckbox.checked) dest.set('follow', '1');
+        if (fullPortCheckbox.checked) dest.set('fullport', '1');
         window.location.href = '/scan?' + dest.toString();
     });
 
     // Auto-start scan from URL params on page load
     if (q) {
-        runScan(q, follow, {
+        runScan(q, follow, fullPort, {
             button, input, spinner, spinnerText,
             logsSection, logsOutput,
             resultsSection, scanResults,
@@ -75,7 +87,7 @@ function initScanPage() {
     }
 }
 
-async function runScan(target, follow, els) {
+async function runScan(target, follow, fullPortScan, els) {
     const { button, input, spinner, spinnerText, logsSection, logsOutput,
             resultsSection, scanResults, errorSection, errorMessage } = els;
 
@@ -87,12 +99,12 @@ async function runScan(target, follow, els) {
         const enqueueResp = await fetch('/api/scan', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ target, follow }),
+            body: JSON.stringify({ target, follow, full_port_scan: fullPortScan }),
         });
         const enqueueData = await enqueueResp.json();
         if (!enqueueResp.ok) throw new Error(enqueueData.error || enqueueResp.statusText);
 
-        await pollScanJob(enqueueData.job_id, { spinner, spinnerText, logsSection, logsOutput, resultsSection, scanResults });
+        await streamScanJob(enqueueData.job_id, { spinner, spinnerText, logsSection, logsOutput, resultsSection, scanResults });
     } catch (err) {
         spinner.style.display = 'none';
         errorSection.style.display = 'block';
@@ -104,41 +116,47 @@ async function runScan(target, follow, els) {
     }
 }
 
-async function pollScanJob(jobID, { spinner, spinnerText, logsSection, logsOutput, resultsSection, scanResults }) {
-    const pollIntervalMs = 1000;
+function streamScanJob(jobID, { spinner, spinnerText, logsSection, logsOutput, resultsSection, scanResults }) {
     const timeoutMs = 180000;
-    const startedAt = Date.now();
 
-    while (true) {
-        if (Date.now() - startedAt > timeoutMs) {
-            throw new Error('Scan timed out');
-        }
+    return new Promise((resolve, reject) => {
+        const source = new EventSource('/api/scan/' + encodeURIComponent(jobID) + '/events');
 
-        const resp = await fetch('/api/scan/' + encodeURIComponent(jobID));
-        const data = await resp.json();
-        if (!resp.ok) throw new Error(data.error || resp.statusText);
+        const timeoutTimer = setTimeout(function () {
+            source.close();
+            reject(new Error('Scan timed out'));
+        }, timeoutMs);
 
-        const status = (data.status || '').toLowerCase();
+        source.onmessage = function (event) {
+            const data = JSON.parse(event.data);
+            const status = (data.status || '').toLowerCase();
 
-        if (data.stderr) {
-            logsSection.style.display = 'block';
-            logsOutput.textContent = cleanAnsi(data.stderr);
-            logsOutput.scrollTop = logsOutput.scrollHeight;
-        }
+            if (data.stderr) {
+                logsSection.style.display = 'block';
+                logsOutput.textContent = cleanAnsi(data.stderr);
+                logsOutput.scrollTop = logsOutput.scrollHeight;
+            }
 
-        if (status === 'running') {
-            spinnerText.textContent = getLastLine(data.stderr || '') || 'Scanning...';
-        } else if (status === 'completed') {
-            spinner.style.display = 'none';
-            resultsSection.style.display = 'block';
-            scanResults.textContent = data.results || '';
-            return;
-        } else if (status === 'failed' || status === 'timeout') {
-            throw new Error(data.error || 'Scan ' + status);
-        }
+            if (status === 'running') {
+                spinnerText.textContent = getLastLine(data.stderr || '') || 'Scanning...';
+            } else if (status === 'completed') {
+                clearTimeout(timeoutTimer);
+                source.close();
+                spinner.style.display = 'none';
+                resultsSection.style.display = 'block';
+                scanResults.textContent = data.results || '';
+                resolve();
+            } else if (status === 'failed' || status === 'timeout') {
+                clearTimeout(timeoutTimer);
+                source.close();
+                reject(new Error(data.error || 'Scan ' + status));
+            }
+        };
 
-        await new Promise(r => setTimeout(r, pollIntervalMs));
-    }
+        // EventSource retries transient connection drops on its own; the
+        // timeout above is the only failure signal needed here.
+        source.onerror = function () {};
+    });
 }
 
 function cleanAnsi(text) {

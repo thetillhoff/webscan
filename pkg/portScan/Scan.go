@@ -11,6 +11,7 @@ type scanConfig struct {
 	aRecords    []string
 	aaaaRecords []string
 	advanced    bool
+	fullRange   bool
 	timeout     time.Duration
 }
 
@@ -37,6 +38,14 @@ func WithAdvanced(advanced bool) ConfigOption {
 	}
 }
 
+// WithFullRange scans all 65535 TCP ports instead of the common-port list. Only
+// takes effect together with WithAdvanced(true).
+func WithFullRange(fullRange bool) ConfigOption {
+	return func(sc *scanConfig) {
+		sc.fullRange = fullRange
+	}
+}
+
 // WithTimeout sets the per-connection timeout for port scanning
 func WithTimeout(timeout time.Duration) ConfigOption {
 	return func(sc *scanConfig) {
@@ -52,7 +61,7 @@ func Scan(target types.Target, status *status.Status, options ...ConfigOption) (
 
 	switch {
 	case config.advanced && target.Port() == "" && target.Schema() == types.NONE:
-		return AdvancedScan(status, config.aRecords, config.aaaaRecords, config.timeout)
+		return AdvancedScan(status, config.aRecords, config.aaaaRecords, config.timeout, config.fullRange)
 	default:
 		return SimpleScan(target, status, config.aRecords, config.aaaaRecords, config.timeout)
 	}

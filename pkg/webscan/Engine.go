@@ -36,6 +36,7 @@ type Engine struct {
 
 	// Global settings
 	followRedirects bool
+	fullPortScan    bool
 	timeout         time.Duration
 
 	// Enabled/Disabled scans
@@ -66,6 +67,7 @@ func NewEngine(
 	noColor bool,
 	dnsServer string,
 	followRedirects bool,
+	fullPortScan bool,
 	timeout time.Duration,
 	opts ScanOptions,
 	writeMutex *sync.Mutex,
@@ -109,6 +111,7 @@ func NewEngine(
 		resolver:         resolver,
 		client:           client,
 		followRedirects:  followRedirects,
+		fullPortScan:     fullPortScan,
 		timeout:          timeout,
 		advancedDnsScan:  opts.AdvancedDNS,
 		ipScan:           opts.IP,

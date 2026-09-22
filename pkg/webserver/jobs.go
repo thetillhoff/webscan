@@ -3,9 +3,11 @@ package webserver
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
+	"net/http"
 	"strconv"
 	"strings"
 	"sync"
@@ -23,17 +25,32 @@ const (
 	statusTimeout   = "timeout"
 
 	jobStatusFlushInterval = 500 * time.Millisecond
+
+	// statusBufferMaxSize keeps only the most recent status text. Scan
+	// results (a separate, unbounded buffer) are never trimmed.
+	statusBufferMaxSize = 16 * 1024
 )
 
 type synchronizedBuffer struct {
 	mu  sync.Mutex
 	buf bytes.Buffer
+	// maxSize caps retained bytes, keeping only the most recent ones once
+	// exceeded. 0 means unbounded. A full port scan writes one status line per
+	// port (up to 65535 lines); without a cap, every poll/SSE push resends the
+	// whole growing history, ballooning to multi-MB payloads.
+	maxSize int
 }
 
 func (b *synchronizedBuffer) Write(p []byte) (int, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	return b.buf.Write(p)
+	n, err := b.buf.Write(p)
+	if b.maxSize > 0 && b.buf.Len() > b.maxSize {
+		kept := append([]byte(nil), b.buf.Bytes()[b.buf.Len()-b.maxSize:]...)
+		b.buf.Reset()
+		b.buf.Write(kept)
+	}
+	return n, err
 }
 
 func (b *synchronizedBuffer) String() string {
@@ -127,6 +144,7 @@ func (s *Server) processJob(ctx context.Context, workerID int, jobID string) {
 
 	target := strings.TrimSpace(data["target"])
 	follow, _ := strconv.ParseBool(data["follow"])
+	fullPortScan, _ := strconv.ParseBool(data["full_port_scan"])
 
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 	if err := s.redis.HSet(ctx, jobKey, map[string]any{
@@ -138,11 +156,11 @@ func (s *Server) processJob(ctx context.Context, workerID int, jobID string) {
 	}
 
 	outputBuffer := &synchronizedBuffer{}
-	statusBuffer := &synchronizedBuffer{}
+	statusBuffer := &synchronizedBuffer{maxSize: statusBufferMaxSize}
 	stopStatusStreaming := s.startStatusStreaming(jobKey, statusBuffer)
 	defer stopStatusStreaming()
 
-	engine, err := s.newEngine(outputBuffer, statusBuffer, follow)
+	engine, err := s.newEngine(outputBuffer, statusBuffer, follow, fullPortScan)
 	if err != nil {
 		s.finishJob(ctx, jobKey, statusFailed, "", "", fmt.Sprintf("failed to initialize scan engine: %v", err), "")
 		return
@@ -243,11 +261,61 @@ func (s *Server) finishJob(ctx context.Context, jobKey, status, result, statusOu
 	}
 }
 
+// scanEventsHandler streams job status over Server-Sent Events instead of
+// making the client poll — replaces one HTTP round trip per poll tick with a
+// single connection, pushed on the same cadence the worker persists updates.
+func (s *Server) scanEventsHandler(w http.ResponseWriter, r *http.Request) {
+	jobID := r.PathValue("id")
+	if jobID == "" {
+		http.Error(w, "invalid job id", http.StatusBadRequest)
+		return
+	}
+
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "streaming unsupported", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	w.Header().Set("Connection", "keep-alive")
+	w.WriteHeader(http.StatusOK)
+
+	ticker := time.NewTicker(jobStatusFlushInterval)
+	defer ticker.Stop()
+
+	var lastPayload string
+	for {
+		job, err := s.loadJob(r.Context(), jobID)
+		if err != nil {
+			job = ScanResponse{JobID: jobID, Status: statusFailed, Error: "job not found"}
+		}
+
+		if payload, err := json.Marshal(job); err == nil && string(payload) != lastPayload {
+			fmt.Fprintf(w, "data: %s\n\n", payload)
+			flusher.Flush()
+			lastPayload = string(payload)
+		}
+
+		switch strings.ToLower(job.Status) {
+		case statusCompleted, statusFailed, statusTimeout:
+			return
+		}
+
+		select {
+		case <-r.Context().Done():
+			return
+		case <-ticker.C:
+		}
+	}
+}
+
 func (s *Server) runInlineScan(ctx context.Context, target string, follow bool) (string, error) {
 	outputBuffer := &synchronizedBuffer{}
-	statusBuffer := &synchronizedBuffer{}
+	statusBuffer := &synchronizedBuffer{maxSize: statusBufferMaxSize}
 
-	engine, err := s.newEngine(outputBuffer, statusBuffer, follow)
+	engine, err := s.newEngine(outputBuffer, statusBuffer, follow, false)
 	if err != nil {
 		return "", fmt.Errorf("failed to initialize scan engine: %w", err)
 	}
@@ -271,13 +339,14 @@ func (s *Server) runInlineScan(ctx context.Context, target string, follow bool) 
 	}
 }
 
-func (s *Server) newEngine(stdout io.Writer, statusOut io.Writer, followRedirects bool) (*webscan.Engine, error) {
+func (s *Server) newEngine(stdout io.Writer, statusOut io.Writer, followRedirects bool, fullPortScan bool) (*webscan.Engine, error) {
 	engine, err := webscan.NewEngine(
 		stdout,
 		statusOut,
 		s.disableColor,
 		s.dnsServer,
 		followRedirects,
+		fullPortScan,
 		s.requestTimeout,
 		s.scanOptions,
 		s.writeMutex,

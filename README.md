@@ -96,7 +96,7 @@ webscan http://example.com:8080                # Scan specific port
 
 ### Web Interface
 
-The web interface provides a Google-like search experience across two pages:
+The web interface provides a Google-like search experience across two pages. It follows the browser's light/dark preference automatically (`prefers-color-scheme`, no manual toggle).
 
 - **`/`** — Landing page with centered search bar. Enter a target and click "Scan".
 - **`/scan?q=<target>`** — Scan and results page. The scan starts automatically.
@@ -107,6 +107,7 @@ The web interface provides a Google-like search experience across two pages:
 | --- | --- |
 | `q=<target>` | Domain, IP, or URL to scan |
 | `follow=1` | Follow CNAMEs and HTTP redirects |
+| `fullport=1` | Scan all 65535 ports instead of common ones (slow) |
 | `md=1` | Return plain-text output instead of the HTML page |
 
 Share or bookmark any scan directly:
@@ -158,7 +159,7 @@ The web interface uses a hybrid approach:
 
 - **Backend**: Go web server performing all scans
 - **Frontend**: Two-page HTML/JS/CSS app served by the Go backend (`/` landing, `/scan` results)
-- **API**: `/api/scan` (async, Redis-backed) for browser polling; `/scan?md=1` for synchronous plain-text output
+- **API**: `/api/scan` (async, Redis-backed) to enqueue a job, `/api/scan/<id>/events` (Server-Sent Events) to stream its status; `/scan?md=1` for synchronous plain-text output
 
 This approach ensures maximum compatibility and feature parity with the CLI while providing a user-friendly web interface.
 
@@ -184,7 +185,8 @@ Display comprehensive DNS information and improvement recommendations:
 
 ### Port Scanning
 
-- TCP port scanning for common services
+- TCP port scanning for common services by default
+- Optional full scan of all 65535 ports (`--full-port-scan` on the CLI, "Full port scan" checkbox or `fullport=1` on the web)
 - Parallel checking with configurable timeout per port
 - Cross-IP port consistency verification
 - Special handling for HTTP/HTTPS ports

@@ -168,6 +168,7 @@ func (s *Server) setupRouter() {
 	mux.HandleFunc("GET /scan", s.scanPageHandler)
 	mux.HandleFunc("GET /api/health", s.healthHandler)
 	mux.HandleFunc("POST /api/scan", s.scanHandler)
+	mux.HandleFunc("GET /api/scan/{id}/events", s.scanEventsHandler)
 	mux.HandleFunc("GET /api/scan/", s.scanStatusHandler)
 
 	s.router = s.withRequestLogging(mux)

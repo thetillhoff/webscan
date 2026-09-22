@@ -107,6 +107,11 @@ GLOBAL OPTIONS:{{range .VisibleFlags}}
 				Usage: "focus on detailed port scanning",
 			},
 			&cli.BoolFlag{
+				Name:  "full-port-scan",
+				Value: false,
+				Usage: "scan all 65535 ports instead of common ones (slow, implies --port)",
+			},
+			&cli.BoolFlag{
 				Name:  "tls",
 				Value: false,
 				Usage: "focus on TLS scan",
@@ -192,7 +197,7 @@ GLOBAL OPTIONS:{{range .VisibleFlags}}
 			opts := webscan.NewScanOptions(
 				cmd.Bool("dns"),
 				cmd.Bool("ip"),
-				cmd.Bool("port"),
+				cmd.Bool("port") || cmd.Bool("full-port-scan"),
 				cmd.Bool("tls"),
 				cmd.Bool("protocol"),
 				cmd.Bool("header"),
@@ -214,6 +219,7 @@ GLOBAL OPTIONS:{{range .VisibleFlags}}
 				cmd.Bool("no-color"),
 				cmd.String("ns"),
 				cmd.Bool("follow"),
+				cmd.Bool("full-port-scan"),
 				cmd.Duration("timeout"),
 				opts,
 				&writeMutex,
