@@ -39,12 +39,18 @@ func TestWatchForStale_CancelsAfterNoProgress(t *testing.T) {
 	defer cancel()
 	done := make(chan struct{})
 	defer close(done)
+	staleFired := make(chan struct{})
 
-	go s.watchForStale(ctx, cancel, buf, done)
+	go s.watchForStale(ctx, cancel, buf, done, staleFired)
 
 	select {
 	case <-ctx.Done():
 		// expected: no writes ever happen, so the watchdog cancels.
+		select {
+		case <-staleFired:
+		default:
+			t.Fatal("expected staleFired to be closed when cancelling due to staleness")
+		}
 	case <-time.After(3 * time.Second):
 		t.Fatal("expected context to be cancelled after no status progress")
 	}
@@ -56,8 +62,9 @@ func TestWatchForStale_DoesNotCancelWhileProgressing(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	done := make(chan struct{})
+	staleFired := make(chan struct{})
 
-	go s.watchForStale(ctx, cancel, buf, done)
+	go s.watchForStale(ctx, cancel, buf, done, staleFired)
 
 	deadline := time.Now().Add(700 * time.Millisecond)
 	for time.Now().Before(deadline) {

@@ -29,6 +29,17 @@ const (
 	// statusBufferMaxSize keeps only the most recent status text. Scan
 	// results (a separate, unbounded buffer) are never trimmed.
 	statusBufferMaxSize = 16 * 1024
+
+	// sseWriteTimeout bounds each individual SSE write. Without it, a client
+	// that stops reading (Slowloris) could block a write, and thus this
+	// handler's goroutine, forever.
+	sseWriteTimeout = 10 * time.Second
+
+	// maxScanDuration is an absolute backstop independent of staleTimeout: a
+	// target that keeps status trickling in just under staleTimeout would
+	// otherwise occupy a worker slot forever. Generous enough that no
+	// legitimate scan (a full 65535-port scan included) should ever hit it.
+	maxScanDuration = 30 * time.Minute
 )
 
 type synchronizedBuffer struct {
@@ -177,12 +188,11 @@ func (s *Server) processJob(ctx context.Context, workerID int, jobID string) {
 	}
 
 	started := time.Now()
-	// Cancel propagates to engine.Scan when the watchdog below detects no
-	// status progress for staleTimeout, so the scan goroutine stops making
-	// outbound requests instead of leaking. There is no fixed overall
-	// deadline: a scan may legitimately run long (e.g. a full port scan)
-	// as long as it keeps producing status updates.
-	scanCtx, cancel := context.WithCancel(ctx)
+	// Cancel propagates to engine.Scan either when the watchdog below detects
+	// no status progress for staleTimeout, or when maxScanDuration elapses
+	// regardless of progress — a backstop so a target that keeps trickling
+	// status just under staleTimeout can't occupy a worker slot forever.
+	scanCtx, cancel := context.WithTimeout(ctx, maxScanDuration)
 	defer cancel()
 
 	done := make(chan struct{})
@@ -193,7 +203,8 @@ func (s *Server) processJob(ctx context.Context, workerID int, jobID string) {
 		scanErr = engine.Scan(scanCtx, target)
 	}()
 
-	go s.watchForStale(scanCtx, cancel, statusBuffer, done)
+	staleFired := make(chan struct{})
+	go s.watchForStale(scanCtx, cancel, statusBuffer, done, staleFired)
 
 	select {
 	case <-done:
@@ -205,15 +216,22 @@ func (s *Server) processJob(ctx context.Context, workerID int, jobID string) {
 		s.finishJob(ctx, jobKey, statusCompleted, outputBuffer.String(), statusBuffer.String(), "", duration)
 	case <-scanCtx.Done():
 		duration := time.Since(started).String()
-		s.finishJob(ctx, jobKey, statusTimeout, outputBuffer.String(), statusBuffer.String(), fmt.Sprintf("scan produced no status update for %s, aborting", s.staleTimeout), duration)
+		errMsg := fmt.Sprintf("scan exceeded the maximum duration of %s", maxScanDuration)
+		select {
+		case <-staleFired:
+			errMsg = fmt.Sprintf("scan produced no status update for %s, aborting", s.staleTimeout)
+		default:
+		}
+		s.finishJob(ctx, jobKey, statusTimeout, outputBuffer.String(), statusBuffer.String(), errMsg, duration)
 	}
 }
 
 // watchForStale cancels scanCtx once statusBuffer has gone staleTimeout
-// without a write, i.e. the scan has stopped making progress. Returns once
-// done closes (the scan finished on its own) or scanCtx is done (cancelled
-// by this watchdog, or by the caller for an unrelated reason).
-func (s *Server) watchForStale(scanCtx context.Context, cancel context.CancelFunc, statusBuffer *synchronizedBuffer, done <-chan struct{}) {
+// without a write, i.e. the scan has stopped making progress, closing
+// staleFired first so the caller can tell that apart from scanCtx ending for
+// another reason (maxScanDuration elapsed, parent ctx cancelled). Returns
+// once done closes (the scan finished on its own) or scanCtx is done.
+func (s *Server) watchForStale(scanCtx context.Context, cancel context.CancelFunc, statusBuffer *synchronizedBuffer, done <-chan struct{}, staleFired chan<- struct{}) {
 	ticker := time.NewTicker(jobStatusFlushInterval)
 	defer ticker.Stop()
 
@@ -225,6 +243,7 @@ func (s *Server) watchForStale(scanCtx context.Context, cancel context.CancelFun
 			return
 		case <-ticker.C:
 			if time.Since(statusBuffer.LastWrite()) >= s.staleTimeout {
+				close(staleFired)
 				cancel()
 				return
 			}
@@ -316,10 +335,10 @@ func (s *Server) scanEventsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// A scan (and thus this stream) may run longer than the server's default
-	// write timeout — it's bounded by staleTimeout instead, not a fixed cap.
-	if err := http.NewResponseController(w).SetWriteDeadline(time.Time{}); err != nil {
-		slog.Debug("webserver: could not clear write deadline for SSE stream", "error", err)
-	}
+	// write timeout, so it's overridden here — but with a bounded per-write
+	// deadline, not cleared outright: a client that stops reading (Slowloris)
+	// would otherwise be able to hold this connection open forever.
+	rc := http.NewResponseController(w)
 
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
@@ -337,7 +356,12 @@ func (s *Server) scanEventsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if payload, err := json.Marshal(job); err == nil && string(payload) != lastPayload {
-			fmt.Fprintf(w, "data: %s\n\n", payload)
+			if err := rc.SetWriteDeadline(time.Now().Add(sseWriteTimeout)); err != nil {
+				slog.Debug("webserver: could not set SSE write deadline", "error", err)
+			}
+			if _, err := fmt.Fprintf(w, "data: %s\n\n", payload); err != nil {
+				return
+			}
 			flusher.Flush()
 			lastPayload = string(payload)
 		}
