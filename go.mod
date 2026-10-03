@@ -10,7 +10,7 @@ require (
 	github.com/openrdap/rdap v0.10.2
 	github.com/quic-go/quic-go v0.63.0
 	github.com/redis/go-redis/v9 v9.22.0
-	github.com/urfave/cli/v3 v3.13.0
+	github.com/urfave/cli/v3 v3.14.0
 	golang.org/x/net v0.59.0
 )
 
