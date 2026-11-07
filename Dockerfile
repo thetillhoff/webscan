@@ -22,7 +22,7 @@ ARG VERSION=dev
 RUN go build -ldflags="-X main.version=${VERSION}" -o /artifacts/webscan-web ./cmd/webscan-web/
 
 # Final stage for CLI version
-FROM alpine:3.24.3@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a
+FROM alpine:3.24.4@sha256:93b41ef40b1677fce8fcc64ff4af09daddfacf5040afde618bc46c1e2d1cc7d4
 ARG TARGETPLATFORM
 
 # Copy the pre-built binary directly from artifacts by name
@@ -34,7 +34,7 @@ WORKDIR /workspace
 ENTRYPOINT ["/usr/local/bin/webscan"]
 
 # Final stage for web server (API + worker)
-FROM alpine:3.24.3@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a AS web
+FROM alpine:3.24.4@sha256:93b41ef40b1677fce8fcc64ff4af09daddfacf5040afde618bc46c1e2d1cc7d4 AS web
 COPY --from=builder-web --chmod=755 /artifacts/webscan-web /usr/local/bin/webscan-web
 
 RUN adduser -D -u 10001 app
